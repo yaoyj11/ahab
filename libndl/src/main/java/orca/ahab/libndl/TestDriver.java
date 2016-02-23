@@ -43,7 +43,7 @@ public class TestDriver {
     	//adamantTest1();
     	//adamantTest2();
         //@anirban (05/05/15) commented out the next line
-    	//adamantTest3();
+    	adamantTest3();
     	///autoIP1();
     	System.out.println("ndllib TestDriver: END");
     	
@@ -315,7 +315,6 @@ public class TestDriver {
 	 *  3.  Get the modify request rdf
 	 * @thro 
 	 */
-        /* @anirban (05/05/15) commented out adamantTest3()
         
 	public static void adamantTest3() {
 		
@@ -344,35 +343,36 @@ public class TestDriver {
         //Scanner keyboard = new Scanner(System.in);
         //keyboard.nextLine();
         //System.out.println("continuing");
-        String manifest = getManifestFromORCA("adamantTest1", "https://localhost:11443/orca/xmlrpc");
-        //s.logger().debug("******************** START MANIFEST *********************");
-		//s.logger().debug(manifest);
-		//s.logger().debug("******************** START MANIFEST *********************");
+        String manifest = getManifestFromORCA("pruth-ndllib-1", "https://geni.renci.org:11443/orca/xmlrpc");
+        s.logger().debug("******************** START MANIFEST *********************");
+		s.logger().debug(manifest);
+		s.logger().debug("******************** END MANIFEST *********************");
 		
 		
 		s.logger().debug("************************************ Loading new manifest into slice *********************************");
 
 		s.loadRDF(manifest);
 		
-		//printRequest2Log(s);
+		printRequest2Log(s);
 		
-		s.logger().debug("Workers: ");
-		ComputeNode cn = (ComputeNode) s.getResourceByName("Workers");
-		s.logger().debug("Workers nodeCount = " + cn.getNodeCount());
+		s.logger().debug("NodeGroup0: ");
+		ComputeNode cn = (ComputeNode) s.getResourceByName("NodeGroup0");
+		s.logger().debug("NodeGroup0 = " + cn);
+		s.logger().debug("NodeGroup0 nodeCount = " + cn.getNodeCount());
 		//cn.setNodeCount(9);
 		//s.logger().debug("Workers nodeCount = " + cn.getNodeCount());
 		
 		
 		
-		int i = 0;
-		for (orca.ndllib.resources.manifest.Node mn : ((ComputeNode)cn).getManifestNodes()){
-			s.logger().debug("public ip: " + mn.getPublicIP());
+		//int i = 0;
+		//for (orca.ndllib.resources.manifest.Node mn : ((ComputeNode)cn).getManifestNodes()){
+		//	s.logger().debug("public ip: " + mn.getPublicIP());
 			 //s.logger().debug("manifestNode: " + mn.getURI() + ", state = " + mn.getState());
 			 //if (i++ == 1) {
 			//	 s.logger().debug("manifestNode: deleting " + mn.getURI());
 			//	 mn.delete();
 			 //}
-		}
+		//}
 		
 		s.logger().debug("SliceState = " + s.getState());
 		
@@ -395,7 +395,7 @@ public class TestDriver {
 		
         
 	}
-	*/
+
 	
 	
 	public static void printManifest2Log(Slice s){
@@ -459,7 +459,9 @@ public class TestDriver {
             String prefFilePath = GLOBAL_PREF_FILE;
 
             try {
+            		System.err.println("loding properites from " + prefFilePath);
                     rmProperties = loadPropertiesFromAnyFile(prefFilePath);
+                    System.err.println("rmProperties = " + rmProperties.toString());
                     return;
             } catch (IOException ioe) {
                     System.err.println("Unable to load global config file " + prefFilePath + ", trying local file");
@@ -467,7 +469,10 @@ public class TestDriver {
 
             prefFilePath = "" + p.getProperty("user.home") + p.getProperty("file.separator") + PREF_FILE;
             try {
+            		System.err.println("loding properites from " + prefFilePath);
+            		
                     rmProperties = loadPropertiesFromAnyFile(prefFilePath);
+                    System.err.println("rmProperties = " + rmProperties.toString());
             } catch (IOException e) {
                     System.err.println("Unable to load local config file " + prefFilePath + ", exiting.");
                     System.exit(1);
@@ -518,7 +523,6 @@ public class TestDriver {
 
     }
     
-    /* @anirban (05/05/15) commented out sendModifyRequestToORCA(), sendCreateRequestToORCA(), getManifestFromORCA(), and sanitizeManifest()
     // Send modify request to a specific ORCA controller
     private static void sendModifyRequestToORCA(String sliceId, String controllerUrl, String modifyReq){
 
@@ -596,7 +600,7 @@ public class TestDriver {
 
 
     }
-    */
+   
 
 	
 }

@@ -29,7 +29,8 @@ public class Slice {
 	private boolean isNewSlice;
 	
 	public Slice(){
-		logger = Logger.getLogger(NDLLIBCommon.class.getCanonicalName());
+		//logger = Logger.getLogger(NDLLIBCommon.class.getCanonicalName());
+		logger = Logger.getLogger("PRUTH");
 		logger.setLevel(Level.DEBUG);
 		
 		request = new Request(this);
