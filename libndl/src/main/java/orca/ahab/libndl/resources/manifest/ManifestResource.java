@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import orca.ahab.libndl.Manifest;
 import orca.ahab.libndl.Slice;
 import orca.ndl.NdlCommons;
 
@@ -20,7 +19,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  */
 public abstract class ManifestResource{
-	protected Manifest manifest;
 	protected Slice slice;
 	
 	protected Set<ManifestResource> dependencies = new HashSet<ManifestResource>(); 
@@ -50,8 +48,7 @@ public abstract class ManifestResource{
 	}
 	
 	
-	public ManifestResource(Slice slice, Manifest manifest){
-		this.manifest = manifest;
+	public ManifestResource(Slice slice){
 		this.slice = slice;
 	}
 

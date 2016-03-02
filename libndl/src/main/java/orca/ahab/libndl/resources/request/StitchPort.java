@@ -1,6 +1,6 @@
 package orca.ahab.libndl.resources.request;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
 
 /*
@@ -31,8 +31,8 @@ public class StitchPort extends Node {
 	protected String label;
 	protected String port;
 	
-	public StitchPort(Slice slice, Request request, String name) {
-		super(slice, request,name);
+	public StitchPort(Slice slice, String name) {
+		super(slice, name);
 	}
 
 	public void setLabel(String l) {
@@ -88,7 +88,7 @@ public class StitchPort extends Node {
 			System.out.println("Error: Cannot stitch OrcaStitchPort to " + r.getClass().getName());
 			return null;
 		}
-		request.addStitch(this,r,stitch);
+		slice.addStitch(this,r,stitch);
 		
 		return stitch;
 	}

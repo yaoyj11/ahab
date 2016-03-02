@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -17,7 +17,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  */
 public abstract class RequestResource{
-	protected Request request;
 	protected Slice slice;
 
 	protected Set<RequestResource> dependencies = new HashSet<RequestResource>(); 
@@ -43,8 +42,7 @@ public abstract class RequestResource{
 	protected String domain; 
 	
 	
-	public RequestResource(Slice slice, Request request){
-		this.request = request; 
+	public RequestResource(Slice slice){
 		this.slice = slice;
 	}
 	
@@ -86,7 +84,7 @@ public abstract class RequestResource{
 	}
 	
 	public Collection<Interface> getInterfaces() {
-		return request.getInterfaces(this);
+		return slice.getInterfaces(this);
 	}
 	
 	//public Set<ManifestResource> getInstantiation() {
@@ -103,7 +101,7 @@ public abstract class RequestResource{
 
 	
 	public void delete(){
-		request.deleteResource(this);
+		slice.deleteResource(this);
 	}
 	
 }

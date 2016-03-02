@@ -26,7 +26,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.LIBNDL;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
 
 public class ComputeNode extends Node {
@@ -85,8 +86,8 @@ public class ComputeNode extends Node {
 	// list of open ports
 	protected String openPorts = null;
 
-	public ComputeNode(Slice slice, Request request, String name){
-		super(slice, request,name);
+	public ComputeNode(Slice slice, String name){
+		super(slice,name);
 		
 		nodeCount = 1;
 		manifestNodes = new ArrayList<orca.ahab.libndl.resources.manifest.Node>();
@@ -142,7 +143,7 @@ public class ComputeNode extends Node {
 	}
 	
 	public void setMaxNodeCount(int count){
-		if (request.isNewRequest()){
+		if (slice.isNewRequest()){
 			maxNodeCount = count;
 			
 			if(nodeCount > maxNodeCount){
@@ -165,28 +166,28 @@ public class ComputeNode extends Node {
 	}
 	
 	public void setNodeCount(int nc) {
-		request.logger().debug("setNodeCount: nc = " + nc + ", nodeCount = " + nodeCount + ", isNewReqeust = " + request.isNewRequest());
+		LIBNDL.logger().debug("setNodeCount: nc = " + nc + ", nodeCount = " + nodeCount + ", isNewReqeust = " + slice.isNewRequest());
 		
 		if (nc <= 0){
-			request.logger().warn("setNodeCount: Node group size must be greater than 0");
+			LIBNDL.logger().warn("setNodeCount: Node group size must be greater than 0");
 			return;
 		}
 		
 		if (nc < nodeCount ){
-			request.logger().warn("setNodeCount: Reducing node group size is not supported.  Please delete indivudual nodes.");
+			LIBNDL.logger().warn("setNodeCount: Reducing node group size is not supported.  Please delete indivudual nodes.");
 			return;
 		}
 		
 		if (nc == nodeCount){
-			request.logger().warn("setNodeCount: Setting node group size to the current nodoe group size");
+			LIBNDL.logger().warn("setNodeCount: Setting node group size to the current nodoe group size");
 			return;
 		}
 		
 		//if it is a modify
-		if (!request.isNewRequest()){
+		if (!slice.isNewRequest()){
 			if(nc > nodeCount){
-				request.logger().debug("setNodeCount: " + nc);
-				request.increaseComputeNodeCount(this, nc-nodeCount);
+				LIBNDL.logger().debug("setNodeCount: " + nc);
+				slice.increaseComputeNodeCount(this, nc-nodeCount);
 			}
 		} else {
 			//if it is a new request
@@ -194,15 +195,15 @@ public class ComputeNode extends Node {
 				maxNodeCount = nodeCount;
 			}
 		}
-		request.logger().debug("setNodeCount: Setting node group size to " + nc);
+		LIBNDL.logger().debug("setNodeCount: Setting node group size to " + nc);
 		nodeCount = nc;
 				
 	}	
 	
 	public void deleteNode(String uri){
-		request.logger().debug("ComputeNode.deleteNode: uri = " + uri); 
+		LIBNDL.logger().debug("ComputeNode.deleteNode: uri = " + uri); 
 		nodeCount--;
-		request.deleteComputeNode(this, uri);
+		slice.deleteComputeNode(this, uri);
 	}
 	
 	public String getNodeType() {
@@ -231,7 +232,7 @@ public class ComputeNode extends Node {
 			System.out.println("Error: Cannot stitch OrcaComputeNode to " + r.getClass().getName());
 			return null;
 		}
-		request.addStitch(this,r,stitch);
+		slice.addStitch(this,r,stitch);
 		
 		return stitch;
 	}

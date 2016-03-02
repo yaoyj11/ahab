@@ -31,9 +31,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import orca.ahab.libndl.ndl.ModifySaver;
+import orca.ahab.libndl.ndl.ManifestLoader;
+import orca.ahab.libndl.ndl.ModifyGenerator;
+import orca.ahab.libndl.ndl.RequestGenerator;
 import orca.ahab.libndl.ndl.RequestLoader;
-import orca.ahab.libndl.ndl.RequestSaver;
+import orca.ahab.libndl.resources.manifest.LinkConnection;
+import orca.ahab.libndl.resources.manifest.ManifestResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
@@ -53,13 +56,17 @@ import edu.uci.ics.jung.graph.SparseMultigraph;
  * @author pruth
  *
  */
-public class Request extends NDLLIBCommon  {
-	SparseMultigraph<RequestResource, Interface> g = new SparseMultigraph<RequestResource, Interface>();
-	private boolean newRequest; //true if new,  false if from manifest
+public class SliceGraph   {
+	Slice slice; //added when I removed NDLLIBCommon
+	
+	SparseMultigraph<RequestResource, Interface> sliceGraph = new SparseMultigraph<RequestResource, Interface>();
+	SparseMultigraph<ManifestResource, Interface> manifestGraph = new SparseMultigraph<ManifestResource, Interface>();
+
+	
 	private String rawLoadedRDF; //original rdf loaded. used for reseting uncommited modifies
 	
 	//record modifies
-	private ModifySaver modify;
+	private ModifyGenerator modify;
 	
 	
 	//Obeject for managing subnets for autoIP functionallity
@@ -96,15 +103,14 @@ public class Request extends NDLLIBCommon  {
 	}
 
 	
-	public Request(Slice slice) {
-		super(slice);
+	public SliceGraph(Slice slice) {
 		// clear the graph, reservation set else to defaults
-		if (g == null)
+		if (sliceGraph == null)
 			return;
 		
-		Set<RequestResource> resources = new HashSet<RequestResource>(g.getVertices());
+		Set<RequestResource> resources = new HashSet<RequestResource>(sliceGraph.getVertices());
 		for (RequestResource r: resources)
-			g.removeVertex(r);
+			sliceGraph.removeVertex(r);
 		resDomainName = null;
 		term = new RequestReservationTerm();
 		ofNeededVersion = null;
@@ -116,28 +122,22 @@ public class Request extends NDLLIBCommon  {
 		rawLoadedRDF = null;
 		
 		ipAssign = new IP4Assign();
-
-		//default to true request
-		newRequest = true;
 		
-		modify = new ModifySaver();
+		modify = new ModifyGenerator();
 	}
 	
 	public Collection<RequestResource> getResources(){
-		return g.getVertices();
+		return sliceGraph.getVertices();
 	}
 	
 	protected SparseMultigraph<RequestResource, Interface> getGraph() {
-		return g;
+		return sliceGraph;
 	}
 	
 	public boolean isNewRequest(){
-		return newRequest;
+		return true;
 	}
 	
-	public void setIsNewRequest(boolean isNew){
-		newRequest = isNew;
-	}
 	/*************************************   Add/Delete/Get resources  ************************************/
 	
 	public void increaseComputeNodeCount(ComputeNode node, int addCount){
@@ -146,33 +146,33 @@ public class Request extends NDLLIBCommon  {
 	
 	//deletes the node at uri from the group node
 	public void deleteComputeNode(ComputeNode node, String uri){
-		this.logger().debug("Request.deleteComputeNode: node = " + node + ", uri = " + uri);
+		LIBNDL.logger().debug("Request.deleteComputeNode: node = " + node + ", uri = " + uri);
 		modify.removeNodeFromGroup(node.getURI(), uri);
 	}
 	
 	public ComputeNode addComputeNode(String name){
-		ComputeNode node = new ComputeNode(slice,this,name);
-		g.addVertex(node);
+		ComputeNode node = new ComputeNode(slice,name);
+		sliceGraph.addVertex(node);
 		return node;
 	}
 	public StorageNode addStorageNode(String name){
-		StorageNode node = new StorageNode(slice,this,name);
-		g.addVertex(node);
+		StorageNode node = new StorageNode(slice,name);
+		sliceGraph.addVertex(node);
 		return node;
 	}
 	public StitchPort addStitchPort(String name){
-		StitchPort node = new StitchPort(slice,this,name);
-		g.addVertex(node);
+		StitchPort node = new StitchPort(slice,name);
+		sliceGraph.addVertex(node);
 		return node;
 	}
 	public Network addLink(String name){
-		BroadcastNetwork link = new BroadcastNetwork(slice,this,name);
-		g.addVertex(link);
+		BroadcastNetwork link = new BroadcastNetwork(slice,name);
+		sliceGraph.addVertex(link);
 		return link;
 	}
 	public BroadcastNetwork addBroadcastLink(String name){
-		BroadcastNetwork link = new BroadcastNetwork(slice,this,name);
-		g.addVertex(link);
+		BroadcastNetwork link = new BroadcastNetwork(slice,name);
+		sliceGraph.addVertex(link);
 		return link;
 	}
 	
@@ -181,7 +181,7 @@ public class Request extends NDLLIBCommon  {
 		if (nm == null)
 			return null;
 		
-		for (RequestResource n: g.getVertices()) {
+		for (RequestResource n: sliceGraph.getVertices()) {
 			if (nm.equals(n.getName()) && n instanceof RequestResource)
 				return (RequestResource)n;
 		}
@@ -189,16 +189,16 @@ public class Request extends NDLLIBCommon  {
 	}
 	
 	public RequestResource getResourceByURI(String uri){
-		this.logger().debug("getResourceByURI: " + uri);
+		LIBNDL.logger().debug("getResourceByURI: " + uri);
 		
 		if (uri == null)
 			return null;
-		this.logger().debug("getResourceByURI: " + g);
-		for (RequestResource n: g.getVertices()) {
-			this.logger().debug("getResourceByURI: " + n.getName());
-			this.logger().debug("getResourceByURI: " + n.getURI());
+		LIBNDL.logger().debug("getResourceByURI: " + sliceGraph);
+		for (RequestResource n: sliceGraph.getVertices()) {
+			LIBNDL.logger().debug("getResourceByURI: " + n.getName());
+			LIBNDL.logger().debug("getResourceByURI: " + n.getURI());
 			if (n.getURI() != null && uri.equals(n.getURI()) && n instanceof RequestResource){
-				this.logger().debug("getResourceByURI: returning " + n.getName());
+				LIBNDL.logger().debug("getResourceByURI: returning " + n.getName());
 				return (RequestResource)n;
 			}
 		}
@@ -207,19 +207,19 @@ public class Request extends NDLLIBCommon  {
 	
 	public void deleteResource(RequestResource r){
 		for (Interface s: r.getInterfaces()){
-			g.removeEdge(s);
+			sliceGraph.removeEdge(s);
 		}
-		g.removeVertex(r);
+		sliceGraph.removeVertex(r);
 	}
 	
 	public void addStitch(RequestResource a, RequestResource b, Interface s){
-		g.addEdge(s, a, b);
+		sliceGraph.addEdge(s, a, b);
 	}
 	
 	public Collection<Interface> getInterfaces(){
 		ArrayList<Interface> interfaces = new ArrayList<Interface>();
 		
-		for (Interface i: g.getEdges()) {
+		for (Interface i: sliceGraph.getEdges()) {
 			if (i instanceof Interface){
 				interfaces.add((Interface)i);
 			}
@@ -228,7 +228,7 @@ public class Request extends NDLLIBCommon  {
 	}
 	
 	public Collection<Interface> getInterfaces(RequestResource r){
-		return g.getIncidentEdges(r);
+		return sliceGraph.getIncidentEdges(r);
 	}
 	
 	 
@@ -281,7 +281,7 @@ public class Request extends NDLLIBCommon  {
 	public Collection<Network> getLinks(){
 		ArrayList<Network> links = new ArrayList<Network>();
 		
-		for (RequestResource resource: g.getVertices()) {
+		for (RequestResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof Network){
 				links.add((Network)resource);
 			}
@@ -294,7 +294,7 @@ public class Request extends NDLLIBCommon  {
 	public Collection<BroadcastNetwork> getBroadcastLinks(){
 		ArrayList<BroadcastNetwork> broadcastlinks = new ArrayList<BroadcastNetwork>();
 		
-		for (RequestResource resource: g.getVertices()) {
+		for (RequestResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof BroadcastNetwork){
 				broadcastlinks.add((BroadcastNetwork)resource);
 			}
@@ -305,7 +305,7 @@ public class Request extends NDLLIBCommon  {
 	public Collection<Node> getNodes(){
 		ArrayList<Node> nodes = new ArrayList<Node>();
 		
-		for (RequestResource resource: g.getVertices()) {
+		for (RequestResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof Node){
 				nodes.add((Node)resource);
 			}
@@ -316,7 +316,7 @@ public class Request extends NDLLIBCommon  {
 	public Collection<ComputeNode> getComputeNodes(){
 		ArrayList<ComputeNode> nodes = new ArrayList<ComputeNode>();
 		
-		for (RequestResource resource: g.getVertices()) {
+		for (RequestResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof ComputeNode){
 				nodes.add((ComputeNode)resource);
 			}
@@ -327,7 +327,7 @@ public class Request extends NDLLIBCommon  {
 	public Collection<StorageNode> getStorageNodes(){
 		ArrayList<StorageNode> nodes = new ArrayList<StorageNode>();
 		
-		for (RequestResource resource: g.getVertices()) {
+		for (RequestResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof StorageNode){
 				nodes.add((StorageNode)resource);
 			}
@@ -337,7 +337,7 @@ public class Request extends NDLLIBCommon  {
 	public Collection<StitchPort> getStitchPorts(){
 		ArrayList<StitchPort> nodes = new ArrayList<StitchPort>();
 		
-		for (RequestResource resource: g.getVertices()) {
+		for (RequestResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof StitchPort){
 				nodes.add((StitchPort)resource);
 			}
@@ -352,7 +352,7 @@ public class Request extends NDLLIBCommon  {
 			subnet = ipAssign.getSubnet((Inet4Address)InetAddress.getByName(ip), maskLength);
 			subnet.markIPUsed(subnet.getStartIP());
 		} catch (Exception e){
-			this.logger().warn("setSubnet warning: " + e);
+			LIBNDL.logger().warn("setSubnet warning: " + e);
 		}
 		return subnet;
 	}
@@ -363,13 +363,13 @@ public class Request extends NDLLIBCommon  {
 			subnet = ipAssign.getAvailableSubnet(count);
 			subnet.markIPUsed(subnet.getStartIP());
 		} catch (Exception e){
-			this.logger().warn("allocateSubnet warning: " + e);
+			LIBNDL.logger().warn("allocateSubnet warning: " + e);
 		}
 		return subnet;
 	}
 	
 	public void autoIP(){
-		this.logger().debug("autoIP unimplemented");
+		LIBNDL.logger().debug("autoIP unimplemented");
 	}
 	
 	
@@ -380,10 +380,15 @@ public class Request extends NDLLIBCommon  {
 		rawLoadedRDF = rloader.loadGraph(new File(file));
 	}
 	
-	public void loadRDF(String rdf){
+	public void loadRequestRDF(String rdf){
 		rawLoadedRDF = rdf;
 		RequestLoader loader = new RequestLoader(slice, this);
 		loader.load(rdf);
+	}
+	
+	public void loadManifestRDF(String rdf){
+		ManifestLoader loader = new ManifestLoader(slice,this);
+		loader.loadRDF(rdf);
 	}
 	
 	public void save(String file){
@@ -391,25 +396,25 @@ public class Request extends NDLLIBCommon  {
 	}
 	
 	public void saveNewRequest(String file){
-		RequestSaver saver = new RequestSaver(this);
-		Request r = new Request(slice);
+		RequestGenerator saver = new RequestGenerator(this);
+		SliceGraph r = new SliceGraph(slice);
 		saver.saveRequest(file);
 	}
 	
 	public void saveModifyRequest(String file){
-		RequestSaver saver = new RequestSaver(this);
-		Request r = new Request(slice);
+		RequestGenerator saver = new RequestGenerator(this);
+		SliceGraph r = new SliceGraph(slice);
 		saver.saveModifyRequest(file);
 	}
 	
 	public String getRDFString(){
-		RequestSaver saver = new RequestSaver(this);
-		Request r = new Request(slice);
+		RequestGenerator saver = new RequestGenerator(this);
+		SliceGraph r = new SliceGraph(slice);
 		return saver.getRequest();
 	}
 	
 	public String getModifyRDFString(){
-		this.logger().debug("getModifyRDFString");
+		LIBNDL.logger().debug("getModifyRDFString");
 		return modify.getModifyRequest();
 	}
 
@@ -425,12 +430,36 @@ public class Request extends NDLLIBCommon  {
 	/*************************************   debugging ************************************/
 	public String getDebugString(){
 		String rtnStr = "getRequestDebugString: ";
-		rtnStr += g.toString();
+		rtnStr += sliceGraph.toString();
 		return rtnStr;
 	}
 
 
 	public Object getDomainInReservation() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public void addNetworkConnection(String string) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public LinkConnection addLinkConnection(String string) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public void addCrossConnect(String string) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public orca.ahab.libndl.resources.manifest.Node addNode(String string) {
 		// TODO Auto-generated method stub
 		return null;
 	}

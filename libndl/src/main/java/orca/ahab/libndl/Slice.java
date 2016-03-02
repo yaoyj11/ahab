@@ -1,8 +1,15 @@
 package orca.ahab.libndl;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.Collection;
 
-import orca.ahab.libndl.ndl.RequestSaver;
+import orca.ahab.libndl.ndl.ExistingSliceModel;
+import orca.ahab.libndl.ndl.NDLModel;
+import orca.ahab.libndl.ndl.NewSliceModel;
+import orca.ahab.libndl.ndl.RequestGenerator;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
@@ -11,78 +18,137 @@ import orca.ahab.libndl.resources.request.Node;
 import orca.ahab.libndl.resources.request.RequestResource;
 import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
+import orca.ahab.libndl.util.IP4Subnet;
+import orca.ndl.NdlRequestParser;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import edu.uci.ics.jung.graph.SparseMultigraph;
+
 
 
 public class Slice {
-	Request request;
-	Manifest manifest;
+	//Request request; 
+	//Manifest manifest;
 	
-	//Manifest state (if available)
-	String state;
+	private SliceGraph sliceGraph;
+	private NDLModel ndlModel;
 	
-	protected static Logger logger;
+	private Slice(){
+		//request = new Request(this);
+		//manifest = new Manifest(this);
+				
+		sliceGraph = new SliceGraph(this);
+	}
 	
-	private boolean isNewSlice;
+	public static Slice create(){
+		return new Slice();
+	}
 	
-	public Slice(){
-		//logger = Logger.getLogger(NDLLIBCommon.class.getCanonicalName());
-		logger = Logger.getLogger("PRUTH");
-		logger.setLevel(Level.DEBUG);
+	public static Slice loadRequestFile(String fileName){
+		return Slice.loadRequest(readRDFFile(new File(fileName)));
+	}
+	
+	public static Slice loadManifestFile(String fileName){
+		return Slice.loadManifest(readRDFFile(new File(fileName)));
+	}
+	
+	
+	public static Slice loadRequest(String requestRDFString){
+		Slice s = new Slice();
 		
-		request = new Request(this);
-		manifest = new Manifest(this);
+		s.setNDLModel(new NewSliceModel());
+		s.sliceGraph.loadRequestRDF(requestRDFString);
+		//.loadRDF(requestRDFString);
+		return s;
+	}
+	
+	public static Slice loadManifest(String manifestRDFString){
+		Slice s = new Slice();
+		s.setNDLModel(new ExistingSliceModel());
+		s.sliceGraph.loadManifestRDF(manifestRDFString);
 		
-		isNewSlice = true;
-		
-		state = null;
+		return s;
+	}
+	
+	private static String readRDFFile(File f){
+		BufferedReader bin = null; 
+		String rawRDF = null;
+		try {
+			FileInputStream is = new FileInputStream(f);
+			bin = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+
+			StringBuilder sb = new StringBuilder();
+
+			String line = null;
+			while((line = bin.readLine()) != null) {
+				sb.append(line);
+				// re-add line separator
+				sb.append(System.getProperty("line.separator"));
+			}
+
+			bin.close();
+
+			rawRDF = sb.toString();
+
+		} catch (Exception e) {
+			LIBNDL.logger().debug("error reading file " + f.toString());
+			e.printStackTrace();
+			return null;
+		} 
+
+		return rawRDF;
+	}
+	
+	/************************ Private configuration methods ***************/
+	private void setNDLModel(NDLModel m){
+		this.ndlModel = m;
 	}
 	
 	
 	/************************ User API Methods ****************************/
 	
 	public ComputeNode addComputeNode(String name){
-		return request.addComputeNode(name);		
+		return sliceGraph.addComputeNode(name);
 	}
 
 	public StorageNode addStorageNode(String name){
-		return request.addStorageNode(name);
+		return sliceGraph.addStorageNode(name);
 	}
 
 	public StitchPort addStitchPort(String name){
-		return request.addStitchPort(name);
+		return sliceGraph.addStitchPort(name);	 
 	}
+	SparseMultigraph<RequestResource, Interface> g = new SparseMultigraph<RequestResource, Interface>();
 
 	public Network addLink(String name){
-		return request.addLink(name);
+		return sliceGraph.addLink(name);
 	}
 
 	public BroadcastNetwork addBroadcastLink(String name){
-		return request.addBroadcastLink(name);
+		return sliceGraph.addBroadcastLink(name);
 	}
 		
 	public RequestResource getResourceByName(String nm){
-		return request.getResourceByName(nm);
+		return sliceGraph.getResourceByName(nm);
 	}
 	
 	public RequestResource getResouceByURI(String uri){
-		return request.getResourceByURI(uri);
+		return sliceGraph.getResourceByURI(uri);
 	}
 	
 	public void deleteResource(RequestResource r){
-		request.deleteResource(r);
+		sliceGraph.deleteResource(r);
 	}
 	
 	public Interface stitch(RequestResource r1, RequestResource r2){
-		logger.error("slice.stitch is unimplemented");
+		LIBNDL.logger().error("slice.stitch is unimplemented");
 		return null;
 	}
 	
 	public void autoIP(){
-		for (Network n : request.getLinks()){
+		for (Network n : sliceGraph.getLinks()){
 			n.autoIP();
 		}
 	}
@@ -90,92 +156,106 @@ public class Slice {
 	
 	/**************************** Get Slice Info ***********************************/
 	public Collection<RequestResource> getAllResources(){
-		return request.getResources();
+		return sliceGraph.getResources();
 	}
 	
 	public Collection<Interface> getInterfaces(){
-		return request.getInterfaces();
+		return sliceGraph.getInterfaces();
 	}
 
 	public Collection<Network> getLinks(){
-		return request.getLinks();
+		return sliceGraph.getLinks();
 	}
 		
 	public Collection<BroadcastNetwork> getBroadcastLinks(){
-		return request.getBroadcastLinks();
+		return sliceGraph.getBroadcastLinks();
 	}
 	
 	public Collection<Node> getNodes(){
-		return request.getNodes();
+		return sliceGraph.getNodes();
 	}
 	
 	public Collection<ComputeNode> getComputeNodes(){
-		return request.getComputeNodes();
+		return sliceGraph.getComputeNodes();
 	}
 	
 	public Collection<StorageNode> getStorageNodes(){
-		return request.getStorageNodes();
+		return sliceGraph.getStorageNodes();
 	}	
 
 	public Collection<StitchPort> getStitchPorts(){
-		return request.getStitchPorts();
+		return sliceGraph.getStitchPorts();
 	}	
 	
 	public String getState(){
-		return state;
+		return "getState unimplimented";
 	}
 	
-	public void setState(String state){
-		this.state = state;
-	}
 	
 	public static Collection<String> getDomains(){
-		return RequestSaver.domainMap.keySet();
+		return RequestGenerator.domainMap.keySet();
 	}
 	
 	/**************************** Load/Save Methods **********************************/
-	public void loadFile(String file){
-		request.loadFile(file);
-		isNewSlice = manifest.loadFile(file);
-		request.setIsNewRequest(isNewSlice);
-		logger.debug("Slice has manifest? " + isNewSlice);
-	}
 	
-	public void loadRDF(String rdf){
-		request.loadRDF(rdf);
-		isNewSlice = manifest.loadRDF(rdf);
-		request.setIsNewRequest(isNewSlice);
-		logger.debug("Slice has manifest? " + isNewSlice);
-	}
-	
-	public void save(String file){
-		if(isNewSlice){
-			request.save(file);
-		} else { 
-			request.saveModifyRequest(file);
-		}
+	private void save(String file){
+		sliceGraph.save(file);
 	}
 	
 	public String getRequest(){
-		
-		if(isNewSlice){
-			return request.getRDFString();
-		} else { 
-			return request.getModifyRDFString();
-		}
+		return sliceGraph.getRDFString();
 	}
 
 	/**************************** Logger Methods *************************************/
 	public Logger logger(){
-		return logger;
+		return LIBNDL.logger();
 	}
 	
-	/***************************** User debug methods ********************************/
-	public String getRequestString(){
-		return request.getDebugString();
+	
+	/*****************************  Auto generatted methods to be sorted **************/
+	public Collection<Interface> getInterfaces(RequestResource requestResource) {
+		// TODO Auto-generated method stub
+		return null;
 	}
-	public String getManifestString(){
-		return manifest.getDebugString();
+
+	public boolean isNewRequest() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void increaseComputeNodeCount(ComputeNode computeNode, int i) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void deleteComputeNode(ComputeNode computeNode, String uri) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void addStitch(ComputeNode computeNode, RequestResource r, Interface stitch) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public IP4Subnet setSubnet(String ip, int mask) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void addStitch(StorageNode storageNode, RequestResource r, Interface stitch) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void addStitch(StitchPort stitchPort, RequestResource r, Interface stitch) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public IP4Subnet allocateSubnet(int dEFAULT_SIZE) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	 
 }

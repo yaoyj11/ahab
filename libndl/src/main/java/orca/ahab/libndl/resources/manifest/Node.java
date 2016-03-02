@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import orca.ahab.libndl.Manifest;
+import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.Slice;
 import orca.ndl.NdlCommons;
 
@@ -117,8 +117,8 @@ public class Node extends ManifestResource {
 	}
 		
 //basic constructor
-	public Node(Slice slice, Manifest manifest, String name) {
-		super(slice, manifest);
+	public Node(Slice slice, String name) {
+		super(slice);
 		this.name = name; //name should be unique... i think
 		this.domain = null;
 		this.dependencies = null;
@@ -138,7 +138,7 @@ public class Node extends ManifestResource {
 		if(computeNode != null){	
 			computeNode.deleteNode(this.getURI());
 		} else {
-			manifest.logger().warn("Delete computeNode failed: " + this.getName());
+			LIBNDL.logger().warn("Delete computeNode failed: " + this.getName());
 		}
 	}
 	

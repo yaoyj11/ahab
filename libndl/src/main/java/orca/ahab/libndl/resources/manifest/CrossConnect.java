@@ -1,6 +1,5 @@
 package orca.ahab.libndl.resources.manifest;
 
-import orca.ahab.libndl.Manifest;
 import orca.ahab.libndl.Slice;
 
 import org.apache.commons.collections15.Factory;
@@ -37,8 +36,8 @@ public class CrossConnect extends ManifestResource{
 	    protected String realName = null;
 	    
 		
-	    public CrossConnect(Slice slice, Manifest manifest, String name) {
-	    	super(slice, manifest);
+	    public CrossConnect(Slice slice, String name) {
+	    	super(slice);
 	        this.name = name;
 	    }
 

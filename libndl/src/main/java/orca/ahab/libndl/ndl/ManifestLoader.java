@@ -30,8 +30,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import orca.ahab.libndl.Manifest;
+import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.Slice;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.resources.manifest.LinkConnection;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.RequestResource;
@@ -49,23 +50,28 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ibaldin
  *
  */
-public class ManifestLoader implements INdlManifestModelListener{
+public class ManifestLoader extends NDLLoader implements INdlManifestModelListener{
 	
-	private Slice slice;
-	private Manifest manifest;
+	//private Slice slice;
+	private SliceGraph manifest;
 
 	//for testing if a manifest exists
 	private boolean isManifest;
 	
-	public ManifestLoader(Slice slice, Manifest manifest){
-		manifest.logger().debug("new ManifestLoader");
-		this.manifest = manifest;
+	public ManifestLoader(Slice slice, SliceGraph sliceGraph){
+		LIBNDL.logger().debug("new ManifestLoader");
+		this.manifest = sliceGraph;
 		isManifest = false;
 		this.slice = slice;
 	}
 	
+	/* load method overriding abstract method */
+	public void load(String rdf){
+		loadString(rdf);
+	}
+	
 	public boolean loadFile(File f) {
-		manifest.logger().debug("About to load graph");
+		LIBNDL.logger().debug("About to load graph");
 		BufferedReader bin = null; 
 		StringBuilder sb = null;
 		try {
@@ -84,12 +90,14 @@ public class ManifestLoader implements INdlManifestModelListener{
 			bin.close();
 
 		} catch (Exception e) {
-			manifest.logger().debug("Exception loading graph: " + e);
+			LIBNDL.logger().debug("Exception loading graph: " + e);
 			return false;
 		} 
 		
 		return loadString(sb.toString());
 	}
+	
+
 	
 	public boolean loadRDF(String rdf){
 		return loadString(rdf);
@@ -98,7 +106,7 @@ public class ManifestLoader implements INdlManifestModelListener{
 	public boolean loadString(String s) {
 		
 		try {
-			manifest.logger().debug("About to parse manifest");
+			LIBNDL.logger().debug("About to parse manifest");
 			
 			// parse as manifest
 			NdlManifestParser nmp = new NdlManifestParser(s, this);
@@ -108,7 +116,7 @@ public class ManifestLoader implements INdlManifestModelListener{
 			//manifest.setManifestTerm(creationTime, expirationTime);
 			
 		} catch (Exception e) {
-			manifest.logger().debug("Excpetion: parsing request part of manifest" + e);
+			LIBNDL.logger().debug("Excpetion: parsing request part of manifest" + e);
 			return false;
 		} 
 		
@@ -126,7 +134,7 @@ public class ManifestLoader implements INdlManifestModelListener{
 		String printStr =  "ndlManifest_Interface: \n\tName: " + l;
 		printStr += "\n\tconn: " + conn;
 		printStr += "\n\tnode: " + node;
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlNetworkConnection(Resource l, OntModel om,
 			long bandwidth, long latency, List<Resource> interfaces) {
@@ -139,17 +147,17 @@ public class ManifestLoader implements INdlManifestModelListener{
 			printStr += "\n\t\t " + r;
 		}			
 
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlParseComplete() {		
 		String printStr = "ndlManifest_ParseComplete";
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlReservation(Resource i, OntModel m) {
 		// TODO Auto-generated method stub
 		String printStr = "ndlManifest_Reservation: \n\tName: " + i;
 		printStr += ", sliceState(Manifest:ndlReservation) = " + NdlCommons.getGeniSliceStateName(i);
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 		
 		
 	}
@@ -157,35 +165,35 @@ public class ManifestLoader implements INdlManifestModelListener{
 			int years, int months, int days, int hours, int minutes, int seconds) {
 		// TODO Auto-generated method stub
 		String printStr = "ndlManifest_ReservationTermDuration: \n\tName: " + d;
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlReservationResources(List<Resource> r, OntModel m) {
 		// TODO Auto-generated method stub
 		String printStr = "ndlManifest_ReservationResources: \n\tName: " + r;
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlReservationStart(Literal s, OntModel m, Date start) {
 		// TODO Auto generated method stub
 		String printStr = "ndlManifest_ReservationStart: \n\tName: " + s ;
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlReservationEnd(Literal e, OntModel m, Date end) {
 		// TODO Auto-generated method stub
 		String printStr = "ndlManifest_ReservationEnd: \n\tName: " + e;
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}// parse as request
 	
 	public void ndlNodeDependencies(Resource ni, OntModel m,
 			Set<Resource> dependencies) {
 		// TODO Auto-generated method stub
 		String printStr = "ndlManifest_NodeDependencies: \n\tName: " + ni;
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlSlice(Resource sl, OntModel m) {
 		// TODO Auto-generated method stub
 		String printStr = "ndlManifest_Slice: \n\tName: " + sl;
 		printStr += ", sliceState(manifest) = " + NdlCommons.getGeniSliceStateName(sl);
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlBroadcastConnection(Resource bl, OntModel om,
 			long bandwidth, List<Resource> interfaces) {
@@ -195,7 +203,7 @@ public class ManifestLoader implements INdlManifestModelListener{
 		for (Resource r : interfaces){
 			printStr += "\n\t\t " + r;
 		}
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}
 	public void ndlManifest(Resource i, OntModel m) {
 		//we found a manifest
@@ -204,7 +212,7 @@ public class ManifestLoader implements INdlManifestModelListener{
 		// TODO Auto-generated method stub
 		String printStr = "ndlManifest_Manifest: \n\tName: " + i;
 		printStr += ", sliceState = " + NdlCommons.getGeniSliceStateName(i);
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 		
 	}
 	public void ndlLinkConnection(Resource l, OntModel m,
@@ -215,7 +223,7 @@ public class ManifestLoader implements INdlManifestModelListener{
 		for (Resource r : interfaces){
 			printStr += "\n\t\t " + r;
 		}
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 		
 		LinkConnection lc = manifest.addLinkConnection(l.toString());
 		lc.setModelResource(l);		
@@ -229,18 +237,18 @@ public class ManifestLoader implements INdlManifestModelListener{
 		for (Resource r : interfaces){
 			printStr += "\n\t\t " + r;
 		}
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	}	
 	public void ndlNetworkConnectionPath(Resource c, OntModel m,
 			List<List<Resource>> path, List<Resource> roots) {
 		// TODO Auto-generated method stub
 		String printStr = "ndlManifest_NetworkConnectionPath: \n\tName: " + c;
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	
 	}
 	public void ndlNode(Resource ce, OntModel om, Resource ceClass,
 			List<Resource> interfaces) {
-		manifest.logger().debug("\n\n\n #################################### Processing Node ############################################## \n\n\n");
+		LIBNDL.logger().debug("\n\n\n #################################### Processing Node ############################################## \n\n\n");
 		if (ce == null)
 			return;
 		String printStr = "ndlManifest_Node: ("+ ceClass  + ")\n\tName: " + ce + " (" + ce.getLocalName() + ")"; 
@@ -249,10 +257,10 @@ public class ManifestLoader implements INdlManifestModelListener{
 		for (Resource r : interfaces){
 			printStr += "\n\t\t " + r;
 		}
-		manifest.logger().debug(printStr);
+		LIBNDL.logger().debug(printStr);
 	
 		if(NdlCommons.isNetworkStorage(ce) || NdlCommons.isStitchingNode(ce)){
-			manifest.logger().debug("Found a stitchport or storage node, returning");
+			LIBNDL.logger().debug("Found a stitchport or storage node, returning");
 			return;
 		}
 		
@@ -260,40 +268,40 @@ public class ManifestLoader implements INdlManifestModelListener{
 		
 		//Only handle compute nodes for now.
 		//if (!((ceClass.equals(NdlCommons.computeElementClass) || ceClass.equals(NdlCommons.serverCloudClass)))){
-		//	manifest.logger().debug("Not a compute element, returning");
+		//	LIBNDL.logger().debug("Not a compute element, returning");
 		//	
 		//	return;
 		//}
 		
 		//orca.ndllib.resources.manifest.Node newNode = manifest.addNode(ce.toString());
 		
-		manifest.logger().debug("\n\n\n ************************************** FOUND COMPUTE NODE *************************************** \n\n\n");
+		LIBNDL.logger().debug("\n\n\n ************************************** FOUND COMPUTE NODE *************************************** \n\n\n");
 		String groupUrl = NdlCommons.getRequestGroupURLProperty(ce);
-		manifest.logger().debug("NdlCommons.getRequestGroupURLProperty: " + groupUrl);
+		LIBNDL.logger().debug("NdlCommons.getRequestGroupURLProperty: " + groupUrl);
 		
 		String nodeUrl = ce.getURI();
-		manifest.logger().debug("ce.getURI(): " + nodeUrl);
+		LIBNDL.logger().debug("ce.getURI(): " + nodeUrl);
 
 		if (ceClass.equals(NdlCommons.computeElementClass)){	
-			manifest.logger().debug("Adding computeElement: slice = " + slice);
+			LIBNDL.logger().debug("Adding computeElement: slice = " + slice);
 			orca.ahab.libndl.resources.manifest.Node newNode = manifest.addNode(ce.toString());
-			manifest.logger().debug("newNode: " + newNode);
+			LIBNDL.logger().debug("newNode: " + newNode);
 			newNode.setModelResource(ce);
 			
 			
 			RequestResource r = slice.getResouceByURI(groupUrl);
-			manifest.logger().debug("r: " + r);
+			LIBNDL.logger().debug("r: " + r);
 			if(r instanceof ComputeNode){
 				ComputeNode computeNode = (ComputeNode)r;
-				manifest.logger().debug("Adding computeElement to group: " + computeNode + ", newNode: " + newNode);
+				LIBNDL.logger().debug("Adding computeElement to group: " + computeNode + ", newNode: " + newNode);
 				computeNode.addManifestNode(newNode);
 				newNode.setComputeNode(computeNode);
 			}
 			
 		} 
 		
-	}	
-	
+	}
+
 	
 	
 	

@@ -25,7 +25,7 @@ package orca.ahab.libndl.resources.request;
 import java.util.HashSet;
 import java.util.Set;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
 
 public abstract class Node extends RequestResource {
@@ -36,8 +36,8 @@ public abstract class Node extends RequestResource {
 	}
 		
 //basic constructor
-	public Node(Slice slice, Request request, String name) {
-		super(slice, request);
+	public Node(Slice slice, String name) {
+		super(slice);
 		this.name = name; //name should be unique... i think
 		this.domain = null;
 		this.dependencies = null;

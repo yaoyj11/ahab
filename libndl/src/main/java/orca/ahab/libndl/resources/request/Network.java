@@ -22,7 +22,8 @@
 */
 package orca.ahab.libndl.resources.request;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.LIBNDL;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
 import orca.ahab.libndl.util.IP4Subnet;
 
@@ -38,8 +39,8 @@ public abstract class Network extends RequestResource {
     //Subnet for autoIP
     protected IP4Subnet ipSubnet;
 	
-    public Network(Slice slice, Request request, String name) {
-    	super(slice, request);
+    public Network(Slice slice, String name) {
+    	super(slice);
         this.name = name;
         this.ipSubnet = null;
     }
@@ -78,12 +79,12 @@ public abstract class Network extends RequestResource {
 	
     //set IP subnet for autoIP
     public void setIPSubnet(String ip, int mask){
-    	ipSubnet = request.setSubnet(ip,mask);
+    	ipSubnet = slice.setSubnet(ip,mask);
     }
     
     //allocate new subnet for autoIP
     public void allocateIPSubnet(int count){
-    	ipSubnet = request.allocateSubnet(count);
+    	ipSubnet = slice.allocateSubnet(count);
     }  
 
     public void clearAvailableIPs(){
@@ -104,28 +105,28 @@ public abstract class Network extends RequestResource {
     
     //automatically set IPs on interfaces
     public void autoIP(){
-    	request.logger().debug("AutoIP for network ");
+    	LIBNDL.logger().debug("AutoIP for network ");
     	//Do not set IPs for storage networks
     	for (Interface i : this.getInterfaces()){
     		if (i instanceof InterfaceNode2Net){
     			Node n = ((InterfaceNode2Net)i).getNode();
     			if(n instanceof StorageNode){
-    				request.logger().info("Skipping autoip for storage network: " + this.getName());
+    				LIBNDL.logger().info("Skipping autoip for storage network: " + this.getName());
     				return;
     			}
     		} else {
     			//unknown interface type
-    			request.logger().warn("Unkown interface type. Can not autoIP for interface: " + i.toString());
+    			LIBNDL.logger().warn("Unkown interface type. Can not autoIP for interface: " + i.toString());
     		}
     	}
     	
     	
     	if (ipSubnet == null){
-    		ipSubnet = request.allocateSubnet(Network.DEFAULT_SIZE);
+    		ipSubnet = slice.allocateSubnet(Network.DEFAULT_SIZE);
     	}
     	
     	for (Interface i : this.getInterfaces()){
-    		request.logger().debug("AutoIP for interface: " + i);
+    		LIBNDL.logger().debug("AutoIP for interface: " + i);
     		if (i instanceof InterfaceNode2Net){
     			Node n = ((InterfaceNode2Net)i).getNode();
     			if(n instanceof ComputeNode){
@@ -134,13 +135,13 @@ public abstract class Network extends RequestResource {
     				int maskLength = ipSubnet.getMaskLength();
     				String ip = ipSubnet.getFreeIPs(count).getHostAddress();
     				String mask = IP4Subnet.netmaskIntToString(maskLength);
-    				request.logger().debug("AutoIP for interface: count: " + count + ", maskLength: " + maskLength + ", mask: " + mask + ", ip: " + ip);
+    				LIBNDL.logger().debug("AutoIP for interface: count: " + count + ", maskLength: " + maskLength + ", mask: " + mask + ", ip: " + ip);
     				((InterfaceNode2Net)i).setNetmask(mask);
     				((InterfaceNode2Net)i).setIpAddress(ip);
     			}
     		} else {
     			//unknown interface type
-    			request.logger().warn("Unkown interface type. Can not autoIP for interface: " + i.toString());
+    			LIBNDL.logger().warn("Unkown interface type. Can not autoIP for interface: " + i.toString());
     		}
     	}
     }

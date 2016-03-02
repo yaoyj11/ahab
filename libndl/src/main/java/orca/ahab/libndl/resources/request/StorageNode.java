@@ -1,6 +1,6 @@
 package orca.ahab.libndl.resources.request;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
 
 /**
@@ -16,8 +16,8 @@ public class StorageNode extends Node {
 	protected boolean doFormat = true;
 	protected String hasFSType = "ext4", hasFSParam = "-F -b 2048", hasMntPoint = "/mnt/target"; 
 	
-	public StorageNode(Slice slice, Request request, String name) {
-		super(slice, request, name);
+	public StorageNode(Slice slice, String name) {
+		super(slice, name);
 	}
 	
 	public void setCapacity(long cap) {
@@ -97,7 +97,7 @@ public class StorageNode extends Node {
 			System.out.println("Error: Cannot stitch OrcaStorageNode to " + r.getClass().getName());
 			return null;
 		}
-		request.addStitch(this,r,stitch);
+		slice.addStitch(this,r,stitch);
 
 		return stitch;
 	}
