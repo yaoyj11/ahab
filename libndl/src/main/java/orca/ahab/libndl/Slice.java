@@ -29,16 +29,10 @@ import edu.uci.ics.jung.graph.SparseMultigraph;
 
 
 public class Slice {
-	//Request request; 
-	//Manifest manifest;
 	
 	private SliceGraph sliceGraph;
-	private NDLModel ndlModel;
 	
 	private Slice(){
-		//request = new Request(this);
-		//manifest = new Manifest(this);
-				
 		sliceGraph = new SliceGraph(this);
 	}
 	
@@ -57,16 +51,12 @@ public class Slice {
 	
 	public static Slice loadRequest(String requestRDFString){
 		Slice s = new Slice();
-		
-		s.setNDLModel(new NewSliceModel());
 		s.sliceGraph.loadRequestRDF(requestRDFString);
-		//.loadRDF(requestRDFString);
 		return s;
 	}
 	
 	public static Slice loadManifest(String manifestRDFString){
 		Slice s = new Slice();
-		s.setNDLModel(new ExistingSliceModel());
 		s.sliceGraph.loadManifestRDF(manifestRDFString);
 		
 		return s;
@@ -102,9 +92,6 @@ public class Slice {
 	}
 	
 	/************************ Private configuration methods ***************/
-	private void setNDLModel(NDLModel m){
-		this.ndlModel = m;
-	}
 	
 	
 	/************************ User API Methods ****************************/
@@ -211,6 +198,10 @@ public class Slice {
 		return LIBNDL.logger();
 	}
 	
+	/***************************** Debug Methods **************/
+	public String getDebugString(){
+		return sliceGraph.getDebugString();
+	}
 	
 	/*****************************  Auto generatted methods to be sorted **************/
 	public Collection<Interface> getInterfaces(RequestResource requestResource) {

@@ -39,9 +39,9 @@ public abstract class Network extends RequestResource {
     //Subnet for autoIP
     protected IP4Subnet ipSubnet;
 	
-    public Network(Slice slice, String name) {
-    	super(slice);
-        this.name = name;
+    public Network(SliceGraph sliceGraph, String name) {
+    	super(sliceGraph);
+        //this.name = name;
         this.ipSubnet = null;
     }
 
@@ -79,12 +79,12 @@ public abstract class Network extends RequestResource {
 	
     //set IP subnet for autoIP
     public void setIPSubnet(String ip, int mask){
-    	ipSubnet = slice.setSubnet(ip,mask);
+    	ipSubnet = sliceGraph.setSubnet(ip,mask);
     }
     
     //allocate new subnet for autoIP
     public void allocateIPSubnet(int count){
-    	ipSubnet = slice.allocateSubnet(count);
+    	ipSubnet = sliceGraph.allocateSubnet(count);
     }  
 
     public void clearAvailableIPs(){
@@ -122,7 +122,7 @@ public abstract class Network extends RequestResource {
     	
     	
     	if (ipSubnet == null){
-    		ipSubnet = slice.allocateSubnet(Network.DEFAULT_SIZE);
+    		ipSubnet = sliceGraph.allocateSubnet(Network.DEFAULT_SIZE);
     	}
     	
     	for (Interface i : this.getInterfaces()){
@@ -148,7 +148,7 @@ public abstract class Network extends RequestResource {
     
     @Override
     public String toString() {
-        return name;
+        return getName();
     }
 
 }

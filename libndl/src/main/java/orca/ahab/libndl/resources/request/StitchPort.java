@@ -31,8 +31,8 @@ public class StitchPort extends Node {
 	protected String label;
 	protected String port;
 	
-	public StitchPort(Slice slice, String name) {
-		super(slice, name);
+	public StitchPort(SliceGraph sliceGraph, String name) {
+		super(sliceGraph, name);
 	}
 
 	public void setLabel(String l) {
@@ -88,7 +88,7 @@ public class StitchPort extends Node {
 			System.out.println("Error: Cannot stitch OrcaStitchPort to " + r.getClass().getName());
 			return null;
 		}
-		slice.addStitch(this,r,stitch);
+		sliceGraph.addStitch(this,r,stitch);
 		
 		return stitch;
 	}

@@ -1,4 +1,4 @@
-package orca.ahab.libndl.ndl;
+ package orca.ahab.libndl.ndl;
 
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
@@ -19,7 +19,8 @@ public class ModifyGenerator extends NDLGenerator{
 	private Individual modRes = null;
 	private String outputFormat = null;
 	
-	public ModifyGenerator() {
+	public ModifyGenerator(NdlGenerator ngen) {
+		this.ngen = ngen;
 	}
 	
 	public void setOutputFormat(String of) {
@@ -104,6 +105,7 @@ public class ModifyGenerator extends NDLGenerator{
 	 * @return
 	 */
 	public String getModifyRequest() {
+		LIBNDL.logger().debug("ModifyGenerator::getModifyRequest");
 		return getFormattedOutput(outputFormat);
 	}
 	

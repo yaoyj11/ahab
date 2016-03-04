@@ -32,13 +32,13 @@ public abstract class Node extends RequestResource {
 
 	
 	public String toString() {
-		return name;
+		return getName();
 	}
 		
 //basic constructor
-	public Node(Slice slice, String name) {
-		super(slice);
-		this.name = name; //name should be unique... i think
+	public Node(SliceGraph sliceGraph, String name) {
+		super(sliceGraph);
+		//this.name = name; //name should be unique... i think
 		this.domain = null;
 		this.dependencies = null;
 		this.state = null;

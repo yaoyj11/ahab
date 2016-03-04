@@ -1,12 +1,13 @@
 package orca.ahab.libndl.ndl;
 
-import java.io.File;
 
 import orca.ahab.libndl.Slice;
+import orca.ahab.libndl.SliceGraph;
+import orca.ndl.NdlCommons;
+import orca.ndl.NdlRequestParser;
 
 public abstract class NDLLoader {
-	protected Slice slice;
+	protected SliceGraph sliceGraph;
 	
-	abstract void load(String rdf);
-	abstract boolean loadFile(File f);
+	abstract NdlCommons load(String rdf);
 }

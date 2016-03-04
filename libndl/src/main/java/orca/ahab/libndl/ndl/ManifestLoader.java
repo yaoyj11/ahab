@@ -34,16 +34,21 @@ import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.Slice;
 import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.resources.manifest.LinkConnection;
+import orca.ahab.libndl.resources.manifest.ManifestResource;
 import orca.ahab.libndl.resources.request.ComputeNode;
+import orca.ahab.libndl.resources.request.Interface;
 import orca.ahab.libndl.resources.request.RequestResource;
 import orca.ndl.INdlManifestModelListener;
 import orca.ndl.NdlCommons;
 import orca.ndl.NdlManifestParser;
+import orca.ndl.NdlRequestParser;
 
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Resource;
 //import com.hyperrealm.kiwi.ui.dialog.ExceptionDialog;
+
+import edu.uci.ics.jung.graph.SparseMultigraph;
 
 /**
  * Class for loading manifests
@@ -51,65 +56,24 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  */
 public class ManifestLoader extends NDLLoader implements INdlManifestModelListener{
+	private SliceGraph sliceGraph;
+	private ExistingSliceModel ndlModel;
 	
-	//private Slice slice;
-	private SliceGraph manifest;
-
-	//for testing if a manifest exists
-	private boolean isManifest;
-	
-	public ManifestLoader(Slice slice, SliceGraph sliceGraph){
+	public ManifestLoader(SliceGraph sliceGraph, ExistingSliceModel ndlModel){
 		LIBNDL.logger().debug("new ManifestLoader");
-		this.manifest = sliceGraph;
-		isManifest = false;
-		this.slice = slice;
-	}
-	
-	/* load method overriding abstract method */
-	public void load(String rdf){
-		loadString(rdf);
-	}
-	
-	public boolean loadFile(File f) {
-		LIBNDL.logger().debug("About to load graph");
-		BufferedReader bin = null; 
-		StringBuilder sb = null;
-		try {
-			FileInputStream is = new FileInputStream(f);
-			bin = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-			
-			sb = new StringBuilder();
-			String line = null;// parse as request
-			
-			while((line = bin.readLine()) != null) {
-				sb.append(line);
-				// re-add line separator
-				sb.append(System.getProperty("line.separator"));
-			}
-			
-			bin.close();
-
-		} catch (Exception e) {
-			LIBNDL.logger().debug("Exception loading graph: " + e);
-			return false;
-		} 
-		
-		return loadString(sb.toString());
+		this.sliceGraph = sliceGraph;
+		this.ndlModel = ndlModel;
 	}
 	
 
 	
-	public boolean loadRDF(String rdf){
-		return loadString(rdf);
-	}
-	
-	public boolean loadString(String s) {
-		
+	public NdlManifestParser load(String rdf) {
+		NdlManifestParser nmp = null;
 		try {
 			LIBNDL.logger().debug("About to parse manifest");
 			
 			// parse as manifest
-			NdlManifestParser nmp = new NdlManifestParser(s, this);
+			nmp = new NdlManifestParser(rdf, this);
 			
 			nmp.processManifest();	
 			//nmp.freeModel();			
@@ -117,11 +81,8 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 			
 		} catch (Exception e) {
 			LIBNDL.logger().debug("Excpetion: parsing request part of manifest" + e);
-			return false;
 		} 
-		
-		//return false if this is not a manifest
-		return isManifest;
+		return nmp;
 	}
 
 
@@ -139,7 +100,8 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 	public void ndlNetworkConnection(Resource l, OntModel om,
 			long bandwidth, long latency, List<Resource> interfaces) {
 		
-		manifest.addNetworkConnection(l.toString());
+		//should be sliceGraph.add... and/or manifestGraph.add...
+		//manifest.addNetworkConnection(l.toString());
 
 		String printStr = "ndlManifest_NetworkConnection: \n\tName: " + l.toString() + " (" + l.getLocalName() + ")";
 		printStr += "\n\tInterfaces:";
@@ -179,7 +141,7 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 	}
 	public void ndlReservationEnd(Literal e, OntModel m, Date end) {
 		// TODO Auto-generated method stub
-		String printStr = "ndlManifest_ReservationEnd: \n\tName: " + e;
+		String printStr = "ndlManifest_ReservationEnd: \n\tNameg.: " + e;
 		LIBNDL.logger().debug(printStr);
 	}// parse as request
 	
@@ -205,11 +167,7 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 		}
 		LIBNDL.logger().debug(printStr);
 	}
-	public void ndlManifest(Resource i, OntModel m) {
-		//we found a manifest
-		isManifest = true;
-		
-		// TODO Auto-generated method stub
+	public void ndlManifest(Resource i, OntModel m) {		
 		String printStr = "ndlManifest_Manifest: \n\tName: " + i;
 		printStr += ", sliceState = " + NdlCommons.getGeniSliceStateName(i);
 		LIBNDL.logger().debug(printStr);
@@ -218,19 +176,21 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 	public void ndlLinkConnection(Resource l, OntModel m,
 			List<Resource> interfaces, Resource parent) {// parse as request
 		
-		String printStr = "ndlManifest_LinkConnection: \n\tName: " + l +  "\n\tparent: " + parent; 
+		String printStr = "ndlManifest_LinkConnection: \n\tNameg.: " + l +  "\n\tparent: " + parent; 
 		printStr += "\n\tInterfaces:";
 		for (Resource r : interfaces){
 			printStr += "\n\t\t " + r;
 		}
 		LIBNDL.logger().debug(printStr);
 		
-		LinkConnection lc = manifest.addLinkConnection(l.toString());
-		lc.setModelResource(l);		
+		//should be sliceGraph and/or manifestGraph
+		//LinkConnection lc = manifest.addLinkConnection(l.toString());
+		//lc.setModelResource(l);		
 	}	
 	public void ndlCrossConnect(Resource c, OntModel m, long bw,
 			String label, List<Resource> interfaces, Resource parent) {
-		manifest.addCrossConnect(c.toString());
+		//should be sliceGraph and/or manifestGraph
+		//manifest.addCrossConnect(c.toString());
 		
 		String printStr = "ndlManifest_CrossConnect: \n\tName: " + c +  "\n\tparent: " + parent; 
 		printStr += "\n\tInterfaces:";
@@ -267,13 +227,15 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 	
 		
 		//Only handle compute nodes for now.
-		//if (!((ceClass.equals(NdlCommons.computeElementClass) || ceClass.equals(NdlCommons.serverCloudClass)))){
-		//	LIBNDL.logger().debug("Not a compute element, returning");
-		//	
-		//	return;
-		//}
-		
-		//orca.ndllib.resources.manifest.Node newNode = manifest.addNode(ce.toString());
+		if (!((ceClass.equals(NdlCommons.computeElementClass) || ceClass.equals(NdlCommons.serverCloudClass)))){
+			LIBNDL.logger().debug("Not a compute element, returning");
+			
+			return;
+		}
+		ComputeNode newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
+		ndlModel.mapSliceResource2ModelResource(newNode, ce);
+	
+		LIBNDL.logger().debug("modelNode: " + ndlModel.getModelResource(newNode).getLocalName());
 		
 		LIBNDL.logger().debug("\n\n\n ************************************** FOUND COMPUTE NODE *************************************** \n\n\n");
 		String groupUrl = NdlCommons.getRequestGroupURLProperty(ce);
@@ -282,23 +244,24 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 		String nodeUrl = ce.getURI();
 		LIBNDL.logger().debug("ce.getURI(): " + nodeUrl);
 
-		if (ceClass.equals(NdlCommons.computeElementClass)){	
-			LIBNDL.logger().debug("Adding computeElement: slice = " + slice);
-			orca.ahab.libndl.resources.manifest.Node newNode = manifest.addNode(ce.toString());
-			LIBNDL.logger().debug("newNode: " + newNode);
-			newNode.setModelResource(ce);
-			
-			
-			RequestResource r = slice.getResouceByURI(groupUrl);
-			LIBNDL.logger().debug("r: " + r);
-			if(r instanceof ComputeNode){
-				ComputeNode computeNode = (ComputeNode)r;
-				LIBNDL.logger().debug("Adding computeElement to group: " + computeNode + ", newNode: " + newNode);
-				computeNode.addManifestNode(newNode);
-				newNode.setComputeNode(computeNode);
-			}
-			
-		} 
+//		if (ceClass.equals(NdlCommons.computeElementClass)){	
+//			LIBNDL.logger().debug("Adding computeElement: "); 
+//			//should be sliceGraph and/or manifestGraph
+//			orca.ahab.libndl.resources.manifest.Node newNode = sliceGraph.addNode(ce.toString());
+//			LIBNDL.logger().debug("newNode: " + newNode);
+//			newNode.setModelResource(ce);
+//			
+//			
+//			RequestResource r = sliceGraph.getResouceByURI(groupUrl);
+//			LIBNDL.logger().debug("r: " + r);
+//			if(r instanceof ComputeNode){
+//				ComputeNode computeNode = (ComputeNode)r;
+//				LIBNDL.logger().debug("Adding computeElement to group: " + computeNode + ", newNode: " + newNode);
+//				computeNode.addManifestNode(newNode);
+//				newNode.setComputeNode(computeNode);
+//			}
+//			
+//		} 
 		
 	}
 

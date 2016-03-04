@@ -273,7 +273,7 @@ public class RequestGenerator extends NDLGenerator{
 				}
 			 */
 
-
+			
 
 
 			Individual ni;
@@ -361,7 +361,7 @@ public class RequestGenerator extends NDLGenerator{
 					Individual ni = ngen.getRequestIndividual(resource.getName());
 					for(OrcaResource dep: resource.getDependencies()) {
 						Individual depI = ngen.getRequestIndividual(dep.getName());
-						if (depI != null) {
+		btaessawy@gmail.com				if (depI != null) {
 							ngen.addDependOnToIndividual(depI, ni);
 						}
 					}

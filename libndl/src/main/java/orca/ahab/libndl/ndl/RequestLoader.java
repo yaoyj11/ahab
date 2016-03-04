@@ -34,6 +34,7 @@ import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
 import orca.ahab.libndl.resources.request.ComputeNode;
+import orca.ahab.libndl.resources.request.Interface;
 import orca.ahab.libndl.resources.request.InterfaceNode2Net;
 import orca.ahab.libndl.resources.request.Network;
 import orca.ahab.libndl.resources.request.Node;
@@ -51,85 +52,40 @@ import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+import edu.uci.ics.jung.graph.SparseMultigraph;
+
 public class RequestLoader extends NDLLoader  implements INdlRequestModelListener {
 	
-	//private Slice slice;
-	private SliceGraph request;
+	private NDLModel ndlModel;
 	private RequestReservationTerm term = new RequestReservationTerm();
 
-	public RequestLoader(Slice slice, SliceGraph request){
-		this.request = request;
-		this.slice =slice;
+	public RequestLoader(SliceGraph sliceGraph, NDLModel ndlModel){
+		this.sliceGraph = sliceGraph;
+		this.ndlModel = ndlModel;
 	}
     
-	
-	@Override
-	public boolean loadFile(File f) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	/**
-	 * Load from file
-	 * @param f
-	 * @return
-	 */
-	public String loadGraph(File f) {
-		BufferedReader bin = null; 
-		String rawRDF = null;
-		try {
-			FileInputStream is = new FileInputStream(f);
-			bin = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-			
-			StringBuilder sb = new StringBuilder();
-		
-			String line = null;
-			while((line = bin.readLine()) != null) {
-				sb.append(line);
-				// re-add line separator
-				sb.append(System.getProperty("line.separator"));
-			}
-			
-			bin.close();
-			
-			rawRDF = sb.toString();
-			
-			NdlRequestParser nrp = new NdlRequestParser(sb.toString(), this);
-			LIBNDL.logger().debug("Parsing request");
-			nrp.doLessStrictChecking(); //TODO: Should be removed...
-			nrp.processRequest();
-			
-			nrp.freeModel();
-			
-		} catch (Exception e) {
-			LIBNDL.logger().debug("error loading graph");
-			LIBNDL.logger().error(e);
-			e.printStackTrace();
-			return null;
-		} 
-		
-		return rawRDF;
-	}
-	
+
+
 	/**
 	 * Load from string
 	 * @param f
 	 * @return
 	 */
-	public void load(String rdf) {
+	public NdlRequestParser load(String rdf) {
+		NdlRequestParser nrp;
 		try {
-			NdlRequestParser nrp = new NdlRequestParser(rdf, this);
+			nrp = new NdlRequestParser(rdf, this);
 			nrp.doLessStrictChecking(); //TODO: Should be removed...
 			nrp.processRequest();
-			nrp.freeModel();
+			//nrp.freeModel();
 			
 		} catch (Exception e) {
 			LIBNDL.logger().error(e);
 			LIBNDL.logger().debug("error loading graph");
-			return;
+			return null;
 		} 
 		
-		return;
+		return nrp;
 	}
 
 	
@@ -142,13 +98,13 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		String u = i.getURI();
 		String guid = StringUtils.removeEnd(StringUtils.removeStart(u, NdlCommons.ORCA_NS), "#");
 		
-		this.request.setNsGuid(guid);
+		this.sliceGraph.setNsGuid(guid);
 		
 		//this.slice.setState(NdlCommons.getGeniSliceStateName(i));
 		
 		/*if (i != null) {
 			reservationDomain = RequestSaver.reverseLookupDomain(NdlCommons.getDomain(i));
-			this.request.setOFVersion(NdlCommons.getOpenFlowVersion(i));
+			this.sliceGraph.setOFVersion(NdlCommons.getOpenFlowVersion(i));
 		}*/
 	}
 
@@ -178,9 +134,11 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 			if(!ce.hasProperty(NdlCommons.manifestHasParent)){
 				LIBNDL.logger().debug("Node: " + ce.getLocalName() + " : found computeElementClass, parent = " + ce.hasProperty(NdlCommons.manifestHasParent));
 			
-				newNode = this.request.addComputeNode(ce.getLocalName());
+				newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
 				newComputeNode = (ComputeNode)newNode;
-				newNode.setModelResource(ce);
+				//LIBNDL.logger().debug("ndlModel: " + ndlModel);
+				//ndlModel.mapSliceResource2ModelResource(newComputeNode, ce);
+				//newNode.setNDLModel(ndlModel);
 			} else {
 				LIBNDL.logger().debug("Node: " + ce.getLocalName() + " : found computeElementClass without parent, skipping!");
 				return;
@@ -188,14 +146,16 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		} else { 
 			if (ceClass.equals(NdlCommons.serverCloudClass)) {
 				LIBNDL.logger().debug("Node: " + ce.getLocalName() + " : found serverCloudClass, parent = " + ce.hasProperty(NdlCommons.manifestHasParent));
-				ComputeNode newNodeGroup = this.request.addComputeNode(ce.getLocalName());
+				ComputeNode newNodeGroup = this.sliceGraph.buildComputeNode(ce.getLocalName());
+				//newNodeGroup.setNDLModel(ndlModel);
+				//ndlModel.mapSliceResource2ModelResource(newNodeGroup, ce);
 				newComputeNode = newNodeGroup;
 				//int ceCount = NdlCommons.getNumCE(ce);
 				//if (ceCount > 0) newNodeGroup.setNodeCount(ceCount);
 				newNodeGroup.initializeNodeCount(0);
 				//newNodeGroup.setSplittable(NdlCommons.isSplittable(ce));
 				newNode = newNodeGroup;
-				newNode.setModelResource(ce);
+				
 				
 				String groupUrl = NdlCommons.getRequestGroupURLProperty(ce);
 				LIBNDL.logger().debug("NdlCommons.getRequestGroupURLProperty: " + groupUrl);
@@ -208,15 +168,15 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 			} else if (NdlCommons.isStitchingNode(ce)) {
 				// stitching node
 				// For some reason the properties of the stitchport are stored on the interface (not here)
-				StitchPort sp = this.request.addStitchPort(ce.getLocalName());
+				StitchPort sp = this.sliceGraph.buildStitchPort(ce.getLocalName());
 				newNode = sp;
 			} else if (NdlCommons.isNetworkStorage(ce)) {
 				// storage node
-				StorageNode snode = this.request.addStorageNode(ce.getLocalName());
+				StorageNode snode = this.sliceGraph.buildStorageNode(ce.getLocalName());
 				snode.setCapacity(NdlCommons.getResourceStorageCapacity(ce));
 				newNode = snode;
 			} else // default just a node
-				newNode = this.request.addComputeNode(ce.getLocalName());
+				newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
 		}
 
 		LIBNDL.logger().debug("about to load domain");
@@ -245,13 +205,13 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 				try {
 					String imageURL = NdlCommons.getIndividualsImageURL(ce);
 					String imageHash = NdlCommons.getIndividualsImageHash(ce);
-					//String imName = this.request.addImage(new OrcaImage(di.getLocalName(), 
+					//String imName = this.sliceGraph.buildImage(new OrcaImage(di.getLocalName(), 
 					//		new URL(imageURL), imageHash), null);
 					//String imName = imageURL + imageHash;  //FIX ME: not right
 					String imName = newComputeNode.getName() + "-image"; //FIX ME: not right:  why do we even have an image name???
 					newComputeNode.setImage(imageURL,imageHash,imName);
 				} catch (Exception e) {
-					// FIXME: ?
+					// FIXME:SliceGraph ?
 					LIBNDL.logger().debug("about to load domain: hit an exception");
 					;
 				}
@@ -277,7 +237,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		if (l == null)
 			return;
 		
-		Network ol = this.request.addLink(l.getLocalName());
+		Network ol = this.sliceGraph.buildLink(l.getLocalName());
 		ol.setBandwidth(bandwidth);
 		ol.setLatency(latency);
 		ol.setLabel(NdlCommons.getLayerLabelLiteral(l));
@@ -293,13 +253,13 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		
 		RequestResource onode = null;
 		if(node != null){
-			onode = this.request.getResourceByName(node.getLocalName());
+			onode = this.sliceGraph.getResourceByName(node.getLocalName());
 		} else {
 			LIBNDL.logger().warn("ndlInterface with null node: " + intf);
 		}
 		RequestResource olink = null;
 		if(conn != null){
-			olink = this.request.getResourceByName(conn.getLocalName());
+			olink = this.sliceGraph.getResourceByName(conn.getLocalName());
 		} else{
 			LIBNDL.logger().warn("ndlInterface with null connection: " + intf);
 		}
@@ -345,23 +305,23 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 	
 	public void ndlSlice(Resource sl, OntModel m) {
 		
-		LIBNDL.logger().debug("Slice: " + sl + ", sliceState(request) = " + NdlCommons.getGeniSliceStateName(sl));
+		LIBNDL.logger().debug("Slice: " + sl + ", sliceState(sliceGraph) = " + NdlCommons.getGeniSliceStateName(sl));
 		// check that this is an OpenFlow slice and get its details
 		if (sl.hasProperty(NdlCommons.RDF_TYPE, NdlCommons.ofSliceClass)) {
 			Resource ofCtrl = NdlCommons.getOfCtrl(sl);
 			if (ofCtrl == null)
 				return;
-			this.request.setOfCtrlUrl(NdlCommons.getURL(ofCtrl));
-			this.request.setOfUserEmail(NdlCommons.getEmail(sl));
-			this.request.setOfSlicePass(NdlCommons.getSlicePassword(sl));
-			if ((this.request.getOfUserEmail() == null) ||
-					(this.request.getOfSlicePass() == null) ||
-					(this.request.getOfCtrlUrl() == null)) {
+			this.sliceGraph.setOfCtrlUrl(NdlCommons.getURL(ofCtrl));
+			this.sliceGraph.setOfUserEmail(NdlCommons.getEmail(sl));
+			this.sliceGraph.setOfSlicePass(NdlCommons.getSlicePassword(sl));
+			if ((this.sliceGraph.getOfUserEmail() == null) ||
+					(this.sliceGraph.getOfSlicePass() == null) ||
+					(this.sliceGraph.getOfCtrlUrl() == null)) {
 					// disable OF if invalid parameters
-					//this.request.setNoOF();
-					this.request.setOfCtrlUrl(null);
-					this.request.setOfSlicePass(null);
-					this.request.setOfUserEmail(null);
+					//this.sliceGraph.setNoOF();
+					this.sliceGraph.setOfCtrlUrl(null);
+					this.sliceGraph.setOfSlicePass(null);
+					this.sliceGraph.setOfUserEmail(null);
 			}
 		}	
 	}
@@ -373,8 +333,8 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 	public void ndlParseComplete() {
 		LIBNDL.logger().debug("Done parsing.");
 		// set term etc
-		this.request.setTerm(term);
-		//this.request.setDomainInReservation(reservationDomain);
+		this.sliceGraph.setTerm(term);
+		//this.sliceGraph.setDomainInReservation(reservationDomain);
 	}
 
 	public void ndlNodeDependencies(Resource ni, OntModel m, Set<Resource> dependencies) {
@@ -386,7 +346,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		for(Resource r: dependencies) {
 			OrcaNode depNode = nodes.get(r.getURI());
 			if (depNode != null)
-				mainNode.addDependency(depNode);
+				mainNode.buildDependency(depNode);
 		}*/
 	}
 
@@ -398,11 +358,13 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		
 		LIBNDL.logger().debug("BroadcastConnection: " + bl);
 		
-		Network ol = this.request.addLink(bl.getLocalName());
+		Network ol = this.sliceGraph.buildLink(bl.getLocalName());
 		ol.setBandwidth(bandwidth);
 		//ol.setLatency(latency);
 		ol.setLabel(NdlCommons.getLayerLabelLiteral(bl));	
 	}
 
 
+
+	
 }
