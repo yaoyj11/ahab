@@ -22,7 +22,6 @@
 */
 package orca.ahab.libndl.resources.manifest;
 
-import orca.ahab.libndl.Manifest;
 import orca.ahab.libndl.Slice;
 
 /*
@@ -54,8 +53,8 @@ public class NetworkConnection extends LinkConnection {
 	protected long bandwidth;
 	
 	
-	public NetworkConnection(Slice slice, Manifest manifest, String name) {
-		super(slice, manifest,name);
+	public NetworkConnection(Slice slice, String name) {
+		super(slice,name);
 	}
 
 	public void setLabel(String l) {

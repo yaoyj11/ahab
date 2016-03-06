@@ -22,7 +22,7 @@
 */
 package orca.ahab.libndl.resources.request;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
 
 /*
@@ -54,8 +54,8 @@ public class BroadcastNetwork extends Network {
 	protected long bandwidth;
 	
 	
-	public BroadcastNetwork(Slice slice, Request request, String name) {
-		super(slice, request,name);
+	public BroadcastNetwork(SliceGraph sliceGraph, String name) {
+		super(sliceGraph, name);
 	}
 
 	public void setLabel(String l) {

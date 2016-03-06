@@ -43,7 +43,7 @@
 				<configuration>
 					<programs>
 						<program>
-							<mainClass>orca.ndllib.TestDriver</mainClass>
+							<mainClass>orca.ahab.libndl.TestDriver</mainClass>
 							<name>libndlTestDriver</name>
 						</program>
 
@@ -126,5 +126,70 @@
 			<artifactId>gson</artifactId>
 			<scope>compile</scope>
 		</dependency>
+		
+		
+		
+		
+		<dependency>
+			<groupId>org.apache.xmlrpc</groupId>
+			<artifactId>xmlrpc-client</artifactId>
+			<version>3.1.3</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.xmlrpc</groupId>
+			<artifactId>xmlrpc-common</artifactId>
+			<version>3.1.3</version>
+			<type>jar</type>
+			<scope>compile</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>xml-apis</artifactId>
+					<groupId>xml-apis</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.50</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-ext-jdk15on</artifactId>
+			<version>1.50</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>1.50</version>
+		</dependency>
+		
+		 <dependency>
+                        <groupId>orca.core</groupId>
+                        <artifactId>util</artifactId>
+                        <version>5.0-SNAPSHOT</version>
+                        <exclusions>
+                                <exclusion>
+                                        <artifactId>bcprov-jdk16</artifactId>
+                                        <groupId>bouncycastle.bcprov-jdk16</groupId>
+                                </exclusion>
+                        </exclusions>
+                </dependency>
+ <dependency>
+                        <groupId>orca.core</groupId>
+                        <artifactId>util</artifactId>
+                        <version>5.0-SNAPSHOT</version>
+                        <exclusions>
+                                <exclusion>
+                                        <artifactId>bcprov-jdk16</artifactId>
+                                        <groupId>bouncycastle.bcprov-jdk16</groupId>
+                                </exclusion>
+                        </exclusions>
+                </dependency>
+
+		
+		
 	</dependencies>
 </project>

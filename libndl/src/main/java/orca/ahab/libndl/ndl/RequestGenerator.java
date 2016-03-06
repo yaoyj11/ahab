@@ -34,7 +34,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.LIBNDL;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
@@ -55,10 +56,10 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import edu.uci.ics.jung.graph.util.Pair;
 
-public class RequestSaver {
-	private Request request;
+public class RequestGenerator extends NDLGenerator{
+	private SliceGraph request;
 	
-	private static RequestSaver instance;
+	private static RequestGenerator instance;
 	private NdlGenerator ngen = null;
 	private Individual reservation = null;
 	private String outputFormat = null;
@@ -157,7 +158,7 @@ public class RequestSaver {
 	}
 
 	
-	public RequestSaver(Request r) {
+	public RequestGenerator(SliceGraph r) {
 		request = r;
 	}
 	
@@ -194,13 +195,13 @@ public class RequestSaver {
 			out.close();
 			return true;
 		} catch(FileNotFoundException e) {
-			request.logger().debug("saveGraph: FileNotFoundException");
+			LIBNDL.logger().debug("saveGraph: FileNotFoundException");
 			;
 		} catch(UnsupportedEncodingException ex) {
-			request.logger().debug("saveGraph: UnsupportedEncodingException");
+			LIBNDL.logger().debug("saveGraph: UnsupportedEncodingException");
 			;
 		} catch(IOException ey) {
-			request.logger().debug("saveGraph: IOException");
+			LIBNDL.logger().debug("saveGraph: IOException");
 			;
 		} 
 		return false;
@@ -235,12 +236,12 @@ public class RequestSaver {
 	//public String convertGraphToNdl(SparseMultigraph<OrcaResource, OrcaStitch> g, String nsGuid) {
 	public String convertGraphToNdl() {
 		String nsGuid = null;  //TODO: if set to null ndlcommons will pick one for me
-		this.request.logger().debug("convertGraphToNdl");
+		LIBNDL.logger().debug("convertGraphToNdl");
 		String res = null;
 
 
 		try {
-			ngen = new NdlGenerator(nsGuid, this.request.logger());
+			ngen = new NdlGenerator(nsGuid, LIBNDL.logger());
 
 			reservation = ngen.declareReservation();
 			Individual term = ngen.declareTerm();
@@ -272,7 +273,7 @@ public class RequestSaver {
 				}
 			 */
 
-
+			
 
 
 			Individual ni;
@@ -339,11 +340,11 @@ public class RequestSaver {
 
 				}
 
-				request.logger().debug("About to add domain " + cn.getDomain());
+				LIBNDL.logger().debug("About to add domain " + cn.getDomain());
 				// if no global domain domain is set, declare a domain and add inDomain property
 				//if (!globalDomain && (cn.getDomain() != null)) {
 				if (cn.getDomain() != null) {
-					request.logger().debug("adding domain " + cn.getDomain());
+					LIBNDL.logger().debug("adding domain " + cn.getDomain());
 					Individual domI = ngen.declareDomain(domainMap.get(cn.getDomain()));
 					ngen.addNodeToDomain(domI, ni);
 				}
@@ -360,7 +361,7 @@ public class RequestSaver {
 					Individual ni = ngen.getRequestIndividual(resource.getName());
 					for(OrcaResource dep: resource.getDependencies()) {
 						Individual depI = ngen.getRequestIndividual(dep.getName());
-						if (depI != null) {
+		btaessawy@gmail.com				if (depI != null) {
 							ngen.addDependOnToIndividual(depI, ni);
 						}
 					}
@@ -376,7 +377,7 @@ public class RequestSaver {
 			*  
 			*/ 
 			for (BroadcastNetwork e: request.getBroadcastLinks()) {
-				request.logger().debug("saving OrcaBroadcastLink");
+				LIBNDL.logger().debug("saving OrcaBroadcastLink");
 				//checkLinkSanity(e);
 				boolean hasStorage = false;
 				for(Interface i : e.getInterfaces()){
@@ -428,7 +429,7 @@ public class RequestSaver {
 					Individual ei = ngen.getRequestIndividual(stitch_n2l.getLink().getName());
 					processNodeAndLink(stitch_n2l, ei);
 				} else {
-					request.logger().error("Error: unkown stitch type, skipping: " + stitch);
+					LIBNDL.logger().error("Error: unkown stitch type, skipping: " + stitch);
 				}
 			}
 			res = getFormattedOutput(ngen, outputFormat);
@@ -756,6 +757,13 @@ public class RequestSaver {
 			return "255.255.255.0";
 		else
 			return netmaskConverter[nm - 1];
+	}
+
+
+	@Override
+	void generate(String rdf) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

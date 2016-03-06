@@ -1,6 +1,7 @@
-package orca.ahab.libndl.ndl;
+ package orca.ahab.libndl.ndl;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.LIBNDL;
+import orca.ahab.libndl.SliceGraph;
 import orca.ndl.NdlException;
 import orca.ndl.NdlGenerator;
 
@@ -12,13 +13,14 @@ import com.hp.hpl.jena.ontology.Individual;
  * @author ibaldin
  *
  */
-public class ModifySaver {
+public class ModifyGenerator extends NDLGenerator{
 	
 	private NdlGenerator ngen = null;
 	private Individual modRes = null;
 	private String outputFormat = null;
 	
-	public ModifySaver() {
+	public ModifyGenerator(NdlGenerator ngen) {
+		this.ngen = ngen;
 	}
 	
 	public void setOutputFormat(String of) {
@@ -29,16 +31,16 @@ public class ModifySaver {
 		if (ngen == null)
 			return null;
 		if (oFormat == null)
-			return getFormattedOutput(RequestSaver.defaultFormat);
-		if (oFormat.equals(RequestSaver.RDF_XML_FORMAT)) 
+			return getFormattedOutput(RequestGenerator.defaultFormat);
+		if (oFormat.equals(RequestGenerator.RDF_XML_FORMAT)) 
 			return ngen.toXMLString();
-		else if (oFormat.equals(RequestSaver.N3_FORMAT))
+		else if (oFormat.equals(RequestGenerator.N3_FORMAT))
 			return ngen.toN3String();
-		else if (oFormat.equals(RequestSaver.DOT_FORMAT)) {
+		else if (oFormat.equals(RequestGenerator.DOT_FORMAT)) {
 			return ngen.getGVOutput();
 		}
 		else
-			return getFormattedOutput(RequestSaver.defaultFormat);
+			return getFormattedOutput(RequestGenerator.defaultFormat);
 	}
 
 	/**
@@ -50,11 +52,11 @@ public class ModifySaver {
 	public void createModifyRequest(String nsGuid) {
 		// this should never run in parallel anyway
 			try {
-				ngen = new NdlGenerator(nsGuid, Request.logger(), true);
+				ngen = new NdlGenerator(nsGuid, LIBNDL.logger(), true);
 				String nm = (nsGuid == null ? "my-modify" : nsGuid + "/my-modify");
 				modRes = ngen.declareModifyReservation(nm);
 			} catch (Exception e) {
-				Request.logger().debug("Fail: createModifyRequest");
+				LIBNDL.logger().debug("Fail: createModifyRequest");
 				return;
 			} 
 	
@@ -69,10 +71,10 @@ public class ModifySaver {
 		if (ngen == null)
 			createModifyRequest(null);
 		try {
-			Request.logger().debug("ngen: " + ngen + ", modRes: " + modRes +", groupUrl: " + groupUrl + ", count: " + count);
+			LIBNDL.logger().debug("ngen: " + ngen + ", modRes: " + modRes +", groupUrl: " + groupUrl + ", count: " + count);
 			ngen.declareModifyElementNGIncreaseBy(modRes, groupUrl, count);
 		} catch (NdlException e) {
-			Request.logger().debug("addNodesToGroup FAIL: ngen: " + ngen + ", modRes: " + modRes +", groupUrl: " + groupUrl + ", count: " + count);
+			LIBNDL.logger().debug("addNodesToGroup FAIL: ngen: " + ngen + ", modRes: " + modRes +", groupUrl: " + groupUrl + ", count: " + count);
 
 			return;
 		}
@@ -84,7 +86,7 @@ public class ModifySaver {
 	 * @param nodeUrl
 	 */
 	public void removeNodeFromGroup(String groupUrl, String nodeUrl) {
-		Request.logger().debug("removeNodeFromGroup: ngen: " + ngen + ", modRes: " + modRes +", groupUrl: " + groupUrl + ", nodeUrl: " + nodeUrl);
+		LIBNDL.logger().debug("removeNodeFromGroup: ngen: " + ngen + ", modRes: " + modRes +", groupUrl: " + groupUrl + ", nodeUrl: " + nodeUrl);
 		if (ngen == null)
 			createModifyRequest(null);
 		try {
@@ -103,6 +105,7 @@ public class ModifySaver {
 	 * @return
 	 */
 	public String getModifyRequest() {
+		LIBNDL.logger().debug("ModifyGenerator::getModifyRequest");
 		return getFormattedOutput(outputFormat);
 	}
 	
@@ -114,6 +117,12 @@ public class ModifySaver {
 			ngen.done();
 			ngen = null;
 		}
+	}
+
+	@Override
+	void generate(String rdf) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

@@ -168,7 +168,6 @@
 	</dependencyManagement>
 
 	<modules>
-		<module>libahab</module>
 		<module>libndl</module>
 		<module>libtransport</module>
 	</modules>

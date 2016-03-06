@@ -4,7 +4,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import orca.ahab.libndl.Request;
+import orca.ahab.libndl.SliceGraph;
+import orca.ahab.libndl.ndl.NDLModel;
 import orca.ahab.libndl.Slice;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -17,35 +18,28 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  */
 public abstract class RequestResource{
-	protected Request request;
-	protected Slice slice;
+	protected SliceGraph sliceGraph;
 
 	protected Set<RequestResource> dependencies = new HashSet<RequestResource>(); 
 	//protected Set<Interface> interfaces = new HashSet<Interface>(); 
 	//protected Set<ManifestResource> instantiation = new HashSet<ManifestResource>();
 	
-	//Jena model references
-	protected Resource modelResource;
 	
-	public Resource getModelResource() {
-		return modelResource;
+	private NDLModel getNDLModel() {
+		return sliceGraph.getNDLModel();
 	}
 
-	public void setModelResource(Resource modelResource) {
-		this.modelResource = modelResource;
-	}
 
 	// reservation state - should probably be an enumeration
 	protected String state = null;
 	
 	//User controlled properties:
-	protected String name;
+	//protected String name;
 	protected String domain; 
 	
 	
-	public RequestResource(Slice slice, Request request){
-		this.request = request; 
-		this.slice = slice;
+	public RequestResource(SliceGraph sliceGraph){
+		this.sliceGraph = sliceGraph;
 	}
 	
 	//abstract methods 
@@ -53,20 +47,21 @@ public abstract class RequestResource{
 	public abstract Interface stitch(RequestResource r);
 
 	//non-abstract methods
-	public String getURI(){
-		if(getModelResource() != null){
-			return getModelResource().getURI();
-		} 
-		
-		return null;
-	}
+//	public String getURI(){
+//		if(getModelResource() != null){
+//			return getModelResource().getURI();
+//		} 
+//		
+//		return null;
+//	}
 	
 	public String getName(){ 
-		return name; 
+		return getNDLModel().getName(this); 
 	}
 
 	public void setName(String s) {
-		name = s;
+		getNDLModel().setName(this);
+		//name = s;
 	}
 
 	public String getState() {
@@ -86,7 +81,7 @@ public abstract class RequestResource{
 	}
 	
 	public Collection<Interface> getInterfaces() {
-		return request.getInterfaces(this);
+		return sliceGraph.getInterfaces(this);
 	}
 	
 	//public Set<ManifestResource> getInstantiation() {
@@ -103,7 +98,7 @@ public abstract class RequestResource{
 
 	
 	public void delete(){
-		request.deleteResource(this);
+		sliceGraph.deleteResource(this);
 	}
 	
 }
