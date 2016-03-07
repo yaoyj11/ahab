@@ -11,7 +11,7 @@ import java.util.Map;
 import javax.xml.bind.DatatypeConverter;
 
 import orca.ahab.libtransport.AccessToken;
-import orca.ahab.libtransport.ISliceTransportAPI;
+import orca.ahab.libtransport.ISliceTransportAPIv1;
 import orca.ahab.libtransport.SSHAccessToken;
 import orca.ahab.libtransport.SSLTransportContext;
 import orca.ahab.libtransport.SliceAccessContext;
@@ -24,7 +24,7 @@ import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
-public class OrcaSMXMLRPCProxy implements ISliceTransportAPI {
+public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 	private static final String RET_RET_FIELD = "ret";
 	private static final String MSG_RET_FIELD = "msg";
 	private static final String ERR_RET_FIELD = "err";

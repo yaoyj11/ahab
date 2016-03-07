@@ -9,7 +9,7 @@ import orca.ahab.libtransport.util.ContextTransportException;
 import orca.ahab.libtransport.util.TransportException;
 import orca.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
-public interface ISliceTransportAPI {
+public interface ISliceTransportAPIv1 {
 
 	/**
 	 * getVersion of the controller
