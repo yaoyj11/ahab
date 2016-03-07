@@ -10,17 +10,21 @@ import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
+import orca.ahab.libtransport.AccessToken;
+import orca.ahab.libtransport.ISliceTransportAPI;
 import orca.ahab.libtransport.SSHAccessToken;
 import orca.ahab.libtransport.SSLTransportContext;
 import orca.ahab.libtransport.SliceAccessContext;
+import orca.ahab.libtransport.TransportContext;
 import orca.ahab.libtransport.util.ContextTransportException;
+import orca.ahab.libtransport.util.TransportException;
 
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
-public class OrcaSMXMLRPCProxy {
+public class OrcaSMXMLRPCProxy implements ISliceTransportAPI {
 	private static final String RET_RET_FIELD = "ret";
 	private static final String MSG_RET_FIELD = "msg";
 	private static final String ERR_RET_FIELD = "err";
@@ -35,26 +39,16 @@ public class OrcaSMXMLRPCProxy {
 	private static final String GET_SLIVER_PROPERTIES = "orca.getSliverProperties";
 	private static final String GET_RESERVATION_STATES = "orca.getReservationStates";
 
-	OrcaSMXMLRPCProxy() {
+	public OrcaSMXMLRPCProxy() {
 		;
 	}
 
-	private static OrcaSMXMLRPCProxy instance = new OrcaSMXMLRPCProxy();
-
-	public static OrcaSMXMLRPCProxy getInstance() {
-		return instance;
+	public Map<String, Object> getVersion(TransportContext ctx, URL cUrl) throws TransportException, ContextTransportException {
+		return _getVersion((SSLTransportContext)ctx, cUrl);
 	}
-
-	/**
-	 * getVersion of the controller
-	 * @param ctx
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+	
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> getVersion(SSLTransportContext ctx, URL cUrl) throws XMLRPCTransportException, ContextTransportException {
+	private Map<String, Object> _getVersion(SSLTransportContext ctx, URL cUrl) throws XMLRPCTransportException, ContextTransportException {
 		Map<String, Object> versionMap = null;
 		ctx.establishIdentity(cUrl);
 
@@ -78,19 +72,14 @@ public class OrcaSMXMLRPCProxy {
 		return versionMap;
 	}
 
-	/**
-	 * Create slice 
-	 * @param ctx - SSL context
-	 * @param sliceId - slice id
-	 * @param resReq - NDL request
-	 * @param sliceCtx - slice access context with SSH keys
-	 * @param cUrl - controller URL
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
 	@SuppressWarnings("unchecked")
-	public String createSlice(SSLTransportContext ctx, String sliceId, String resReq, SliceAccessContext<SSHAccessToken> sliceCtx, URL cUrl) 
+	public String createSlice(TransportContext ctx, String sliceId, String resReq, SliceAccessContext<? extends AccessToken> sliceCtx, URL cUrl) 
+			throws TransportException, ContextTransportException {
+		return _createSlice((SSLTransportContext)ctx, sliceId, resReq, (SliceAccessContext<SSHAccessToken>)sliceCtx, cUrl);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private String _createSlice(SSLTransportContext ctx, String sliceId, String resReq, SliceAccessContext<SSHAccessToken> sliceCtx, URL cUrl) 
 			throws XMLRPCTransportException, ContextTransportException {
 		assert(sliceId != null);
 		assert(resReq != null);
@@ -128,19 +117,13 @@ public class OrcaSMXMLRPCProxy {
 		return result;
 	}
 
-
-	/**
-	 * Renew a slice
-	 * @param ctx
-	 * @param sliceId
-	 * @param newDate
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+	public Boolean renewSlice(TransportContext ctx, String sliceId, Date newDate, URL cUrl) 
+			throws TransportException, ContextTransportException {
+		return _renewSlice((SSLTransportContext)ctx, sliceId, newDate, cUrl);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public Boolean renewSlice(SSLTransportContext ctx, String sliceId, Date newDate, URL cUrl) 
+	private Boolean _renewSlice(SSLTransportContext ctx, String sliceId, Date newDate, URL cUrl) 
 			throws XMLRPCTransportException, ContextTransportException {
 		assert(sliceId != null);
 
@@ -179,17 +162,13 @@ public class OrcaSMXMLRPCProxy {
 		return result;
 	}
 
-	/**
-	 * Delete a slice
-	 * @param ctx
-	 * @param sliceId
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+	public boolean deleteSlice(TransportContext ctx, String sliceId, URL cUrl)  
+			throws TransportException, ContextTransportException {
+		return _deleteSlice((SSLTransportContext)ctx, sliceId, cUrl);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public boolean deleteSlice(SSLTransportContext ctx, String sliceId, URL cUrl)  
+	private boolean _deleteSlice(SSLTransportContext ctx, String sliceId, URL cUrl)  
 			throws XMLRPCTransportException, ContextTransportException {
 		boolean res = false;
 		ctx.establishIdentity(cUrl);
@@ -224,17 +203,13 @@ public class OrcaSMXMLRPCProxy {
 		return res;
 	}
 
-	/**
-	 * Get a status of the slice (manifest)
-	 * @param ctx
-	 * @param sliceId
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+
+	public String sliceStatus(TransportContext ctx, String sliceId, URL cUrl)  throws TransportException, ContextTransportException {
+		return _sliceStatus((SSLTransportContext)ctx, sliceId, cUrl);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public String sliceStatus(SSLTransportContext ctx, String sliceId, URL cUrl)  throws XMLRPCTransportException, ContextTransportException {
+	private String _sliceStatus(SSLTransportContext ctx, String sliceId, URL cUrl)  throws XMLRPCTransportException, ContextTransportException {
 		assert(sliceId != null);
 
 		String result = null;
@@ -271,18 +246,13 @@ public class OrcaSMXMLRPCProxy {
 		return result;
 	}
 
-	/**
-	 * Get states of reservations named in the list
-	 * @param ctx
-	 * @param sliceId
-	 * @param reservationIds
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+	public Map<String, Map<String, String>> getReservationStates(TransportContext ctx, String sliceId, List<String> reservationIds, URL cUrl)  
+			throws TransportException, ContextTransportException {
+		return _getReservationStates((SSLTransportContext)ctx, sliceId, reservationIds, cUrl);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public Map<String, Map<String, String>> getReservationStates(SSLTransportContext ctx, String sliceId, List<String> reservationIds, URL cUrl)  
+	private Map<String, Map<String, String>> _getReservationStates(SSLTransportContext ctx, String sliceId, List<String> reservationIds, URL cUrl)  
 			throws XMLRPCTransportException, ContextTransportException {
 		assert((sliceId != null) && (reservationIds != null));
 
@@ -316,18 +286,13 @@ public class OrcaSMXMLRPCProxy {
 		return (Map<String, Map<String, String>>) rr.get(RET_RET_FIELD);
 	}
 
-	/**
-	 * Get sliver properties for a named reservation within a named slice
-	 * @param ctx
-	 * @param sliceId
-	 * @param reservationId
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+	public List<Map<String, String>> getSliverProperties(TransportContext ctx, String sliceId, String reservationId, URL cUrl) 
+			throws TransportException, ContextTransportException {
+		return _getSliverProperties((SSLTransportContext)ctx, sliceId, reservationId, cUrl);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public List<Map<String, String>> getSliverProperties(SSLTransportContext ctx, String sliceId, String reservationId, URL cUrl) 
+	private List<Map<String, String>> _getSliverProperties(SSLTransportContext ctx, String sliceId, String reservationId, URL cUrl) 
 			throws XMLRPCTransportException, ContextTransportException {
 		assert((sliceId != null) && (reservationId != null));
 
@@ -368,16 +333,14 @@ public class OrcaSMXMLRPCProxy {
 		return t1;
 	}
 
-	/**
-	 * List all my slices
-	 * @param ctx
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+	public String[] listMySlices(TransportContext ctx, URL cUrl) 
+			throws TransportException, ContextTransportException {
+		return _listMySlices((SSLTransportContext)ctx, cUrl);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public String[] listMySlices(SSLTransportContext ctx, URL cUrl) throws XMLRPCTransportException, ContextTransportException {
+	private String[] _listMySlices(SSLTransportContext ctx, URL cUrl) 
+			throws XMLRPCTransportException, ContextTransportException {
 		String[] result = null;
 		ctx.establishIdentity(cUrl);
 
@@ -418,18 +381,13 @@ public class OrcaSMXMLRPCProxy {
 		return result;
 	}
 
-	/**
-	 * Modify a slice
-	 * @param ctx
-	 * @param sliceId
-	 * @param modReq
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+	public String modifySlice(TransportContext ctx, String sliceId, String modReq, URL cUrl) 
+			throws TransportException, ContextTransportException  {
+		return _modifySlice((SSLTransportContext)ctx, sliceId, modReq, cUrl);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public String modifySlice(SSLTransportContext ctx, String sliceId, String modReq, URL cUrl) 
+	private String _modifySlice(SSLTransportContext ctx, String sliceId, String modReq, URL cUrl) 
 			throws XMLRPCTransportException, ContextTransportException  {
 		assert(sliceId != null);
 		assert(modReq != null);
@@ -466,16 +424,13 @@ public class OrcaSMXMLRPCProxy {
 		return result;
 	}
 
-	/**
-	 * List resources - list known resources
-	 * @param ctx
-	 * @param cUrl
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
-	 */
+	public String listResources(TransportContext ctx, URL cUrl) 
+			throws TransportException, ContextTransportException {
+		return _listResources((SSLTransportContext)ctx, cUrl);
+	}
+
 	@SuppressWarnings("unchecked")
-	public String listResources(SSLTransportContext ctx, URL cUrl) 
+	private String _listResources(SSLTransportContext ctx, URL cUrl) 
 			throws XMLRPCTransportException, ContextTransportException {
 
 		String result = null;
