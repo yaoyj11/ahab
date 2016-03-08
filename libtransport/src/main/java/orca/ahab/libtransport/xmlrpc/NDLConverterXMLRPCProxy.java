@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import orca.ahab.libtransport.IConverterAPIv1;
+
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -15,14 +17,14 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
  * @author ibaldin
  *
  */
-public class NDLConverter {
-    public static final String RSPEC2_TO_NDL = "ndlConverter.requestFromRSpec2";
-    public static final String RSPEC3_TO_NDL = "ndlConverter.requestFromRSpec3";
-    public static final String MANIFEST_TO_RSPEC = "ndlConverter.manifestToRSpec3";
-    public static final String AD_TO_RSPEC = "ndlConverter.adToRSpec3";
-    public static final String ADS_TO_RSPEC = "ndlConverter.adsToRSpec3";
-
-	/**
+public class NDLConverterXMLRPCProxy implements IConverterAPIv1 {
+	List<String> urlList;
+	
+	public NDLConverterXMLRPCProxy(List<String> ul) {
+		urlList = ul;
+	}
+	
+    /**
 	 * Make RR calls to converters until success or list exhausted
 	 * @param call
 	 * @param params
@@ -30,7 +32,7 @@ public class NDLConverter {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static String callConverter(String call, Object[] params, List<String> urlList) throws Exception {
+	public String callConverter(ConverterCommand cmd, Object[] params) throws Exception {
 		
 		Map<String, Object> ret = null;
 		Collections.shuffle(urlList);
@@ -41,7 +43,7 @@ public class NDLConverter {
 				XmlRpcClient client = new XmlRpcClient();
 				client.setConfig(config);
 
-				ret = (Map<String, Object>)client.execute(call, params);
+				ret = (Map<String, Object>)client.execute("ndlConverter." + cmd.getCmd(), params);
 				break;
 			} catch (XmlRpcException e) {
 				continue;
