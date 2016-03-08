@@ -38,19 +38,27 @@ public class PEMTransportContext extends SSLTransportContext {
 
 	private static final String DEFAULT_X509_ALIAS = "x509convert";
 
+	/**
+	 * Password and path to cert pem file and key file
+	 * @param pass
+	 * @param certP
+	 * @param keyP
+	 * @throws ContextTransportException
+	 */
 	public PEMTransportContext(String pass, String certP, String keyP) throws ContextTransportException {
 		super(DEFAULT_X509_ALIAS, pass);
-
+		
 		try {
 			File certFilePath = StaticUtil.getUserFileName(certP);
 			File certKeyFilePath = StaticUtil.getUserFileName(keyP);
-
 			if (certFilePath.exists() && certKeyFilePath.exists()) {
 				FileInputStream certIS = new FileInputStream(certFilePath);
 				FileInputStream keyIS = new FileInputStream(certKeyFilePath);
 				ks = loadX509Data(certIS, keyIS, keyAlias, keyPassword);
 				certIS.close();
 				keyIS.close();
+			} else {
+				throw new ContextTransportException("PEMTransportContext unable to find cert or key file " + certP + " " + keyP);
 			}
 		} catch(Exception e) {
 			throw new ContextTransportException(e.getMessage());

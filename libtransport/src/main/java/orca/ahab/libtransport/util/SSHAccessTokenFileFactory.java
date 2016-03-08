@@ -36,7 +36,7 @@ public class SSHAccessTokenFileFactory implements ISSHAccessTokenFactory<SSHAcce
 		String userKey = StaticUtil.readTextFile(keyPath);
 
 		if (userKey == null) 
-			throw new UtilTransportException("Unable to load user public ssh key " + keyPath);
+			throw new UtilTransportException("SSHAccessTokenFileFactory unable to load user public ssh key " + keyPath);
 		
 		token = new SSHAccessToken(Collections.singletonList(userKey), sudo);
 	}
@@ -69,7 +69,7 @@ public class SSHAccessTokenFileFactory implements ISSHAccessTokenFactory<SSHAcce
 			keyFilePath = new File(keyFilePathStr);
 			userKey = StaticUtil.readTextFile(keyFilePath);
 			if (userKey == null) {
-				throw new UtilTransportException ("Unable to locate ssh public keys, you will not be able to login to the resources!");
+				throw new UtilTransportException ("SSHAccessTokenFileFactory unable to locate ssh public keys, you will not be able to login to the resources!");
 			}
 		}
 		return userKey;

@@ -51,7 +51,6 @@ public class StaticUtil {
 		else {
 			f = new File(pathStr);
 		}
-
 		return f;
 	}
 }
