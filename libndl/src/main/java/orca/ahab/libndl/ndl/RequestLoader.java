@@ -123,7 +123,6 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 
 	public void ndlNode(Resource ce, OntModel om, Resource ceClass, List<Resource> interfaces) {
 		LIBNDL.logger().debug("Node: " + ce + " of class " + ceClass);
-	
 		
 		if (ce == null)
 			return;
@@ -131,54 +130,62 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		Node newNode;
 		ComputeNode newComputeNode = null;
 		if (ceClass.equals(NdlCommons.computeElementClass)){
-			if(!ce.hasProperty(NdlCommons.manifestHasParent)){
-				LIBNDL.logger().debug("Node: " + ce.getLocalName() + " : found computeElementClass, parent = " + ce.hasProperty(NdlCommons.manifestHasParent));
-			
-				newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
-				newComputeNode = (ComputeNode)newNode;
-				//LIBNDL.logger().debug("ndlModel: " + ndlModel);
-				//ndlModel.mapSliceResource2ModelResource(newComputeNode, ce);
-				//newNode.setNDLModel(ndlModel);
-			} else {
-				LIBNDL.logger().debug("Node: " + ce.getLocalName() + " : found computeElementClass without parent, skipping!");
-				return;
-			}
-		} else { 
-			if (ceClass.equals(NdlCommons.serverCloudClass)) {
-				LIBNDL.logger().debug("Node: " + ce.getLocalName() + " : found serverCloudClass, parent = " + ce.hasProperty(NdlCommons.manifestHasParent));
-				ComputeNode newNodeGroup = this.sliceGraph.buildComputeNode(ce.getLocalName());
-				//newNodeGroup.setNDLModel(ndlModel);
-				//ndlModel.mapSliceResource2ModelResource(newNodeGroup, ce);
-				newComputeNode = newNodeGroup;
-				//int ceCount = NdlCommons.getNumCE(ce);
-				//if (ceCount > 0) newNodeGroup.setNodeCount(ceCount);
-				newNodeGroup.initializeNodeCount(0);
-				//newNodeGroup.setSplittable(NdlCommons.isSplittable(ce));
-				newNode = newNodeGroup;
-				
-				
-				String groupUrl = NdlCommons.getRequestGroupURLProperty(ce);
-				LIBNDL.logger().debug("NdlCommons.getRequestGroupURLProperty: " + groupUrl);
-				
-				String nodeUrl = ce.getURI();
-				LIBNDL.logger().debug("URI: " + nodeUrl);
-				
-				
-				
-			} else if (NdlCommons.isStitchingNode(ce)) {
-				// stitching node
-				// For some reason the properties of the stitchport are stored on the interface (not here)
-				StitchPort sp = this.sliceGraph.buildStitchPort(ce.getLocalName());
-				newNode = sp;
-			} else if (NdlCommons.isNetworkStorage(ce)) {
-				// storage node
-				StorageNode snode = this.sliceGraph.buildStorageNode(ce.getLocalName());
-				snode.setCapacity(NdlCommons.getResourceStorageCapacity(ce));
-				newNode = snode;
-			} else // default just a node
-				newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
-		}
+			//if(!ce.hasProperty(NdlCommons.manifestHasParent)){
+			LIBNDL.logger().debug("BUILDING: Copute Node: " + ce.getLocalName() + " : found computeElementClass, parent = " + ce.hasProperty(NdlCommons.manifestHasParent));
 
+			newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
+			newComputeNode = (ComputeNode)newNode;
+			ndlModel.mapRequestResource2ModelResource(newComputeNode, ce);
+			//LIBNDL.logger().debug("ndlModel: " + ndlModel);
+			//ndlModel.mapSliceResource2ModelResource(newComputeNode, ce);
+			//newNode.setNDLModel(ndlModel);
+			//} else {
+			//	LIBNDL.logger().debug("Node: " + ce.getLocalName() + " : found computeElementClass without parent, skipping!");
+			//	return;
+			//}
+		} else if (ceClass.equals(NdlCommons.serverCloudClass)) {
+			LIBNDL.logger().debug("BUILDING: Group Node: " + ce.getLocalName() + " : found serverCloudClass, parent = " + ce.hasProperty(NdlCommons.manifestHasParent));
+			ComputeNode newNodeGroup = this.sliceGraph.buildComputeNode(ce.getLocalName());
+			ndlModel.mapRequestResource2ModelResource(newNodeGroup, ce);
+			//newNodeGroup.setNDLModel(ndlModel);
+			//ndlModel.mapSliceResource2ModelResource(newNodeGroup, ce);
+			newComputeNode = newNodeGroup;
+			//int ceCount = NdlCommons.getNumCE(ce);
+			//if (ceCount > 0) newNodeGroup.setNodeCount(ceCount);
+			newNodeGroup.initializeNodeCount(0);
+			//newNodeGroup.setSplittable(NdlCommons.isSplittable(ce));
+			newNode = newNodeGroup;
+
+
+			String groupUrl = NdlCommons.getRequestGroupURLProperty(ce);
+			LIBNDL.logger().debug("NdlCommons.getRequestGroupURLProperty: " + groupUrl);
+
+			String nodeUrl = ce.getURI();
+			LIBNDL.logger().debug("URI: " + nodeUrl);
+
+
+
+		} else if (NdlCommons.isStitchingNode(ce)) {
+			LIBNDL.logger().debug("BUILDING: Stitching Node: " + ce.getLocalName() );
+			// stitching node
+			// For some reason the properties of the stitchport are stored on the interface (not here)
+			StitchPort sp = this.sliceGraph.buildStitchPort(ce.getLocalName());
+			ndlModel.mapRequestResource2ModelResource(sp, ce);
+			newNode = sp;
+		} else if (NdlCommons.isNetworkStorage(ce)) {
+			LIBNDL.logger().debug("BUILDING: Storage Node: " + ce.getLocalName() );
+			// storage node
+			StorageNode snode = this.sliceGraph.buildStorageNode(ce.getLocalName());
+			ndlModel.mapRequestResource2ModelResource(snode, ce);
+			newNode = snode;
+			snode.setCapacity(NdlCommons.getResourceStorageCapacity(ce));
+		} else {
+			// default just a node
+			LIBNDL.logger().debug("BUILDING: Just a Node: " + ce.getLocalName() );
+			newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
+			ndlModel.mapRequestResource2ModelResource(newNode, ce);
+		}
+		
 		LIBNDL.logger().debug("about to load domain");
 		Resource domain = NdlCommons.getDomain(ce);
 		if (domain != null){
@@ -238,6 +245,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 			return;
 		
 		Network ol = this.sliceGraph.buildLink(l.getLocalName());
+		ndlModel.mapRequestResource2ModelResource(ol, l);
 		ol.setBandwidth(bandwidth);
 		ol.setLatency(latency);
 		ol.setLabel(NdlCommons.getLayerLabelLiteral(l));
@@ -359,6 +367,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		LIBNDL.logger().debug("BroadcastConnection: " + bl);
 		
 		Network ol = this.sliceGraph.buildLink(bl.getLocalName());
+		ndlModel.mapRequestResource2ModelResource(ol, bl);
 		ol.setBandwidth(bandwidth);
 		//ol.setLatency(latency);
 		ol.setLabel(NdlCommons.getLayerLabelLiteral(bl));	

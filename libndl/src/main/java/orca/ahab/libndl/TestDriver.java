@@ -14,6 +14,8 @@ import java.util.Properties;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Network;
 import orca.ahab.libndl.resources.request.Node;
+import orca.ahab.libndl.resources.request.StitchPort;
+import orca.ahab.libndl.resources.request.StorageNode;
 import orca.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 
@@ -104,8 +106,10 @@ public class TestDriver {
 	public static void testLoad(){
 		//r.logger("ndllib TestDriver: testLoad");
 		//Slice s = Slice.loadRequestFile("/home/geni-orca/test-rdfs/request-test1.rdf");
-		Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/manifest-test1.rdf");
-			
+		//Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/manifest-test1.rdf");
+		//Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/newest-test-manifest-up-1failed.rdf");
+		Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/newest-test-manifest-halfup.rdf");
+		
 		//s.load("/home/geni-orca/test-rdfs/test1.rdf");
 		//s.loadFile("/home/geni-orca/test-rdfs/test1.rdf");
 	
@@ -115,20 +119,26 @@ public class TestDriver {
 	
 		
 		
-		ComputeNode   newnode = s.addComputeNode("ComputeNode0");
-		newnode.setImage("http://geni-images.renci.org/images/standard/centos/centos6.3-v1.0.11.xml","776f4874420266834c3e56c8092f5ca48a180eed","PRUTH-centos");
-		newnode.setNodeType("XO Large");
-		newnode.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
-		newnode.setPostBootScript("master post boot script");
+		//ComputeNode   newnode = s.addComputeNode("ComputeNode0");
+		//newnode.setImage("http://geni-images.renci.org/images/standard/centos/centos6.3-v1.0.11.xml","776f4874420266834c3e56c8092f5ca48a180eed","PRUTH-centos");
+		//newnode.setNodeType("XO Large");
+		//newnode.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
+		//newnode.setPostBootScript("master post boot script");
 
-		s.logger().debug("******************** START Request Info *********************");
-		s.logger().debug(s.getRequest());
+		//s.logger().debug("******************** START Request Info *********************");
+		//s.logger().debug(s.getRequest());
 		//s.logger().debug(s.getDebugString());
 		s.logger().debug("******************** END PRINTING *********************");
 		
-		ComputeNode cn = (ComputeNode)s.getResourceByName("ComputeNode0");
-		s.logger().debug("cn: " + cn);
-		s.logger().debug("compute node: " + cn.getName());
+		//ComputeNode cn = (ComputeNode)s.getResourceByName("Node0");
+		//s.logger().debug("cn: " + cn);
+		//s.logger().debug("compute node: " + cn.getName());
+				
+		//StitchPort sp = (StitchPort)s.getResourceByName("StitchPort0");
+		//s.logger().debug("stitchprot node: " + sp.getName());
+
+		//StorageNode sn = (StorageNode)s.getResourceByName("Storage0");
+		//s.logger().debug("storage node: " + sn.getName());
 	}
 /*	
 	public static void testSave(){

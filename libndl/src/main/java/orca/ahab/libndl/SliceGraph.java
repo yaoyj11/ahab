@@ -51,6 +51,7 @@ import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
 import orca.ahab.libndl.util.IP4Assign;
 import orca.ahab.libndl.util.IP4Subnet;
+import orca.ndl.NdlCommons;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 
 /**
@@ -154,13 +155,14 @@ public class SliceGraph   {
 	
 	/************ Build resources in jung model without adding to ndlmodel **********/
 	public ComputeNode buildComputeNode(String name){
-		LIBNDL.logger().debug("SliceGraph.addComputeNode: adding node " + name);
+		LIBNDL.logger().debug("PRUTH_BUILD: SliceGraph.buildComputeNode: adding node " + name);
 		ComputeNode node = new ComputeNode(this,name);
 		sliceGraph.addVertex(node);
 		
 		return node;
 	}
 	public StorageNode buildStorageNode(String name){
+		LIBNDL.logger().debug("PRUTH_BUILD: SliceGraph.buildStorageNode: adding node " + name);	
 		StorageNode node = new StorageNode(this,name);
 		sliceGraph.addVertex(node);
 		return node;
@@ -184,27 +186,27 @@ public class SliceGraph   {
 	/************************ build resources and add them to ndl model ************/
 	public ComputeNode addComputeNode(String name){
 		ComputeNode node = buildComputeNode(name);
-		ndlModel.add(node,name);	
+		//ndlModel.add(node,name);	
 		return node;
 	}
 	public StorageNode addStorageNode(String name){
 		StorageNode node = buildStorageNode(name);
-		ndlModel.add(node);
+		//ndlModel.add(node);
 		return node;
 	}
 	public StitchPort addStitchPort(String name){
 		StitchPort node = buildStitchPort(name);
-		ndlModel.add(node);
+		//ndlModel.add(node);
 		return node;
 	}
 	public Network addLink(String name){
 		BroadcastNetwork link = buildLink(name);
-		ndlModel.add(link);
+		//ndlModel.add(link);
 		return link;
 	}
 	public BroadcastNetwork addBroadcastLink(String name){
 		BroadcastNetwork link = buildBroadcastLink(name);
-		ndlModel.add(link);
+		//ndlModel.add(link);
 		return link;
 	}
 	
@@ -452,7 +454,10 @@ public class SliceGraph   {
 	/*************************************   debugging ************************************/
 	public String getDebugString(){
 		String rtnStr = "getRequestDebugString: ";
-		rtnStr += sliceGraph.toString();
+		for (RequestResource r : sliceGraph.getVertices()){
+			rtnStr += ", Resource:" + r.getName();
+		}
+		//rtnStr += sliceGraph.toString();
 		return rtnStr;
 	}
 

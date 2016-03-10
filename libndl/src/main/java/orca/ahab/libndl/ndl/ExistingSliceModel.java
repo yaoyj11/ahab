@@ -21,9 +21,11 @@ import orca.ndl.NdlCommons;
 import orca.ndl.NdlException;
 import orca.ndl.NdlGenerator;
 import orca.ndl.NdlManifestParser;
+import orca.ndl.NdlRequestParser;
 
 public class ExistingSliceModel extends NDLModel{
-	protected NdlManifestParser sliceModel;
+	//protected NdlManifestParser sliceModel;
+	protected NdlRequestParser sliceModel;
 	
 	/* map of RequestResource in original slice or request to ndl Resource */
 	protected Map<RequestResource,Resource> slice2NDLMap;
@@ -34,8 +36,12 @@ public class ExistingSliceModel extends NDLModel{
 		
 		slice2NDLMap = new HashMap<RequestResource,Resource>();
 		
-		ManifestLoader loader = new ManifestLoader(sliceGraph,this);
-		sliceModel = loader.load(rdf);
+		//ManifestLoader mloader = new ManifestLoader(sliceGraph,this);
+		//sliceModel = mloader.load(rdf);
+		
+		RequestLoader rloader = new RequestLoader(sliceGraph,this);
+		sliceModel = rloader.load(rdf);
+	
 		
 		try {
 			String nsGuid = "1111111111"; //hack for now

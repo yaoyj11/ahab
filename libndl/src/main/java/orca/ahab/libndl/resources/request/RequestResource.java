@@ -6,6 +6,7 @@ import java.util.Set;
 
 import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.ndl.NDLModel;
+import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.Slice;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -56,7 +57,12 @@ public abstract class RequestResource{
 //	}
 	
 	public String getName(){ 
-		return getNDLModel().getName(this); 
+		try{
+			return getNDLModel().getName(this); 
+		} catch (Exception e){
+			LIBNDL.logger().debug("resouce name not found");
+		}
+		return "resource name not found";
 	}
 
 	public void setName(String s) {

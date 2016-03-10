@@ -30,6 +30,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
+
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.Slice;
 import orca.ahab.libndl.SliceGraph;
@@ -37,7 +39,10 @@ import orca.ahab.libndl.resources.manifest.LinkConnection;
 import orca.ahab.libndl.resources.manifest.ManifestResource;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
+import orca.ahab.libndl.resources.request.Node;
 import orca.ahab.libndl.resources.request.RequestResource;
+import orca.ahab.libndl.resources.request.StitchPort;
+import orca.ahab.libndl.resources.request.StorageNode;
 import orca.ndl.INdlManifestModelListener;
 import orca.ndl.NdlCommons;
 import orca.ndl.NdlManifestParser;
@@ -46,7 +51,6 @@ import orca.ndl.NdlRequestParser;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Resource;
-//import com.hyperrealm.kiwi.ui.dialog.ExceptionDialog;
 
 import edu.uci.ics.jung.graph.SparseMultigraph;
 
@@ -219,79 +223,45 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 		}
 		LIBNDL.logger().debug(printStr);
 	
-		if(NdlCommons.isNetworkStorage(ce) || NdlCommons.isStitchingNode(ce)){
-			LIBNDL.logger().debug("Found a stitchport or storage node, returning");
-			return;
-		}
-		
-	
-		
-		//Only handle compute nodes for now.
-		if (!((ceClass.equals(NdlCommons.computeElementClass) || ceClass.equals(NdlCommons.serverCloudClass)))){
-			LIBNDL.logger().debug("Not a compute element, returning");
+		if(NdlCommons.isStitchingNode(ce)){
+			LIBNDL.logger().debug("\n\n\n ************************************** FOUND STITCHPORT NODE *************************************** \n\n\n");
+			LIBNDL.logger().debug("Found a stitchport");
+			StitchPort newStitchport = this.sliceGraph.buildStitchPort(getPrettyName(ce));
+			ndlModel.mapSliceResource2ModelResource(newStitchport, ce);
 			
 			return;
 		}
-		ComputeNode newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
-		ndlModel.mapSliceResource2ModelResource(newNode, ce);
+		if(NdlCommons.isNetworkStorage(ce)){
+			LIBNDL.logger().debug("\n\n\n ************************************** FOUND STORAGE NODE *************************************** \n\n\n");
+			LIBNDL.logger().debug("Found a storage node, returning");
+			StorageNode newStorageNode = this.sliceGraph.buildStorageNode(getPrettyName(ce));
+			ndlModel.mapSliceResource2ModelResource(newStorageNode, ce);
+			
+			return;
+		}
 	
-		LIBNDL.logger().debug("modelNode: " + ndlModel.getModelResource(newNode).getLocalName());
 		
-		LIBNDL.logger().debug("\n\n\n ************************************** FOUND COMPUTE NODE *************************************** \n\n\n");
-		String groupUrl = NdlCommons.getRequestGroupURLProperty(ce);
-		LIBNDL.logger().debug("NdlCommons.getRequestGroupURLProperty: " + groupUrl);
-		
-		String nodeUrl = ce.getURI();
-		LIBNDL.logger().debug("ce.getURI(): " + nodeUrl);
+		//Only handle compute nodes for now.
+		if ((ceClass.equals(NdlCommons.computeElementClass) || ceClass.equals(NdlCommons.serverCloudClass))){
+			LIBNDL.logger().debug("\n\n\n ************************************** FOUND COMPUTE NODE *************************************** \n\n\n");
+			ComputeNode newNode = this.sliceGraph.buildComputeNode(getPrettyName(ce));
+			ndlModel.mapSliceResource2ModelResource(newNode, ce);
+			
+			newNode.setPostBootScript(NdlCommons.getPostBootScript(ce));
+			
 
-//		if (ceClass.equals(NdlCommons.computeElementClass)){	
-//			LIBNDL.logger().debug("Adding computeElement: "); 
-//			//should be sliceGraph and/or manifestGraph
-//			orca.ahab.libndl.resources.manifest.Node newNode = sliceGraph.addNode(ce.toString());
-//			LIBNDL.logger().debug("newNode: " + newNode);
-//			newNode.setModelResource(ce);
-//			
-//			
-//			RequestResource r = sliceGraph.getResouceByURI(groupUrl);
-//			LIBNDL.logger().debug("r: " + r);
-//			if(r instanceof ComputeNode){
-//				ComputeNode computeNode = (ComputeNode)r;
-//				LIBNDL.logger().debug("Adding computeElement to group: " + computeNode + ", newNode: " + newNode);
-//				computeNode.addManifestNode(newNode);
-//				newNode.setComputeNode(computeNode);
-//			}
-//			
-//		} 
+			
+			
+			
+			//LIBNDL.logger().debug("modelNode: " + ndlModel.getModelResource(newNode).getLocalName());
+			//String groupUrl = NdlCommons.getRequestGroupURLProperty(ce);
+			//LIBNDL.logger().debug("NdlCommons.getRequestGroupURLProperty: " + groupUrl);
+			//String nodeUrl = ce.getURI();
+			//LIBNDL.logger().debug("ce.getURI(): " + nodeUrl);
+			return;
+		}
 		
 	}
-
-	
-	
-	
-	
-	
-	
-	
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-/*
 
 
 	// sometimes getLocalName is not good enough
@@ -311,7 +281,8 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 		}
 		return rname;
 	}
-	
+
+	/*
 	// get domain name from inter-domain resource name
 	private String getInterDomainName(Resource r) {
 		String trueName = getTrueName(r);
@@ -675,9 +646,9 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 		if (innerNodeConnected)
 			Manifest.getInstance().getGraph().removeVertex(parent);
 	}
-	
+
 	// set common node properties from NDL
-	private void setCommonNodeProperties(OrcaNode on, Resource nr) {
+	private void setCommonNodeProperties(Node on, Resource nr) {
 		// post boot script
 		on.setPostBootScript(NdlCommons.getPostBootScript(nr));
 		

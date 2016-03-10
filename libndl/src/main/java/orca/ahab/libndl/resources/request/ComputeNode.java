@@ -134,9 +134,6 @@ public class ComputeNode extends Node {
 		return postBootScript;
 	}
 	
-	public String setgetPostBootScript(){
-		return postBootScript;
-	}
 
 	public int getMaxNodeCount(){
 		return maxNodeCount;
