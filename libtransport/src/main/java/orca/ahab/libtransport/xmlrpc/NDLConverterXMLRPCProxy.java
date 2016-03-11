@@ -1,6 +1,5 @@
 package orca.ahab.libtransport.xmlrpc;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -18,9 +17,9 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
  *
  */
 public class NDLConverterXMLRPCProxy implements IConverterAPIv1 {
-	List<String> urlList;
+	List<URL> urlList;
 	
-	public NDLConverterXMLRPCProxy(List<String> ul) {
+	public NDLConverterXMLRPCProxy(List<URL> ul) {
 		urlList = ul;
 	}
 	
@@ -36,10 +35,10 @@ public class NDLConverterXMLRPCProxy implements IConverterAPIv1 {
 		
 		Map<String, Object> ret = null;
 		Collections.shuffle(urlList);
-		for(String cUrl: urlList) {
+		for(URL cUrl: urlList) {
 			try {
 				XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-				config.setServerURL(new URL(cUrl));
+				config.setServerURL(cUrl);
 				XmlRpcClient client = new XmlRpcClient();
 				client.setConfig(config);
 
@@ -47,8 +46,6 @@ public class NDLConverterXMLRPCProxy implements IConverterAPIv1 {
 				break;
 			} catch (XmlRpcException e) {
 				continue;
-			} catch (MalformedURLException ue) {
-				throw new Exception("Unable to call converter at " + cUrl + " due to " + ue);
 			} catch (ClassCastException ce) {
 				// old converter, skip it
 				continue;

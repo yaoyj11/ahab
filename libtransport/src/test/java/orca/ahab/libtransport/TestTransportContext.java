@@ -48,7 +48,7 @@ public class TestTransportContext extends TestCase {
 			System.out.println("PEM1 " + ctx);
 			
 		} catch(Exception e) {
-			System.err.println("PEM Test failed: " + e);
+			System.err.println("PEM1 Test failed: " + e);
 			assert(false);
 		}
 	}
@@ -63,5 +63,16 @@ public class TestTransportContext extends TestCase {
 			return;
 		}
 		assert(false);
+	}
+	
+	public void testPEM3() {
+		try {
+			TransportContext ctx = new PEMTransportContext("", "files/combined.pem");
+			System.out.println("PEM3 " + ctx);
+			
+		} catch(Exception e) {
+			System.err.println("PEM3 Test failed: " + e);
+			assert(false);
+		}
 	}
 }

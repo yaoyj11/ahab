@@ -38,16 +38,7 @@ public class PEMTransportContext extends SSLTransportContext {
 
 	private static final String DEFAULT_X509_ALIAS = "x509convert";
 
-	/**
-	 * Password and path to cert pem file and key file
-	 * @param pass
-	 * @param certP
-	 * @param keyP
-	 * @throws ContextTransportException
-	 */
-	public PEMTransportContext(String pass, String certP, String keyP) throws ContextTransportException {
-		super(DEFAULT_X509_ALIAS, pass);
-		
+	private void initKS(String pass, String certP, String keyP) throws ContextTransportException {
 		try {
 			File certFilePath = StaticUtil.getUserFileName(certP);
 			File certKeyFilePath = StaticUtil.getUserFileName(keyP);
@@ -64,7 +55,32 @@ public class PEMTransportContext extends SSLTransportContext {
 			throw new ContextTransportException(e.getMessage());
 		}
 	}
+	
+	/**
+	 * Password and path to cert pem file and key file
+	 * @param pass password
+	 * @param certP path to certificate
+	 * @param keyP path to key file
+	 * @throws ContextTransportException
+	 */
+	public PEMTransportContext(String pass, String certP, String keyP) throws ContextTransportException {
+		super(DEFAULT_X509_ALIAS, pass);
+		
+		initKS(pass, certP, keyP);
+	}
 
+	/**
+	 * Password and path to unified pem file
+	 * @param pass
+	 * @param certP
+	 * @throws ContextTransportException
+	 */
+	public PEMTransportContext(String pass, String certP) throws ContextTransportException {
+		super(DEFAULT_X509_ALIAS, pass);
+		
+		initKS(pass, certP, certP);
+	}
+	
 	/**
 	 * Load PEM file data using bouncycastle
 	 * @param certIS
