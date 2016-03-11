@@ -20,5 +20,4 @@ public interface ITransportProxyFactory {
 	public IActorRegistryAPIv1 getRegistryProxy(String fingerprint, URL url) throws TransportException;
 	
 	public IConverterAPIv1 getConverterProxy(List<URL> urls) throws TransportException;
-
 }
