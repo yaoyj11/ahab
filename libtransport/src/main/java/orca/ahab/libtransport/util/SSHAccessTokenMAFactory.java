@@ -7,7 +7,7 @@ import orca.ahab.libtransport.SSHAccessToken;
  * @author ibaldin
  *
  */
-public class SSHAccessTokenMAPopulator implements ISSHAccessTokenFactory<SSHAccessToken> {
+public class SSHAccessTokenMAFactory implements ISSHAccessTokenFactory<SSHAccessToken> {
 
 	@Override
 	public SSHAccessToken getPopulatedToken() {
