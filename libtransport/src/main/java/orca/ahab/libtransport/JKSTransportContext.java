@@ -15,6 +15,13 @@ import orca.ahab.libtransport.util.StaticUtil;
 public class JKSTransportContext extends SSLTransportContext {
 	final File keyStorePath;
 	
+	/**
+	 * Load identity from keystore path, using alias and password
+	 * @param alias
+	 * @param pass
+	 * @param ksp
+	 * @throws ContextTransportException
+	 */
 	public JKSTransportContext(String alias, String pass, String ksp) throws ContextTransportException {
 		super(alias, pass);
 		try {
@@ -24,9 +31,11 @@ public class JKSTransportContext extends SSLTransportContext {
 				FileInputStream jksIS = new FileInputStream(keyStorePath);
 				ks = loadJKSData(jksIS, keyAlias, keyPassword);
 				jksIS.close();
+			} else {
+				throw new ContextTransportException("JKSTransportContext unable to find keystore " + keyStorePath);
 			}
 		} catch (Exception e) {
-			throw new ContextTransportException(e.getMessage());
+			throw new ContextTransportException("JKSTransportContext " + e.getMessage());
 		}
 	}
 		

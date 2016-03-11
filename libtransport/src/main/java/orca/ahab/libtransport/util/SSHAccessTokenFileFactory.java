@@ -11,7 +11,7 @@ import orca.ahab.libtransport.SSHAccessToken;
  * @author ibaldin
  *
  */
-public class SSHAccessTokenFilePopulator implements ISSHAccessTokenPopulator<SSHAccessToken> {
+public class SSHAccessTokenFileFactory implements ISSHAccessTokenFactory<SSHAccessToken> {
 	SSHAccessToken token;
 	private static final String SSH_DSA_PUBKEY_FILE = "id_dsa.pub";
 	private static final String SSH_RSA_PUBKEY_FILE = "id_rsa.pub";
@@ -22,7 +22,7 @@ public class SSHAccessTokenFilePopulator implements ISSHAccessTokenPopulator<SSH
 	 * @param sudo
 	 * @throws UtilTransportException
 	 */
-	public SSHAccessTokenFilePopulator(String keyPathStr, boolean sudo) throws UtilTransportException {
+	public SSHAccessTokenFileFactory(String keyPathStr, boolean sudo) throws UtilTransportException {
 		File keyPath = null;
 		
 		if (keyPathStr.startsWith("~/")) {
@@ -36,7 +36,7 @@ public class SSHAccessTokenFilePopulator implements ISSHAccessTokenPopulator<SSH
 		String userKey = StaticUtil.readTextFile(keyPath);
 
 		if (userKey == null) 
-			throw new UtilTransportException("Unable to load user public ssh key " + keyPath);
+			throw new UtilTransportException("SSHAccessTokenFileFactory unable to load user public ssh key " + keyPath);
 		
 		token = new SSHAccessToken(Collections.singletonList(userKey), sudo);
 	}
@@ -46,7 +46,7 @@ public class SSHAccessTokenFilePopulator implements ISSHAccessTokenPopulator<SSH
 	 * @param sudo
 	 * @throws UtilTransportException
 	 */
-	public SSHAccessTokenFilePopulator(boolean sudo) throws UtilTransportException {
+	public SSHAccessTokenFileFactory(boolean sudo) throws UtilTransportException {
 		token = new SSHAccessToken(Collections.singletonList(getAnyUserPubKey()), sudo);
 	}
 	
@@ -69,7 +69,7 @@ public class SSHAccessTokenFilePopulator implements ISSHAccessTokenPopulator<SSH
 			keyFilePath = new File(keyFilePathStr);
 			userKey = StaticUtil.readTextFile(keyFilePath);
 			if (userKey == null) {
-				throw new UtilTransportException ("Unable to locate ssh public keys, you will not be able to login to the resources!");
+				throw new UtilTransportException ("SSHAccessTokenFileFactory unable to locate ssh public keys, you will not be able to login to the resources!");
 			}
 		}
 		return userKey;

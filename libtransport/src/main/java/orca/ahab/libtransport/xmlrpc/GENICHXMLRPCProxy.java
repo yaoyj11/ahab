@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import orca.ahab.libtransport.IGENICHAPIv1;
 import orca.ahab.libtransport.SSLTransportContext;
 import orca.ahab.libtransport.util.ContextTransportException;
 
@@ -28,7 +29,7 @@ import org.apache.xmlrpc.serializer.NullSerializer;
  * @author ibaldin
  *
  */
-public class GENICHXMLRPCProxy {
+public class GENICHXMLRPCProxy implements IGENICHAPIv1 {
 
 	public static final String SSH_KEY_PRIVATE = "KEY_PRIVATE";
 	public static final String SSH_KEY_PUBLIC = "KEY_PUBLIC";
@@ -38,39 +39,9 @@ public class GENICHXMLRPCProxy {
 	private static final String FED_VERSION = "2";
 
 	private static boolean saVersionMatch = false, maVersionMatch = false;
-
-	public enum FedField {
-		VERSION, 
-		code, 
-		value,
-		output,
-		// used in get_version return
-		FIELDS, 
-		// used in create/lookup/update
-		fields, 
-		match,
-		filter,
-		SLICE_NAME, 
-		SLICE_PROJECT_URN,
-		SLICE_URN,
-		SLICE_EXPIRATION,
-		KEY_MEMBER;
-	}
-
-	public enum FedAgent {
-		SA, MA
-	}
-
-	public enum FedCall {
-		get_version, create, 
-		lookup, update;
-	}
-
-	public enum FedObjectType {
-		SLICE, PROJECT, SLIVER, KEY;
-	}
-
-	private static GENICHXMLRPCProxy instance = new GENICHXMLRPCProxy();
+	
+	protected SSLTransportContext ctx;
+	protected URL url;
 
 	/**
 	 * To deal with 'nil' returned by CH
@@ -95,12 +66,11 @@ public class GENICHXMLRPCProxy {
 		}
 	}
 
-	GENICHXMLRPCProxy() {
-
-	}
-
-	public static GENICHXMLRPCProxy getInstance() {
-		return instance;
+	public GENICHXMLRPCProxy(SSLTransportContext c, URL u) throws ContextTransportException {
+		ctx = c;
+		url = u;
+		
+		ctx.establishIdentity(url);
 	}
 
 	private XmlRpcClient setupClient(FedAgent a, URL url) throws MalformedURLException {
@@ -119,18 +89,12 @@ public class GENICHXMLRPCProxy {
 		return client;
 	}
 
-	/**
-	 * Get version of the MA or SA
-	 * @param ctx
-	 * @param a
-	 * @param url
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IGENICHAPIv1#fedGetVersion(orca.ahab.libtransport.SSLTransportContext, orca.ahab.libtransport.xmlrpc.GENICHXMLRPCProxy.FedAgent, java.net.URL)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> fedGetVersion(SSLTransportContext ctx, FedAgent a, URL url) throws XMLRPCTransportException, ContextTransportException {
-		ctx.establishIdentity(url);
+	public Map<String, Object> fedGetVersion(FedAgent a) throws XMLRPCTransportException, ContextTransportException {
 
 		Map<String, Object> rr = null;
 		try {
@@ -151,17 +115,13 @@ public class GENICHXMLRPCProxy {
 	}
 
 
-	/**
-	 * Check we are talking to SA of correct version
-	 * @param ctx
-	 * @param a
-	 * @param url
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IGENICHAPIv1#fedCheckVersion(orca.ahab.libtransport.SSLTransportContext, orca.ahab.libtransport.xmlrpc.GENICHXMLRPCProxy.FedAgent, java.net.URL)
 	 */
-	public void fedCheckVersion(SSLTransportContext ctx, FedAgent a, URL url) throws XMLRPCTransportException, ContextTransportException {
+	@Override
+	public void fedCheckVersion(FedAgent a) throws XMLRPCTransportException, ContextTransportException {
 		try {
-			Map<String, Object> fields = fedGetVersion(ctx, a, url);
+			Map<String, Object> fields = fedGetVersion(a);
 
 			if (fields == null)
 				throw new Exception(a + " returned invalid values");
@@ -175,27 +135,19 @@ public class GENICHXMLRPCProxy {
 	}
 
 
-	/**
-	 * Create slice on SA using URN and project id
-	 * @param ctx
-	 * @param name
-	 * @param projectUrn
-	 * @param url
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IGENICHAPIv1#saCreateSlice(orca.ahab.libtransport.SSLTransportContext, java.lang.String, java.lang.String, java.net.URL)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public String saCreateSlice(SSLTransportContext ctx, String name, String projectUrn, URL url) 
+	public String saCreateSlice(String name, String projectUrn) 
 			throws XMLRPCTransportException, ContextTransportException {
 
 		if ((name == null) || (projectUrn == null) ||
 				(name.length() == 0) || (projectUrn.length() == 0))
 			throw new XMLRPCTransportException("Invalid slice name or project urn: " + name + "/" + projectUrn);
 
-		ctx.establishIdentity(url);
-
-		saCompatible(ctx, url);
+		saCompatible();
 
 		Map<String, Object> rr = null;
 		try {
@@ -222,25 +174,17 @@ public class GENICHXMLRPCProxy {
 	}
 
 
-	/**
-	 * Update slice field to specific value
-	 * @param ctx
-	 * @param sliceUrn
-	 * @param field
-	 * @param val
-	 * @param url
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IGENICHAPIv1#saUpdateSlice(orca.ahab.libtransport.SSLTransportContext, java.lang.String, orca.ahab.libtransport.xmlrpc.GENICHXMLRPCProxy.FedField, java.lang.Object, java.net.URL)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public void saUpdateSlice(SSLTransportContext ctx, String sliceUrn, FedField field, Object val, URL url) 
+	public void saUpdateSlice(String sliceUrn, FedField field, Object val) 
 			throws XMLRPCTransportException, ContextTransportException {
 		if ((sliceUrn == null) || (sliceUrn.length() == 0))
 			throw new XMLRPCTransportException("Invalid slice Urn: " + sliceUrn);
 
-		ctx.establishIdentity(url);
-
-		saCompatible(ctx, url);
+		saCompatible();
 
 		Map<String, Object> rr = null;
 		try {
@@ -264,25 +208,17 @@ public class GENICHXMLRPCProxy {
 		}
 	}
 
-	/**
-	 * Lookup a slice on SA
-	 * @param ctx
-	 * @param sliceUrn
-	 * @param fields - filter
-	 * @param url
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IGENICHAPIv1#saLookupSlice(orca.ahab.libtransport.SSLTransportContext, java.lang.String, orca.ahab.libtransport.xmlrpc.GENICHXMLRPCProxy.FedField[], java.net.URL)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> saLookupSlice(SSLTransportContext ctx, String sliceUrn, FedField[] fields, URL url) 
+	public Map<String, Object> saLookupSlice(String sliceUrn, FedField[] fields) 
 			throws XMLRPCTransportException, ContextTransportException {
 		if ((sliceUrn == null) || (sliceUrn.length() == 0))
 			throw new XMLRPCTransportException("Invalid slice Urn: " + sliceUrn);
 
-		ctx.establishIdentity(url);
-
-		saCompatible(ctx, url);
+		saCompatible();
 
 		Map<String, Object> rr = null;
 		try {
@@ -314,39 +250,26 @@ public class GENICHXMLRPCProxy {
 		}
 	}
 
-	/**
-	 * Lookup either a list of fields or all fields in a slice
-	 * @param ctx
-	 * @param sliceUrn
-	 * @param fields
-	 * @param url
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IGENICHAPIv1#saLookupSlice(orca.ahab.libtransport.SSLTransportContext, java.lang.String, java.util.List, java.net.URL)
 	 */
-	public Map<String, Object> saLookupSlice(SSLTransportContext ctx, String sliceUrn, List<FedField> fields, URL url) 
+	@Override
+	public Map<String, Object> saLookupSlice(String sliceUrn, List<FedField> fields) 
 			throws XMLRPCTransportException, ContextTransportException {
-		return saLookupSlice(ctx, sliceUrn, fields.toArray(new FedField[fields.size()]), url);
+		return saLookupSlice(sliceUrn, fields.toArray(new FedField[fields.size()]));
 	}
 
-	/**
-	 * MA Call to get all public and private SSH keys of a user
-	 * @param ctx
-	 * @param userUrn
-	 * @param url
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IGENICHAPIv1#maLookupAllSSHKeys(orca.ahab.libtransport.SSLTransportContext, java.lang.String, java.net.URL)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> maLookupAllSSHKeys(SSLTransportContext ctx, String userUrn, URL url) 
+	public Map<String, Object> maLookupAllSSHKeys(String userUrn) 
 			throws XMLRPCTransportException, ContextTransportException {
 		if ((userUrn == null) || (userUrn.length() == 0))
 			throw new XMLRPCTransportException("Invalid user Urn: " + userUrn);
 
-		ctx.establishIdentity(url);
-
-		maCompatible(ctx, url);
+		maCompatible();
 
 		Map<String, Object> rr = null;
 		try {
@@ -371,19 +294,14 @@ public class GENICHXMLRPCProxy {
 	}
 
 
-	/**
-	 * Get the latest pair of SSH keys from MA
-	 * @param ctx
-	 * @param userUrn
-	 * @param url
-	 * @return
-	 * @throws XMLRPCTransportException
-	 * @throws ContextTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IGENICHAPIv1#maLookupLatestSSHKeys(orca.ahab.libtransport.SSLTransportContext, java.lang.String, java.net.URL)
 	 */
-	public Map<String, Object> maLookupLatestSSHKeys(SSLTransportContext ctx, String userUrn, URL url) 
+	@Override
+	public Map<String, Object> maLookupLatestSSHKeys(String userUrn) 
 			throws XMLRPCTransportException, ContextTransportException {
 
-		Map<String, Object> ret = maLookupAllSSHKeys(ctx, userUrn, url);
+		Map<String, Object> ret = maLookupAllSSHKeys(userUrn);
 
 		List<String> keys = new ArrayList<String>(ret.keySet());
 		java.util.Collections.sort(keys, new Comparator<String>() {
@@ -416,9 +334,9 @@ public class GENICHXMLRPCProxy {
 	 * Ensure we're compatible with this SA
 	 * @throws Exception
 	 */
-	private synchronized void saCompatible(SSLTransportContext ctx, URL url) throws XMLRPCTransportException, ContextTransportException {
+	private synchronized void saCompatible() throws XMLRPCTransportException, ContextTransportException {
 		if (!saVersionMatch) { 
-			fedCheckVersion(ctx, FedAgent.SA, url);
+			fedCheckVersion(FedAgent.SA);
 			saVersionMatch = true;
 		}
 	}
@@ -427,9 +345,9 @@ public class GENICHXMLRPCProxy {
 	 * Ensure we're compatible with this SA
 	 * @throws Exception
 	 */
-	private synchronized void maCompatible(SSLTransportContext ctx, URL url) throws XMLRPCTransportException, ContextTransportException {
+	private synchronized void maCompatible() throws XMLRPCTransportException, ContextTransportException {
 		if (!maVersionMatch) { 
-			fedCheckVersion(ctx, FedAgent.MA, url);
+			fedCheckVersion(FedAgent.MA);
 			maVersionMatch = true;
 		}
 	}

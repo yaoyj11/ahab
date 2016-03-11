@@ -23,4 +23,14 @@ public class SSHAccessToken extends AccessToken {
 	public boolean getSudo() {
 		return sudo;
 	}
+	
+	public String toString() {
+		StringBuilder sb  = new StringBuilder();
+		sb.append("{ ");
+		for(String s: publicKeys) {
+			sb.append("[ " + s + " ] ");
+		}
+		sb.append(" }/" + sudo);
+		return sb.toString();
+	}
 }

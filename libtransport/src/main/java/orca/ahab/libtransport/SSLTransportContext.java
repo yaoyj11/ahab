@@ -2,6 +2,7 @@ package orca.ahab.libtransport;
 
 import java.net.URL;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -132,7 +133,6 @@ public class SSLTransportContext extends TransportContext {
 				port = HTTPS_PORT;
 			regSslFact.addHostContextFactory(new MultiKeySSLContextFactory(mkm, trustAllCerts), 
 					ctrlrUrl.getHost(), port);
-
 			setIdentity();
 		} catch (Exception e) {
 			throw new ContextTransportException(e.getMessage());
@@ -172,5 +172,15 @@ public class SSLTransportContext extends TransportContext {
 			}
 		}
 		return urn;
+	}
+	
+	
+	@Override
+	public String toString() {
+		try {
+			return ks.getType() + " contains alias " + keyAlias + ": " + ks.containsAlias(keyAlias);
+		} catch(KeyStoreException kse) {
+			return "Unable to get keystore information: " + kse;
+		}
 	}
 }

@@ -22,6 +22,8 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.security.cert.CertificateException;
 
+import orca.ahab.libtransport.IActorRegistryAPIv1;
+
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -31,7 +33,7 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
  * @author ibaldin
  *
  */
-public class RegistryXMLRPCProxy {
+public class RegistryXMLRPCProxy implements IActorRegistryAPIv1 {
 	private static final String GET_AMS = "registryService.getAMs";
 	private static final String GET_IMAGES = "registryService.getAllImages";
 	private static final String GET_CONTROLLERS = "registryService.getAllControllers";
@@ -157,13 +159,10 @@ public class RegistryXMLRPCProxy {
         }
 	}
 	
-	/**
-	 * Get known AMs from registry
-	 * @param verbose
-	 * @param url
-	 * @return
-	 * @throws Exception
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IActorRegistryAPIv1#getAMs(boolean, java.net.URL)
 	 */
+	@Override
 	public Map<String, Map<String, String>> getAMs(boolean verbose, URL url) throws Exception {
         // call the actor registry
         Map<String, Map<String, String>> amData = null;
@@ -194,12 +193,10 @@ public class RegistryXMLRPCProxy {
 		return m.get(k).get(f.getName());
 	}
 	
-	/**
-	 * Get known images from registry
-	 * @param url
-	 * @return
-	 * @throws XMLRPCTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IActorRegistryAPIv1#getImages(java.net.URL)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public List<Map<String, String>> getImages(URL url) throws XMLRPCTransportException {
 		List<Map<String, String>> ret = null;
@@ -224,12 +221,10 @@ public class RegistryXMLRPCProxy {
 		return ret;
 	}
 	
-	/**
-	 * Get known controllers from registry
-	 * @param url
-	 * @return
-	 * @throws XMLRPCTransportException
+	/* (non-Javadoc)
+	 * @see orca.ahab.libtransport.xmlrpc.IActorRegistryAPIv1#getControllers(java.net.URL)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public List<Map<String, String>> getControllers(URL url) throws XMLRPCTransportException {
 		List<Map<String, String>> ret = null;
