@@ -9,6 +9,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.Collections;
 import java.util.Properties;
 
 import orca.ahab.libndl.resources.request.ComputeNode;
@@ -16,6 +18,11 @@ import orca.ahab.libndl.resources.request.Network;
 import orca.ahab.libndl.resources.request.Node;
 import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
+//import orca.ahab.libtransport.ISliceTransportAPIv1;
+//import orca.ahab.libtransport.ITransportProxyFactory;
+//import orca.ahab.libtransport.JKSTransportContext;
+//import orca.ahab.libtransport.TransportContext;
+//import orca.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import orca.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 
@@ -30,6 +37,7 @@ public class TestDriver {
     	
     	LIBNDL.setLogger();
     	
+    	//testLibtransport();
     	testLoad();
     	//testSave();
     	//testLoadAndSave();
@@ -42,6 +50,27 @@ public class TestDriver {
     	System.out.println("ndllib TestDriver: END");
     	
 	}
+	
+//	public static void testLibtransport(){
+//		try {
+//			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+//			TransportContext ctx = new JKSTransportContext("selfsigned", "selfpassword", 
+//					"files/testkeystore.jks");
+//			ifac.getConverterProxy(Collections.singletonList(new URL("http://geni.renci.org:15080/convert")));
+//			ifac.getGENICHProxy(ctx, new URL("http://portal.geni.net/ch"));
+//			ifac.getRegistryProxy("78:B6:1A:F0:6C:F8:C7:0F:C0:05:10:13:06:79:E0:AC", new URL("https://geni.renci.org:15443/registry/"));
+//			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL("https://geni.renci.org:15443/orca/xmlrpc"));
+//			
+//			// now you can do things like 
+//			//sliceProxy.getVersion();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			System.err.println("Proxy factory test failed");
+//			assert(false);
+//		}
+//		System.out.println("Proxy factory test succeeded");
+//	}
+	
 	
 //	public static  void autoIP1(){
 //		Slice s = new Slice();
