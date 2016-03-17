@@ -186,6 +186,16 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 	}
 
 
+	private String stripManifest(String m) {
+		if (m == null)
+			return null;
+		int ind = m.indexOf("<rdf:RDF");
+		if (ind > 0)
+			return m.substring(ind);
+		else
+			return null;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public String sliceStatus(String sliceId)  throws TransportException, ContextTransportException {
 		assert(sliceId != null);
@@ -220,7 +230,7 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		result = (String)rr.get(RET_RET_FIELD);
 
-		return result;
+		return stripManifest(result);
 	}
 
 	@SuppressWarnings("unchecked")
