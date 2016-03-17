@@ -10,6 +10,7 @@ import orca.ahab.libndl.ndl.ExistingSliceModel;
 import orca.ahab.libndl.ndl.NDLModel;
 import orca.ahab.libndl.ndl.NewSliceModel;
 import orca.ahab.libndl.ndl.RequestGenerator;
+import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
@@ -53,6 +54,7 @@ public class Slice {
 		Slice s = new Slice();
 		s.sliceGraph.loadRequestRDF(requestRDFString);
 		return s;
+
 	}
 	
 	public static Slice loadManifest(String manifestRDFString){
@@ -125,9 +127,9 @@ public class Slice {
 		return sliceGraph.getResourceByURI(uri);
 	}
 	
-	public void deleteResource(RequestResource r){
-		sliceGraph.deleteResource(r);
-	}
+	//public void deleteResource(RequestResource r){
+	//	sliceGraph.deleteResource(r);
+	//}
 	
 	public Interface stitch(RequestResource r1, RequestResource r2){
 		LIBNDL.logger().error("slice.stitch is unimplemented");
@@ -142,7 +144,7 @@ public class Slice {
 	
 	
 	/**************************** Get Slice Info ***********************************/
-	public Collection<RequestResource> getAllResources(){
+	public Collection<ModelResource> getAllResources(){
 		return sliceGraph.getResources();
 	}
 	

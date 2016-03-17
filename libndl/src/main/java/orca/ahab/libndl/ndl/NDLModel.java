@@ -9,6 +9,7 @@ import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import orca.ahab.libndl.LIBNDL;
+import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.InterfaceNode2Net;
@@ -23,7 +24,7 @@ public abstract class NDLModel {
 	
 	
 	/* map of RequestResource in slice changes to ndl Resource */
-	protected Map<RequestResource,Resource> request2NDLMap; 
+	protected Map<ModelResource, Resource> request2NDLMap; 
 	
 	/* ndl generation */
 	protected NdlGenerator ngen;
@@ -42,18 +43,18 @@ public abstract class NDLModel {
 	abstract public void remove(StorageNode sn);
 	
 	protected NDLModel(){
-		request2NDLMap = new HashMap<RequestResource,Resource>();
+		request2NDLMap = new HashMap<ModelResource,Resource>();
 		
 
 	}
 
-	protected void mapRequestResource2ModelResource(RequestResource r, Resource i){
+	protected void mapRequestResource2ModelResource(ModelResource r, Resource i){
 		request2NDLMap.put(r,i);
 	}
 	
 	
-	protected Resource getModelResource(RequestResource r){
-		return request2NDLMap.get(r);
+	protected Resource getModelResource(ModelResource cn){
+		return request2NDLMap.get(cn);
 	}
 	
 	protected Logger logger(){
@@ -62,10 +63,12 @@ public abstract class NDLModel {
 	
 	abstract public String getRequest();
 	
-	abstract public String getName(RequestResource cn);
-	abstract public void setName(RequestResource cn);
+	abstract public String getName(ModelResource modelResource);
+	abstract public void setName(ModelResource modelResource);
 	
 	
-	
+	public void printRequest2NDLMap(){
+		LIBNDL.logger().debug("NDLModle::printRequest2NDLMap: " + request2NDLMap);
+	}
 	
 }

@@ -33,6 +33,7 @@ import java.util.Set;
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.Slice;
+import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
 import orca.ahab.libndl.resources.request.InterfaceNode2Net;
@@ -131,11 +132,16 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		ComputeNode newComputeNode = null;
 		if (ceClass.equals(NdlCommons.computeElementClass)){
 			//if(!ce.hasProperty(NdlCommons.manifestHasParent)){
-			LIBNDL.logger().debug("BUILDING: Copute Node: " + ce.getLocalName() + " : found computeElementClass, parent = " + ce.hasProperty(NdlCommons.manifestHasParent));
+			LIBNDL.logger().debug("BUILDING: Compute Node: " + ce.getLocalName() + " : found computeElementClass, parent = " + ce.hasProperty(NdlCommons.manifestHasParent));
 
 			newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
 			newComputeNode = (ComputeNode)newNode;
 			ndlModel.mapRequestResource2ModelResource(newComputeNode, ce);
+			LIBNDL.logger().debug("newComputeNode.getName(): " + newComputeNode.getName());
+			Resource returnedResource = ndlModel.getModelResource(newComputeNode);
+			LIBNDL.logger().debug("returnedResource.getLocalName(): " + returnedResource.getLocalName());
+			ndlModel.printRequest2NDLMap();
+			
 			//LIBNDL.logger().debug("ndlModel: " + ndlModel);
 			//ndlModel.mapSliceResource2ModelResource(newComputeNode, ce);
 			//newNode.setNDLModel(ndlModel);
@@ -171,6 +177,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 			// For some reason the properties of the stitchport are stored on the interface (not here)
 			StitchPort sp = this.sliceGraph.buildStitchPort(ce.getLocalName());
 			ndlModel.mapRequestResource2ModelResource(sp, ce);
+			ndlModel.printRequest2NDLMap();
 			newNode = sp;
 		} else if (NdlCommons.isNetworkStorage(ce)) {
 			LIBNDL.logger().debug("BUILDING: Storage Node: " + ce.getLocalName() );
@@ -185,6 +192,8 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 			newNode = this.sliceGraph.buildComputeNode(ce.getLocalName());
 			ndlModel.mapRequestResource2ModelResource(newNode, ce);
 		}
+		
+		sliceGraph.printGraph();
 		
 		LIBNDL.logger().debug("about to load domain");
 		Resource domain = NdlCommons.getDomain(ce);
@@ -255,15 +264,18 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 	
 		LIBNDL.logger().debug("Interface: " + intf + " link: " + conn + " node: " + node);
 		if(intf == null){
+			
 			return;
 		}
 		
 		
 		RequestResource onode = null;
 		if(node != null){
+			ndlModel.printRequest2NDLMap();
 			onode = this.sliceGraph.getResourceByName(node.getLocalName());
+			LIBNDL.logger().debug("ndlInterface with node: " + onode + ", localName: " + node.getLocalName());
 		} else {
-			LIBNDL.logger().warn("ndlInterface with null node: " + intf);
+			LIBNDL.logger().debug("ndlInterface with null node: " + intf);
 		}
 		RequestResource olink = null;
 		if(conn != null){
@@ -271,6 +283,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		} else{
 			LIBNDL.logger().warn("ndlInterface with null connection: " + intf);
 		}
+		
 		
 		if(onode == null){
 			LIBNDL.logger().warn("ndlInterface with null missing node:  Interface: " + intf + ", Node: " + node);
@@ -280,7 +293,9 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		//ComputeNode
 		if(onode instanceof ComputeNode && olink instanceof Network){
 			LIBNDL.logger().debug("stitching compute node");
-			InterfaceNode2Net stitch = (InterfaceNode2Net)onode.stitch(olink);
+			//InterfaceNode2Net stitch = (InterfaceNode2Net)onode.stitch(olink);
+			InterfaceNode2Net stitch = sliceGraph.buildInterfaceNode2Net((Node)onode, (Network)olink);
+			ndlModel.mapRequestResource2ModelResource((ModelResource)stitch, intf);
 			stitch.setIpAddress(ip);  
 			stitch.setNetmask(mask);
 			return;
@@ -289,7 +304,8 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		//StorageNode
 		if(onode instanceof StorageNode){
 			LIBNDL.logger().debug("stitching storage node");
-			InterfaceNode2Net stitch = (InterfaceNode2Net)onode.stitch(olink);
+			//InterfaceNode2Net stitch = (InterfaceNode2Net)onode.stitch(olink);
+			InterfaceNode2Net stitch = sliceGraph.buildInterfaceNode2Net((Node)onode, (Network)olink);
 			
 			return;
 		}
@@ -303,12 +319,13 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 			sp.setPort(intf.toString());
 			sp.setLabel(NdlCommons.getLayerLabelLiteral(intf));
 			
-			InterfaceNode2Net stitch = (InterfaceNode2Net)onode.stitch(olink);
+			//InterfaceNode2Net stitch = (InterfaceNode2Net)onode.stitch(olink);
+			InterfaceNode2Net stitch = sliceGraph.buildInterfaceNode2Net((Node)onode, (Network)olink);
 			return;
 		}	
 		
 		//shouldnt get here
-		LIBNDL.logger().debug("Unknown node type: " + node + ", " + node.getClass());
+		LIBNDL.logger().debug("Stitching to unknown node type: " + node + ", " + node.getClass());
 	}
 	
 	public void ndlSlice(Resource sl, OntModel m) {

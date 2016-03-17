@@ -115,25 +115,27 @@ public class TestDriver {
 	
 		s.logger().debug("******************** START Slice Info *********************");
 		//s.logger().debug(s.getRequest());
-		s.logger().debug(s.getDebugString());
+		//s.logger().debug(s.getDebugString());
 	
 		
 		
-		//ComputeNode   newnode = s.addComputeNode("ComputeNode0");
-		//newnode.setImage("http://geni-images.renci.org/images/standard/centos/centos6.3-v1.0.11.xml","776f4874420266834c3e56c8092f5ca48a180eed","PRUTH-centos");
-		//newnode.setNodeType("XO Large");
-		//newnode.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
-		//newnode.setPostBootScript("master post boot script");
+		ComputeNode   newnode = s.addComputeNode("ComputeNode0");
+		newnode.setImage("http://geni-images.renci.org/images/standard/centos/centos6.3-v1.0.11.xml","776f4874420266834c3e56c8092f5ca48a180eed","PRUTH-centos");
+		newnode.setNodeType("XO Large");
+		newnode.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
+		newnode.setPostBootScript("master post boot script");
 
 		//s.logger().debug("******************** START Request Info *********************");
-		//s.logger().debug(s.getRequest());
+		s.logger().debug(s.getRequest());
 		//s.logger().debug(s.getDebugString());
 		s.logger().debug("******************** END PRINTING *********************");
 		
-		//ComputeNode cn = (ComputeNode)s.getResourceByName("Node0");
+		ComputeNode cn = (ComputeNode)s.getResourceByName("Node0");
 		//s.logger().debug("cn: " + cn);
-		//s.logger().debug("compute node: " + cn.getName());
-				
+		s.logger().debug("compute node: " + cn.getName());
+		s.logger().debug("compute node: " + cn.getDomain());
+		s.logger().debug("Interfaces:  " + cn.getInterfaces());
+		
 		//StitchPort sp = (StitchPort)s.getResourceByName("StitchPort0");
 		//s.logger().debug("stitchprot node: " + sp.getName());
 

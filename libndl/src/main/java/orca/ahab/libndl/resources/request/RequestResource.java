@@ -6,6 +6,7 @@ import java.util.Set;
 
 import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.ndl.NDLModel;
+import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.Slice;
 
@@ -18,18 +19,13 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author pruth
  *
  */
-public abstract class RequestResource{
-	protected SliceGraph sliceGraph;
+public abstract class RequestResource extends ModelResource{
+	
 
-	protected Set<RequestResource> dependencies = new HashSet<RequestResource>(); 
-	//protected Set<Interface> interfaces = new HashSet<Interface>(); 
-	//protected Set<ManifestResource> instantiation = new HashSet<ManifestResource>();
-	
-	
-	private NDLModel getNDLModel() {
-		return sliceGraph.getNDLModel();
+
+	public RequestResource(SliceGraph sliceGraph) {
+		super(sliceGraph);
 	}
-
 
 	// reservation state - should probably be an enumeration
 	protected String state = null;
@@ -39,14 +35,13 @@ public abstract class RequestResource{
 	protected String domain; 
 	
 	
-	public RequestResource(SliceGraph sliceGraph){
-		this.sliceGraph = sliceGraph;
-	}
-	
-	//abstract methods 
-	public abstract String getPrintText();
+
 	public abstract Interface stitch(RequestResource r);
 
+	
+	
+	
+	
 	//non-abstract methods
 //	public String getURI(){
 //		if(getModelResource() != null){
@@ -56,19 +51,7 @@ public abstract class RequestResource{
 //		return null;
 //	}
 	
-	public String getName(){ 
-		try{
-			return getNDLModel().getName(this); 
-		} catch (Exception e){
-			LIBNDL.logger().debug("resouce name not found");
-		}
-		return "resource name not found";
-	}
 
-	public void setName(String s) {
-		getNDLModel().setName(this);
-		//name = s;
-	}
 
 	public String getState() {
 		return state;
@@ -103,8 +86,6 @@ public abstract class RequestResource{
 	//}
 
 	
-	public void delete(){
-		sliceGraph.deleteResource(this);
-	}
+
 	
 }

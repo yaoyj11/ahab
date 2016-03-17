@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import orca.ahab.libndl.ndl.ExistingSliceModel;
 import orca.ahab.libndl.ndl.ManifestLoader;
 import orca.ahab.libndl.ndl.ModifyGenerator;
@@ -38,11 +40,13 @@ import orca.ahab.libndl.ndl.NDLModel;
 import orca.ahab.libndl.ndl.NewSliceModel;
 import orca.ahab.libndl.ndl.RequestGenerator;
 import orca.ahab.libndl.ndl.RequestLoader;
+import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.manifest.LinkConnection;
 import orca.ahab.libndl.resources.manifest.ManifestResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
+import orca.ahab.libndl.resources.request.InterfaceNode2Net;
 import orca.ahab.libndl.resources.request.Network;
 import orca.ahab.libndl.resources.request.Node;
 import orca.ahab.libndl.resources.request.RequestReservationTerm;
@@ -64,7 +68,7 @@ public class SliceGraph   {
 	private Slice slice; 
 	private NDLModel ndlModel;
 	
-	private SparseMultigraph<RequestResource, Interface> sliceGraph = new SparseMultigraph<RequestResource, Interface>();
+	private SparseMultigraph<ModelResource, Interface> sliceGraph = new SparseMultigraph<ModelResource, Interface>();
 	private SparseMultigraph<ManifestResource, Interface> manifestGraph = new SparseMultigraph<ManifestResource, Interface>();
 	
 	private String rawLoadedRDF; //original rdf loaded. used for reseting uncommited modifies
@@ -108,8 +112,8 @@ public class SliceGraph   {
 		if (sliceGraph == null)
 			return;
 		
-		Set<RequestResource> resources = new HashSet<RequestResource>(sliceGraph.getVertices());
-		for (RequestResource r: resources)
+		Set<ModelResource> resources = new HashSet<ModelResource>(sliceGraph.getVertices());
+		for (ModelResource r: resources)
 			sliceGraph.removeVertex(r);
 		resDomainName = null;
 		term = new RequestReservationTerm();
@@ -125,12 +129,16 @@ public class SliceGraph   {
 		
 	}
 	
-	public Collection<RequestResource> getResources(){
+	public Collection<ModelResource> getResources(){
 		return sliceGraph.getVertices();
 	}
 	
-	protected SparseMultigraph<RequestResource, Interface> getGraph() {
+	protected SparseMultigraph<ModelResource, Interface> getGraph() {
 		return sliceGraph;
+	}
+	
+	public void printGraph() {
+		LIBNDL.logger().debug("JUNG Graph: " + sliceGraph);
 	}
 	
 	//public boolean isNewRequest(){
@@ -138,6 +146,7 @@ public class SliceGraph   {
 	//}
 	
 	public NDLModel getNDLModel(){
+		if(ndlModel == null) LIBNDL.logger().debug("SliceGraph.getNDLModel ndlModel is null");
 		return ndlModel;
 	}
 	/*************************************   Add/Delete/Get resources  ************************************/
@@ -183,30 +192,37 @@ public class SliceGraph   {
 		return link;
 	}
 	
+	public InterfaceNode2Net buildInterfaceNode2Net(Node node, Network net){
+		LIBNDL.logger().debug("PRUTH_BUILD_INTERFACE: " + node + ", " + net);
+		InterfaceNode2Net i = new InterfaceNode2Net(node,net,this);
+		sliceGraph.addEdge(i, node, net);
+		return i;
+	}
+	
 	/************************ build resources and add them to ndl model ************/
 	public ComputeNode addComputeNode(String name){
 		ComputeNode node = buildComputeNode(name);
-		//ndlModel.add(node,name);	
+		ndlModel.add(node,name);	
 		return node;
 	}
 	public StorageNode addStorageNode(String name){
 		StorageNode node = buildStorageNode(name);
-		//ndlModel.add(node);
+		ndlModel.add(node);
 		return node;
 	}
 	public StitchPort addStitchPort(String name){
 		StitchPort node = buildStitchPort(name);
-		//ndlModel.add(node);
+		ndlModel.add(node);
 		return node;
 	}
 	public Network addLink(String name){
 		BroadcastNetwork link = buildLink(name);
-		//ndlModel.add(link);
+		ndlModel.add(link);
 		return link;
 	}
 	public BroadcastNetwork addBroadcastLink(String name){
 		BroadcastNetwork link = buildBroadcastLink(name);
-		//ndlModel.add(link);
+		ndlModel.add(link);
 		return link;
 	}
 	
@@ -215,7 +231,7 @@ public class SliceGraph   {
 		if (nm == null)
 			return null;
 		LIBNDL.logger().debug("RAW jung graph: " + sliceGraph);
-		for (RequestResource n: sliceGraph.getVertices()) {
+		for (ModelResource n: sliceGraph.getVertices()) {
 			if (nm.equals(n.getName()) && n instanceof RequestResource){
 				return (RequestResource)n;
 			}
@@ -229,7 +245,7 @@ public class SliceGraph   {
 		if (uri == null)
 			return null;
 		LIBNDL.logger().debug("getResourceByURI: " + sliceGraph);
-		for (RequestResource n: sliceGraph.getVertices()) {
+		for (ModelResource n: sliceGraph.getVertices()) {
 			LIBNDL.logger().debug("getResourceByURI: " + n.getName());
 			//LIBNDL.logger().debug("getResourceByURI: " + n.getURI());
 			//if (n.getURI() != null && uri.equals(n.getURI()) && n instanceof RequestResource){
@@ -240,11 +256,17 @@ public class SliceGraph   {
 		return null;
 	}
 	
-	public void deleteResource(RequestResource r){
-		for (Interface s: r.getInterfaces()){
+	
+	
+	public void deleteResource(RequestResource modelResource){
+		for (Interface s: modelResource.getInterfaces()){
 			sliceGraph.removeEdge(s);
 		}
-		sliceGraph.removeVertex(r);
+		sliceGraph.removeVertex(modelResource);
+	}
+	
+	public void deleteResource(Interface i){
+			sliceGraph.removeEdge(i);
 	}
 	
 	public void addStitch(RequestResource a, RequestResource b, Interface s){
@@ -316,7 +338,7 @@ public class SliceGraph   {
 	public Collection<Network> getLinks(){
 		ArrayList<Network> links = new ArrayList<Network>();
 		
-		for (RequestResource resource: sliceGraph.getVertices()) {
+		for (ModelResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof Network){
 				links.add((Network)resource);
 			}
@@ -329,7 +351,7 @@ public class SliceGraph   {
 	public Collection<BroadcastNetwork> getBroadcastLinks(){
 		ArrayList<BroadcastNetwork> broadcastlinks = new ArrayList<BroadcastNetwork>();
 		
-		for (RequestResource resource: sliceGraph.getVertices()) {
+		for (ModelResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof BroadcastNetwork){
 				broadcastlinks.add((BroadcastNetwork)resource);
 			}
@@ -340,7 +362,7 @@ public class SliceGraph   {
 	public Collection<Node> getNodes(){
 		ArrayList<Node> nodes = new ArrayList<Node>();
 		
-		for (RequestResource resource: sliceGraph.getVertices()) {
+		for (ModelResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof Node){
 				nodes.add((Node)resource);
 			}
@@ -351,7 +373,7 @@ public class SliceGraph   {
 	public Collection<ComputeNode> getComputeNodes(){
 		ArrayList<ComputeNode> nodes = new ArrayList<ComputeNode>();
 		
-		for (RequestResource resource: sliceGraph.getVertices()) {
+		for (ModelResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof ComputeNode){
 				nodes.add((ComputeNode)resource);
 			}
@@ -362,7 +384,7 @@ public class SliceGraph   {
 	public Collection<StorageNode> getStorageNodes(){
 		ArrayList<StorageNode> nodes = new ArrayList<StorageNode>();
 		
-		for (RequestResource resource: sliceGraph.getVertices()) {
+		for (ModelResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof StorageNode){
 				nodes.add((StorageNode)resource);
 			}
@@ -372,7 +394,7 @@ public class SliceGraph   {
 	public Collection<StitchPort> getStitchPorts(){
 		ArrayList<StitchPort> nodes = new ArrayList<StitchPort>();
 		
-		for (RequestResource resource: sliceGraph.getVertices()) {
+		for (ModelResource resource: sliceGraph.getVertices()) {
 			if(resource instanceof StitchPort){
 				nodes.add((StitchPort)resource);
 			}
@@ -416,8 +438,12 @@ public class SliceGraph   {
 	}
 	
 	public void loadManifestRDF(String rdf){
+		LIBNDL.logger().debug("SliceGraph::loadManifestRDF");
 		rawLoadedRDF = rdf;
-		this.ndlModel = new ExistingSliceModel(this,rdf);
+		this.ndlModel = new ExistingSliceModel();
+		((ExistingSliceModel)this.ndlModel).init(this,rdf);
+		
+		LIBNDL.logger().debug("SliceGraph::loadManifestRDF this.ndlModel = " + this.ndlModel);
 	}
 	
 	public void save(String file){
@@ -454,7 +480,7 @@ public class SliceGraph   {
 	/*************************************   debugging ************************************/
 	public String getDebugString(){
 		String rtnStr = "getRequestDebugString: ";
-		for (RequestResource r : sliceGraph.getVertices()){
+		for (ModelResource r : sliceGraph.getVertices()){
 			rtnStr += ", Resource:" + r.getName();
 		}
 		//rtnStr += sliceGraph.toString();

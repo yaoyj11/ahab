@@ -222,7 +222,7 @@ public class ComputeNode extends Node {
 	public Interface stitch(RequestResource r){
 		Interface stitch = null;
 		if (r instanceof Network){
-			stitch = new InterfaceNode2Net(this,(Network)r);
+			stitch = new InterfaceNode2Net(this,(Network)r,sliceGraph);
 		} else {
 			//Can't stitch computenode to r
 			//Should throw exception
@@ -239,6 +239,12 @@ public class ComputeNode extends Node {
 	public String getPrintText() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void delete() {
+		sliceGraph.deleteResource(this);
+		
 	}
 
 	

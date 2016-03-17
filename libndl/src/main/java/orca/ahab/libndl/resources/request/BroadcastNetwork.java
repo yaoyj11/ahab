@@ -97,4 +97,9 @@ public class BroadcastNetwork extends Network {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public void delete() {
+		sliceGraph.deleteResource(this);
+	}
 }

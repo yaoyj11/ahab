@@ -9,6 +9,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
+import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.manifest.ManifestResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
@@ -31,41 +32,35 @@ public class ExistingSliceModel extends NDLModel{
 	protected Map<RequestResource,Resource> slice2NDLMap;
 	
 	
-	public ExistingSliceModel(SliceGraph sliceGraph, String rdf) {
+	public ExistingSliceModel() {
 		super();
 		
-		slice2NDLMap = new HashMap<RequestResource,Resource>();
+	}
+
+	public void init(SliceGraph sliceGraph, String rdf){
 		
-		//ManifestLoader mloader = new ManifestLoader(sliceGraph,this);
-		//sliceModel = mloader.load(rdf);
-		
-		RequestLoader rloader = new RequestLoader(sliceGraph,this);
-		sliceModel = rloader.load(rdf);
-	
-		
-		try {
+		try{
+			RequestLoader rloader = new RequestLoader(sliceGraph,this);
+			sliceModel = rloader.load(rdf);
+
 			String nsGuid = "1111111111"; //hack for now
+		
 			ngen = new NdlGenerator(nsGuid, LIBNDL.logger(), true);
 			String nm = (nsGuid == null ? "my-modify" : nsGuid + "/my-modify");
 			reservation = ngen.declareModifyReservation(nm);
-		} catch (Exception e) {
-			LIBNDL.logger().debug("Fail: createModifyRequest");
-			return;
-		} 
+		} catch (Exception e){
+			LIBNDL.logger().debug("Fail: ExistingSliceModel::init");
+		}
+					
 	}
 
-	
 	protected void mapSliceResource2ModelResource(RequestResource r, Resource i){
 		slice2NDLMap.put(r,i);
 	}
-	
+
 	
 	protected Resource getModelResource(RequestResource r){
-		Resource modelResource = null;	
-		if((modelResource = request2NDLMap.get(r)) != null) {
-			return modelResource;
-		} 
-		return slice2NDLMap.get(r);
+		return request2NDLMap.get(r);
 	}
 	
 	
@@ -150,17 +145,17 @@ public class ExistingSliceModel extends NDLModel{
 
 	@Override
 	public void remove(StorageNode sn) {
-		// TODO Auto-generated method stub
+		// TODO Auto-generated method stu(b
 		
 	}
 
 	@Override
-	public String getName(RequestResource cn) {
+	public String getName(ModelResource cn) {
 		return this.getModelResource(cn).getLocalName();
 	}
 
 	@Override
-	public void setName(RequestResource cn) {
+	public void setName(ModelResource cn) {
 		// TODO Auto-generated method stub
 		
 	}

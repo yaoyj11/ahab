@@ -6,6 +6,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
+import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
@@ -116,12 +117,12 @@ public class NewSliceModel extends NDLModel {
 	}
 
 	@Override
-	public String getName(RequestResource cn) {
+	public String getName(ModelResource cn) {
 		return this.getModelResource(cn).getLocalName();
 	}
 
 	@Override
-	public void setName(RequestResource cn) {
+	public void setName(ModelResource cn) {
 		logger().info("NDLModel:setName not impelemented");		
 	}
 

@@ -3,6 +3,8 @@
  */
 package orca.ahab.libndl.resources.request;
 
+import orca.ahab.libndl.SliceGraph;
+
 /**
  * @author geni-orca
  *
@@ -15,8 +17,8 @@ public class InterfaceNode2Net extends Interface{
 	private String netmask;
 	private String macAddress;
 	
-	public InterfaceNode2Net(Node n, Network l){
-		super(n,l);
+	public InterfaceNode2Net(Node n, Network l, SliceGraph sliceGraph){
+		super(n,l, sliceGraph);
 	}
 	
 	public Node getNode() {
@@ -70,6 +72,19 @@ public class InterfaceNode2Net extends Interface{
 		rtnStr += ", mac: " + this.macAddress;
 		
 		return rtnStr;
+	}
+
+	@Override
+	public String getPrintText() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void delete() {
+		// TODO Auto-generated method stub
+		sliceGraph.deleteResource(this);
+		
 	}
 
 }
