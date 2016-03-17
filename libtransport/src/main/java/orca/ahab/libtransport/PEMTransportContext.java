@@ -38,7 +38,7 @@ public class PEMTransportContext extends SSLTransportContext {
 
 	private static final String DEFAULT_X509_ALIAS = "x509convert";
 
-	private void initKS(String pass, String certP, String keyP) throws ContextTransportException {
+	private void initKS(String certP, String keyP) throws ContextTransportException {
 		try {
 			File certFilePath = StaticUtil.getUserFileName(certP);
 			File certKeyFilePath = StaticUtil.getUserFileName(keyP);
@@ -66,7 +66,7 @@ public class PEMTransportContext extends SSLTransportContext {
 	public PEMTransportContext(String pass, String certP, String keyP) throws ContextTransportException {
 		super(DEFAULT_X509_ALIAS, pass);
 		
-		initKS(pass, certP, keyP);
+		initKS(certP, keyP);
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class PEMTransportContext extends SSLTransportContext {
 	public PEMTransportContext(String pass, String certP) throws ContextTransportException {
 		super(DEFAULT_X509_ALIAS, pass);
 		
-		initKS(pass, certP, certP);
+		initKS(certP, certP);
 	}
 	
 	/**

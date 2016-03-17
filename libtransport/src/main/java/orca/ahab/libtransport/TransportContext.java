@@ -31,5 +31,6 @@ public abstract class TransportContext {
 			return;
 		
 		_establishIdentity(ctrlUrl);
+		setIdentity();
 	}
 }

@@ -133,7 +133,6 @@ public class SSLTransportContext extends TransportContext {
 				port = HTTPS_PORT;
 			regSslFact.addHostContextFactory(new MultiKeySSLContextFactory(mkm, trustAllCerts), 
 					ctrlrUrl.getHost(), port);
-			setIdentity();
 		} catch (Exception e) {
 			throw new ContextTransportException(e.getMessage());
 		}
