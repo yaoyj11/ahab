@@ -9,9 +9,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Properties;
+
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Network;
@@ -21,6 +27,7 @@ import orca.ahab.libndl.resources.request.StorageNode;
 import orca.ahab.libtransport.ISliceTransportAPIv1;
 import orca.ahab.libtransport.ITransportProxyFactory;
 import orca.ahab.libtransport.JKSTransportContext;
+import orca.ahab.libtransport.PEMTransportContext;
 import orca.ahab.libtransport.TransportContext;
 import orca.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import orca.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
@@ -37,8 +44,8 @@ public class TestDriver {
     	
     	LIBNDL.setLogger();
     	
-    	//testLibtransport();
-    	testLoad();
+    	testLibtransport(args[0], args[1]);
+    	//testLoad();
     	//testSave();
     	//testLoadAndSave();
     	//testLoadManifest();
@@ -51,16 +58,26 @@ public class TestDriver {
     	
 	}
 	
-	public static void testLibtransport(){
+	public static void testLibtransport(String certP, String keyP){
 		try {
-			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
-			TransportContext ctx = new JKSTransportContext("selfsigned", "selfpassword", 
-					"files/testkeystore.jks");
-			ifac.getConverterProxy(Collections.singletonList(new URL("http://geni.renci.org:15080/convert")));
-			ifac.getGENICHProxy(ctx, new URL("http://portal.geni.net/ch"));
-			ifac.getRegistryProxy("78:B6:1A:F0:6C:F8:C7:0F:C0:05:10:13:06:79:E0:AC", new URL("https://geni.renci.org:15443/registry/"));
-			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL("https://geni.renci.org:15443/orca/xmlrpc"));
+			Logger logger = Logger.getRootLogger();//Logger.getLogger("org.apache.commons.httpclient.HttpClient");
+			logger.setLevel(Level.DEBUG);
+			ConsoleAppender capp = new ConsoleAppender();
+			capp.setImmediateFlush(true);
+			capp.setName("Test Console Appender");
+			org.apache.log4j.SimpleLayout sl = new SimpleLayout();
+			capp.setLayout(sl);
+			capp.setWriter(new PrintWriter(System.out));
+			logger.addAppender(capp);
 			
+			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+			System.out.println("Opening certificate " + certP + " and key " + keyP);
+			TransportContext ctx = new PEMTransportContext("", certP, 
+					keyP);
+
+			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL("https://geni.renci.org:11443/orca/xmlrpc"));
+			
+			System.out.println(sliceProxy.getVersion());
 			// now you can do things like 
 			//sliceProxy.getVersion();
 		} catch (Exception e) {

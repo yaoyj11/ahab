@@ -29,4 +29,32 @@ public class TestXMLRPCTransport extends TestCase {
 		}
 		System.out.println("Proxy factory test succeeded");
 	}
+	
+//	public void testXMLRPCGetVersion() {
+//		try {
+//			Logger logger = Logger.getRootLogger();//Logger.getLogger("org.apache.commons.httpclient.HttpClient");
+//			logger.setLevel(Level.INFO);
+//			ConsoleAppender capp = new ConsoleAppender();
+//			capp.setImmediateFlush(true);
+//			capp.setName("Test Console Appender");
+//			org.apache.log4j.SimpleLayout sl = new SimpleLayout();
+//			capp.setLayout(sl);
+//			capp.setWriter(new PrintWriter(System.out));
+//			logger.addAppender(capp);
+//
+//			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+//			TransportContext ctx = new PEMTransportContext("", "ddd.pem", 
+//					"ddd.key");
+//			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL("https://geni.renci.org:11443/orca/xmlrpc"));
+//			
+//			System.out.println(sliceProxy.getVersion());
+//			// now you can do things like 
+//			//sliceProxy.getVersion();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			System.err.println("XMLRPC GetVersion test failed");
+//			assert(false);
+//		}
+//		System.out.println("XMLRPC GetVersion test succeeded");
+//	}
 }

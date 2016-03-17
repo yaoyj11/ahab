@@ -60,6 +60,8 @@ public class SSLTransportContext extends TransportContext {
 					// Trust always, unless expired
 					// FIXME: should check the cert of controller we're talking to
 					for(X509Certificate c: certs) {
+						System.out.println("Checking cert");
+						System.out.println(c);
 						c.checkValidity();	
 					}
 				}
