@@ -18,7 +18,10 @@ public class TestXMLRPCTransport extends TestCase {
 			ifac.getConverterProxy(Collections.singletonList(new URL("http://geni.renci.org:15080/convert")));
 			ifac.getGENICHProxy(ctx, new URL("http://portal.geni.net/ch"));
 			ifac.getRegistryProxy("78:B6:1A:F0:6C:F8:C7:0F:C0:05:10:13:06:79:E0:AC", new URL("https://geni.renci.org:15443/registry/"));
-			ifac.getSliceProxy(ctx, new URL("https://geni.renci.org:15443/orca/xmlrpc"));
+			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL("https://geni.renci.org:15443/orca/xmlrpc"));
+			
+			// now you can do things like 
+			//sliceProxy.getVersion();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("Proxy factory test failed");
