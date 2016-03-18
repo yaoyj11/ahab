@@ -32,7 +32,7 @@ public abstract class RequestResource extends ModelResource{
 	
 	//User controlled properties:
 	//protected String name;
-	protected String domain; 
+	//protected String domain; 
 	
 	
 
@@ -61,12 +61,14 @@ public abstract class RequestResource extends ModelResource{
 		state = s;
 	}
 
+	
+
 	public String getDomain() {
-		return domain;
+		return this.getNDLModel().getDomain(this);
 	}
 	
 	public void setDomain(String d) {
-		domain = d;
+		this.getNDLModel().setDomain(this,d);
 	}
 	
 	public Collection<Interface> getInterfaces() {

@@ -68,7 +68,7 @@ public class NewSliceModel extends NDLModel {
 		
 	}
 
-	@Override
+	@Override 
 	public void add(StitchPort sp) {
 		// TODO Auto-generated method stub
 		
@@ -130,6 +130,65 @@ public class NewSliceModel extends NDLModel {
 	public String getRequest() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void setImage(ComputeNode cn, String imageURL, String imageHash, String shortName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String getImageURL(ComputeNode cn) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getImageHash(ComputeNode cn) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getImageShortName(ComputeNode cn) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setNodeType(ComputeNode computeNode, String nodeType) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public String getNodeType(ComputeNode computeNode) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setPostBootScript(ComputeNode computeNode, String postBootScript) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public String getPostBootScript(ComputeNode computeNode) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getDomain(RequestResource requestResource) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setDomain(RequestResource requestResource, String d) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 

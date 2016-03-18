@@ -16,7 +16,7 @@ public abstract class ModelResource {
 	//protected Set<ManifestResource> instantiation = new HashSet<ManifestResource>();
 	
 	
-	private NDLModel getNDLModel() {
+	protected NDLModel getNDLModel() {
 		if(sliceGraph == null) LIBNDL.logger().debug("ModelResource::getNDLModel sliceGraph is null");
 		
 		return sliceGraph.getNDLModel();

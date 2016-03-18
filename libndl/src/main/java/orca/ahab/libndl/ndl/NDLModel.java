@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+import edu.uci.ics.jung.graph.util.Pair;
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
@@ -42,6 +43,11 @@ public abstract class NDLModel {
 	abstract public void remove(InterfaceNode2Net i);
 	abstract public void remove(StorageNode sn);
 	
+	abstract public void setImage(ComputeNode cn, String imageURL, String imageHash, String shortName);
+	abstract public String getImageURL(ComputeNode cn);
+	abstract public String getImageHash(ComputeNode cn);
+	abstract public String getImageShortName(ComputeNode cn);
+	
 	protected NDLModel(){
 		request2NDLMap = new HashMap<ModelResource,Resource>();
 		
@@ -57,6 +63,10 @@ public abstract class NDLModel {
 		return request2NDLMap.get(cn);
 	}
 	
+	public void printRequest2NDLMap(){
+		LIBNDL.logger().debug("NDLModle::printRequest2NDLMap: " + request2NDLMap);
+	}
+	
 	protected Logger logger(){
 		return LIBNDL.logger();
 	}
@@ -66,9 +76,15 @@ public abstract class NDLModel {
 	abstract public String getName(ModelResource modelResource);
 	abstract public void setName(ModelResource modelResource);
 	
+	abstract public String getNodeType(ComputeNode computeNode);
+	abstract public void setNodeType(ComputeNode computeNode, String nodeType);
 	
-	public void printRequest2NDLMap(){
-		LIBNDL.logger().debug("NDLModle::printRequest2NDLMap: " + request2NDLMap);
-	}
+	abstract public void setPostBootScript(ComputeNode computeNode, String postBootScript);
+	abstract public String getPostBootScript(ComputeNode computeNode);
+	
+	abstract public String getDomain(RequestResource requestResource);
+    abstract public void setDomain(RequestResource requestResource, String d);
+	
+	
 	
 }

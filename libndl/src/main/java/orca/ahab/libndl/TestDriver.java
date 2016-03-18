@@ -44,7 +44,7 @@ public class TestDriver {
     	
     	LIBNDL.setLogger();
     	
-    	testLibtransport(args[0], args[1]);
+    	testLibtransport(args[0]);
     	//testLoad();
     	//testSave();
     	//testLoadAndSave();
@@ -58,26 +58,49 @@ public class TestDriver {
     	
 	}
 	
-	public static void testLibtransport(String certP, String keyP){
+	public static void testLibtransport(String pem){
 		try {
-			Logger logger = Logger.getRootLogger();//Logger.getLogger("org.apache.commons.httpclient.HttpClient");
-			logger.setLevel(Level.DEBUG);
-			ConsoleAppender capp = new ConsoleAppender();
-			capp.setImmediateFlush(true);
-			capp.setName("Test Console Appender");
-			org.apache.log4j.SimpleLayout sl = new SimpleLayout();
-			capp.setLayout(sl);
-			capp.setWriter(new PrintWriter(System.out));
-			logger.addAppender(capp);
+//			Logger logger = Logger.getRootLogger();//Logger.getLogger("org.apache.commons.httpclient.HttpClient");
+//			logger.setLevel(Level.DEBUG);
+//			ConsoleAppender capp = new ConsoleAppender();
+//			capp.setImmediateFlush(true);
+//			capp.setName("Test Console Appender");
+//			org.apache.log4j.SimpleLayout sl = new SimpleLayout();
+//			capp.setLayout(sl);
+//			capp.setWriter(new PrintWriter(System.out));
+//			logger.addAppender(capp);
 			
 			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
-			System.out.println("Opening certificate " + certP + " and key " + keyP);
-			TransportContext ctx = new PEMTransportContext("", certP, 
-					keyP);
+			System.out.println("Opening certificate " + pem + " and key " + pem);
+			TransportContext ctx = new PEMTransportContext("", pem, pem);
 
 			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL("https://geni.renci.org:11443/orca/xmlrpc"));
 			
-			System.out.println(sliceProxy.getVersion());
+			//System.out.println(sliceProxy.getVersion());
+			for (String str : sliceProxy.listMySlices()){
+				System.out.println(str);
+			}
+			
+			String manifest = sliceProxy.sliceStatus("pruth.101");
+			//System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+			//System.out.println(manifest);
+			//System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+			
+			Slice s = Slice.loadManifest(manifest);
+			System.out.println("Slice pruth.101 = " + s.getDebugString());
+			
+			ComputeNode   newnode = s.addComputeNode("ComputeNode0");
+			newnode.setImage("http://geni-images.renci.org/images/standard/centos/centos6.3-v1.0.11.xml","776f4874420266834c3e56c8092f5ca48a180eed","PRUTH-centos");
+			newnode.setNodeType("XO Large");
+			newnode.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
+			newnode.setPostBootScript("master post boot script");
+			
+			System.out.println("Slice pruth.101 = " + s.getDebugString());
+			
+			//System.out.println("Request: " + s.getRequest());
+			
+			sliceProxy.modifySlice("pruth.101", s.getRequest());
+			
 			// now you can do things like 
 			//sliceProxy.getVersion();
 		} catch (Exception e) {

@@ -7,6 +7,7 @@ import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.util.Pair;
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.resources.common.ModelResource;
@@ -76,7 +77,8 @@ public class ExistingSliceModel extends NDLModel{
 	public void add(ComputeNode cn, String name) {
 		logger().debug("ExistingSliceModel:add(ComputeNode)");
 		try {
-			Individual ni;
+			Individual ni = null;
+			
 			if (cn.getNodeCount() > 0){
 				if (cn.getSplittable())
 					ni = ngen.declareServerCloud(name, cn.getSplittable());
@@ -88,7 +90,7 @@ public class ExistingSliceModel extends NDLModel{
 			}
 			
 			mapRequestResource2ModelResource(cn, ni);
-			ngen.addResourceToReservation(reservation, ni);
+			ngen.declareModifyElementAddElement(reservation, ni);
 		} catch (NdlException e) {
 			logger().error("NewSliceModel:add(ComputeNode):" + e.getStackTrace());
 		}	
@@ -160,6 +162,108 @@ public class ExistingSliceModel extends NDLModel{
 		
 	}
 
+	/******************************** set/get ComputeNode properties **********************/
+	@Override
+	public void setImage(ComputeNode cn, String imageURL, String imageHash, String shortName){
+		try{
+			Individual imageIndividual = ngen.declareDiskImage(imageURL, imageHash, shortName);	
+			ngen.addDiskImageToIndividual(imageIndividual, (Individual)this.getModelResource(cn));
+		}catch (ClassCastException e){
+			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + cn.getName());
+		}catch (NdlException e){
+			LIBNDL.logger().error("NdlException setting image for " + cn.getName());
+		}
+	}
+
+	@Override
+	public String getImageURL(ComputeNode cn) {
+		return NdlCommons.getIndividualsImageURL(this.getModelResource(cn));
+	}
+
+	@Override
+	public String getImageHash(ComputeNode cn) {
+		return NdlCommons.getIndividualsImageHash(this.getModelResource(cn));
+	}
+
+	@Override
+	public String getImageShortName(ComputeNode cn) {
+		//getImageShortName not implemented
+		return "";
+		//return NdlCommons.getIndividualsImageURL(this.getModelResource(cn));		
+	}
+	
+	@Override
+	public void setNodeType(ComputeNode computeNode, String nodeType) {
+		try{
+			Individual ni = (Individual)this.getModelResource(computeNode);
+			
+			if (NDLGenerator.BAREMETAL.equals(nodeType))
+				ngen.addBareMetalDomainProperty(ni);
+			else if (NDLGenerator.FORTYGBAREMETAL.equals(nodeType))
+				ngen.addFourtyGBareMetalDomainProperty(ni);
+			else
+				ngen.addVMDomainProperty(ni);
+			if (NDLGenerator.nodeTypes.get(nodeType) != null) {
+				Pair<String> nt = NDLGenerator.nodeTypes.get(nodeType);
+				ngen.addNodeTypeToCE(nt.getFirst(), nt.getSecond(), ni);
+			}
+			
+		}catch (ClassCastException e){
+			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + computeNode.getName());
+		}catch (NdlException e){
+			LIBNDL.logger().error("NdlException setting image for " + computeNode.getName());
+		}
+	}
+
+	@Override
+	public String getNodeType(ComputeNode computeNode) {
+		// TODO Auto-generated method stub
+		Resource ceType = NdlCommons.getSpecificCE(this.getModelResource(computeNode));
+		return RequestGenerator.reverseNodeTypeLookup(ceType); 
+	}
+
+	@Override
+	public void setPostBootScript(ComputeNode computeNode, String postBootScript) {
+		try{
+			if ((postBootScript != null) && (postBootScript.length() > 0)) {
+				ngen.addPostBootScriptToCE(postBootScript, (Individual)this.getModelResource(computeNode));
+			} 
+		}
+		catch (ClassCastException e){
+			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + computeNode.getName());
+		}catch (NdlException e){
+			LIBNDL.logger().error("NdlException setting image for " + computeNode.getName());
+		}
+		
+	}
+
+	@Override
+	public String getPostBootScript(ComputeNode computeNode) {
+		return NdlCommons.getPostBootScript((Individual)this.getModelResource(computeNode));
+	}
+
+
+
+	@Override
+	public void setDomain(RequestResource requestResource, String d) {
+		try{
+			Individual domI = ngen.declareDomain(NDLGenerator.domainMap.get(d));
+			ngen.addNodeToDomain(domI, (Individual)this.getModelResource(requestResource));
+		}catch (ClassCastException e){
+			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + requestResource.getName());
+		}catch (NdlException e){
+			LIBNDL.logger().error("NdlException setting image for " + requestResource.getName());
+		}
+	}
+	
+	@Override
+	public String getDomain(RequestResource requestResource) {
+		return NdlCommons.getDomain((Individual)this.getModelResource(requestResource)).getLocalName();
+	}
+
+	
+
+	
 
 
 }

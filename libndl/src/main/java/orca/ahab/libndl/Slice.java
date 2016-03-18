@@ -61,7 +61,7 @@ public class Slice {
 		Slice s = new Slice();
 		s.sliceGraph.loadManifestRDF(manifestRDFString);
 		
-		return s;
+		return s; 
 	}
 	
 	private static String readRDFFile(File f){

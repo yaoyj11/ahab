@@ -39,7 +39,7 @@ public abstract class Node extends RequestResource {
 	public Node(SliceGraph sliceGraph, String name) {
 		super(sliceGraph);
 		//this.name = name; //name should be unique... i think
-		this.domain = null;
+		//this.domain = null;
 		this.dependencies = null;
 		this.state = null;
 	}

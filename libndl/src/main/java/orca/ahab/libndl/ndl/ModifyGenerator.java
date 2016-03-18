@@ -2,6 +2,8 @@
 
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
+import orca.ahab.libndl.resources.request.ComputeNode;
+import orca.ndl.NdlCommons;
 import orca.ndl.NdlException;
 import orca.ndl.NdlGenerator;
 
@@ -61,6 +63,62 @@ public class ModifyGenerator extends NDLGenerator{
 			} 
 	
 	}
+	/**
+	 * Add a  nodes 
+	 * 
+	 */
+	public void addComputeNode(ComputeNode cn) {
+		if (ngen == null)
+			createModifyRequest(null);
+		try {
+			//LIBNDL.logger().debug("ngen: " + ngen + ", modRes: " + modRes +", groupUrl: " + groupUrl + ", count: " + count);
+			Individual ni = ngen.declareServerCloud(cn.getName());
+			ngen.declareModifyElementAddElement(modRes, ni);
+			
+			// for clusters, add number of nodes, declare as cluster (VM domain)
+			if (cn.getNodeCount() > 0){
+				ngen.addNumCEsToCluster(cn.getNodeCount(), ni);
+				ngen.addVMDomainProperty(ni);
+			}
+
+			// node type 
+			setNodeTypeOnInstance(cn.getNodeType(), ni);
+
+			// check if image is set in this node
+			if (cn.getImageUrl() != null) {
+				Individual imI = ngen.declareDiskImage(cn.getImageUrl().toString(), cn.getImageHash(), cn.getImageShortName());
+				ngen.addDiskImageToIndividual(imI, ni);
+			} else {
+				// only bare-metal can specify no image
+				if (!NdlCommons.isBareMetal(ni))
+					throw new NdlException("Node " + cn.getName() + " is not bare-metal and does not specify an image");
+
+			}
+
+			LIBNDL.logger().debug("About to add domain " + cn.getDomain());
+			// if no global domain domain is set, declare a domain and add inDomain property
+			//if (!globalDomain && (cn.getDomain() != null)) {
+			if (cn.getDomain() != null) {
+				LIBNDL.logger().debug("adding domain " + cn.getDomain());
+				Individual domI = ngen.declareDomain(domainMap.get(cn.getDomain()));
+				ngen.addNodeToDomain(domI, ni);
+			}
+
+			// post boot script
+			if ((cn.getPostBootScript() != null) && (cn.getPostBootScript().length() > 0)) {
+				ngen.addPostBootScriptToCE(cn.getPostBootScript(), ni);
+			}
+			
+			
+			
+		} catch (NdlException e) {
+			//LIBNDL.logger().debug("addNodesToGroup FAIL: ngen: " + ngen + ", modRes: " + modRes +", groupUrl: " + groupUrl + ", count: " + count);
+
+			return;
+		}
+	}
+	
+	
 	
 	/**
 	 * Add a count of nodes to a group

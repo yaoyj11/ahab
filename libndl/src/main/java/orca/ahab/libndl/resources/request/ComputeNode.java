@@ -28,57 +28,23 @@ import java.util.List;
 
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
+import orca.ahab.libndl.ndl.NDLModel;
 import orca.ahab.libndl.Slice;
 
-public class ComputeNode extends Node {
-	protected class Image{
-		String imageURL;
-		String imageHash;
-		String shortName;
-		
-		public Image(String imageURL, String imageHash, String shortName) {
-			this.imageURL = imageURL;
-			this.imageHash = imageHash;
-			this.shortName = shortName;
-		}
-		public String getImageURL() {
-			return imageURL;
-		}
-		public void setImageURL(String imageURL) {
-			this.imageURL = imageURL;
-		}
-		public String getImageHash() {
-			return imageHash;
-		}
-		public void setImageHash(String imageHash) {
-			this.imageHash = imageHash;
-		}
-		public String getShortName() {
-			return shortName;
-		}
-		public void setshortName(String shortName) {
-			this.shortName = shortName;
-		}
-		
-	}
-	
-	
-	
+public class ComputeNode extends Node {	
 	protected int nodeCount = 1; //The actual count of the nodes for a group
 	protected int maxNodeCount = 1; //The max nodes a group can expand to. Used for autoip. Default = nodeCount
 	protected boolean splittable = false;
 
-	protected Image image = null;
+	//protected Image image = null;
 	protected String group = null;
-	protected String nodeType = null;
-	protected String postBootScript = null;
+	//protected String nodeType = null;
+	//protected String postBootScript = null;
 		
 	//list of nodes that instantiate this group
 	ArrayList<orca.ahab.libndl.resources.manifest.Node> manifestNodes; 
 		
-	public void setPostBootScript(String postBootScript) {
-		this.postBootScript = postBootScript;
-	}
+	
 
 
 	protected List<String> managementAccess = null;
@@ -103,11 +69,7 @@ public class ComputeNode extends Node {
 	}
 	
 	public void setImage(String url, String hash, String shortName){
-		image = new Image(url, hash, shortName);
-	}
-	
-	public void setDomain(String domain){
-		this.domain = domain;
+		this.getNDLModel().setImage(this, url, hash, shortName);
 	}
 	
 	
@@ -115,7 +77,7 @@ public class ComputeNode extends Node {
 	public String getImageUrl(){
 		String url = null;
 		try{
-			url = image.getImageURL();
+			url = this.getNDLModel().getImageURL(this); 
 		} catch (Exception e){
 			url = null;
 		}
@@ -123,15 +85,21 @@ public class ComputeNode extends Node {
 	}
 	
 	public String getImageHash(){
-		return image.getImageHash();
+		return this.getNDLModel().getImageHash(this); 
 	}
 	
 	public String getImageShortName(){
-		return image.getShortName();
+		return this.getNDLModel().getImageShortName(this); 
+	}
+	
+	
+	public void setPostBootScript(String postBootScript){
+		this.getNDLModel().setPostBootScript(this,postBootScript); 
 	}
 	
 	public String getPostBootScript(){
-		return postBootScript;
+		return this.getNDLModel().getPostBootScript(this); 
+		//return postBootScript;
 	}
 	
 
@@ -204,11 +172,11 @@ public class ComputeNode extends Node {
 	}
 	
 	public String getNodeType() {
-		return nodeType;
+		return this.getNDLModel().getNodeType(this);
 	}
 	
 	public void setNodeType(String nt) {
-		nodeType = nt;
+		this.getNDLModel().setNodeType(this, nt);
 	}
 	public void setSplittable(boolean f) {
 		splittable = f;
