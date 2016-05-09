@@ -93,7 +93,7 @@ public abstract class NDLModel {
     	//return NdlCommons.getURL(this.getModelResource(requestResource));
     }
     public void setURL(RequestResource requestResource, String url){
-    	//not implemented
+    	//not implemented.  should it be?  i'm not sure.
     }
     
 	public String getGUID(RequestResource requestResource){
