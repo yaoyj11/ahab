@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.Collection;
 
 import orca.ahab.libndl.ndl.ExistingSliceModel;
@@ -20,6 +21,13 @@ import orca.ahab.libndl.resources.request.RequestResource;
 import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
 import orca.ahab.libndl.util.IP4Subnet;
+import orca.ahab.libtransport.ISliceTransportAPIv1;
+import orca.ahab.libtransport.ITransportProxyFactory;
+import orca.ahab.libtransport.PEMTransportContext;
+import orca.ahab.libtransport.TransportContext;
+import orca.ahab.libtransport.util.ContextTransportException;
+import orca.ahab.libtransport.util.TransportException;
+import orca.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import orca.ndl.NdlRequestParser;
 
 import org.apache.log4j.Level;
@@ -32,6 +40,8 @@ import edu.uci.ics.jung.graph.SparseMultigraph;
 public class Slice {
 	
 	private SliceGraph sliceGraph;
+	private ISliceTransportAPIv1 sliceProxy;
+	private String name;
 	
 	private Slice(){
 		sliceGraph = new SliceGraph(this);
@@ -45,9 +55,7 @@ public class Slice {
 		return Slice.loadRequest(readRDFFile(new File(fileName)));
 	}
 	
-	public static Slice loadManifestFile(String fileName){
-		return Slice.loadManifest(readRDFFile(new File(fileName)));
-	}
+	
 	
 	
 	public static Slice loadRequest(String requestRDFString){
@@ -55,6 +63,20 @@ public class Slice {
 		s.sliceGraph.loadRequestRDF(requestRDFString);
 		return s;
 
+	}
+	
+	public static Slice loadManifestFile(ISliceTransportAPIv1 sliceProxy, String sliceName) throws ContextTransportException, TransportException{
+		Slice s = Slice.loadManifest(sliceProxy.sliceStatus(sliceName));
+		s.setName(sliceName);
+		s.setSliceProxy(sliceProxy);
+		return s;
+	}
+	
+	
+	
+
+	public static Slice loadManifestFile(String fileName){
+		return Slice.loadManifest(readRDFFile(new File(fileName)));
 	}
 	
 	public static Slice loadManifest(String manifestRDFString){
@@ -142,6 +164,26 @@ public class Slice {
 		}
 	}
 	
+	public void setName(String sliceName) {
+		this.name = sliceName;
+	}
+	public String getName() {
+		return this.name;
+	}
+	
+	public void commit() {
+		try{
+			LIBNDL.logger().debug("Name: " + this.getName());
+			LIBNDL.logger().debug("Req: " + this.getRequest());
+			LIBNDL.logger().debug("sliceProxy: " + sliceProxy);
+			sliceProxy.modifySlice(this.getName(), this.getRequest());
+		} catch (Exception e){
+			this.logger().debug("Failed to commit changes");
+			e.printStackTrace();
+			return;
+		}
+	}
+	
 	
 	/**************************** Get Slice Info ***********************************/
 	public Collection<ModelResource> getAllResources(){
@@ -185,6 +227,9 @@ public class Slice {
 		return RequestGenerator.domainMap.keySet();
 	}
 	
+	public void setSliceProxy(ISliceTransportAPIv1 sliceProxy) {
+		this.sliceProxy = sliceProxy;
+	}
 	/**************************** Load/Save Methods **********************************/
 	
 	private void save(String file){
@@ -204,7 +249,9 @@ public class Slice {
 	public String getDebugString(){
 		return sliceGraph.getDebugString();
 	}
-	
+	public String getSliceGraphString(){
+		return sliceGraph.getSliceGraphString();
+	}
 	/*****************************  Auto generatted methods to be sorted **************/
 	public Collection<Interface> getInterfaces(RequestResource requestResource) {
 		// TODO Auto-generated method stub

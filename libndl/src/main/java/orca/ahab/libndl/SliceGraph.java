@@ -217,15 +217,21 @@ public class SliceGraph   {
 	}
 	public Network addLink(String name){
 		BroadcastNetwork link = buildLink(name);
-		ndlModel.add(link);
+		ndlModel.add(link, name);
 		return link;
 	}
 	public BroadcastNetwork addBroadcastLink(String name){
 		BroadcastNetwork link = buildBroadcastLink(name);
-		ndlModel.add(link);
+		ndlModel.add(link, name);
 		return link;
 	}
 	
+	public void addStitch(RequestResource a, RequestResource b, Interface s){
+		if(s instanceof InterfaceNode2Net){
+			ndlModel.add((InterfaceNode2Net)s);
+		}
+		sliceGraph.addEdge(s, a, b);
+	}
 	
 	public RequestResource getResourceByName(String nm){
 		if (nm == null)
@@ -256,8 +262,13 @@ public class SliceGraph   {
 		return null;
 	}
 	
+	public void deleteResource(ComputeNode node){
+		ndlModel.remove(node);
+		
+		deleteResource((RequestResource)node);
+	}
 	
-	
+	//XXXXXXXXXXXXXXXXXX Should be private XXXXXXXXXXXXXXXXXXX
 	public void deleteResource(RequestResource modelResource){
 		for (Interface s: modelResource.getInterfaces()){
 			sliceGraph.removeEdge(s);
@@ -269,9 +280,7 @@ public class SliceGraph   {
 			sliceGraph.removeEdge(i);
 	}
 	
-	public void addStitch(RequestResource a, RequestResource b, Interface s){
-		sliceGraph.addEdge(s, a, b);
-	}
+	
 	
 	public Collection<Interface> getInterfaces(){
 		ArrayList<Interface> interfaces = new ArrayList<Interface>();
@@ -485,6 +494,10 @@ public class SliceGraph   {
 		}
 		//rtnStr += sliceGraph.toString();
 		return rtnStr;
+	}
+	
+	public String getSliceGraphString(){
+		return sliceGraph.toString();
 	}
 
 

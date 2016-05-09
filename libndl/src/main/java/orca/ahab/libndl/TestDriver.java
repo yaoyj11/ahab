@@ -19,6 +19,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 
+import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Network;
 import orca.ahab.libndl.resources.request.Node;
@@ -43,15 +44,17 @@ public class TestDriver {
     	System.out.println("ndllib TestDriver: START");
     	
     	LIBNDL.setLogger();
-    	
-    	testLibtransport(args[0]);
-    	//testLoad();
+    	//testDeleteComputeNode(args[0],"Node0");
+    	//testAddComputeNode(args[0],"Node3");
+    	//testDeleteComputeNode(args[0],"Node1");
+    	//testLibtransport(args[0]);
+    	//testLoad(args[0],"pruth.1");
+    	TestDriver.testAddNetwork(args[0], "Node0", "Node1", "VLAN0");
     	//testSave();
     	//testLoadAndSave();
     	//testLoadManifest();
     	//adamantTest1();
     	//adamantTest2();
-        //@anirban (05/05/15) commented out the next line
     	//adamantTest3();
     	///autoIP1();
     	System.out.println("ndllib TestDriver: END");
@@ -172,45 +175,176 @@ public class TestDriver {
 //		System.out.println("Stitch:  " + stitch);
 //	}
 //	s
-	public static void testLoad(){
-		//r.logger("ndllib TestDriver: testLoad");
+	public static void testLoad(String pem, String sliceName){
+		Slice s = null;
+		try{
+		
+			//r.logger("ndllib TestDriver: testLoad");
+			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+			System.out.println("Opening certificate " + pem + " and key " + pem);
+			TransportContext ctx = new PEMTransportContext("", pem, pem);
+
+			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL	("https://geni.renci.org:11443/orca/xmlrpc"));
+
+			s = Slice.loadManifestFile(sliceProxy, sliceName);
+		} catch (Exception e){
+			s.logger().debug("Failed to fetch manifest");
+			return;
+		}
+		
+
+	
+		System.out.println("******************** START Slice Info " + s.getName() + " *********************");
+		//System.out.println(s.getDebugString());
+		System.out.println(s.getSliceGraphString());
+		System.out.println("******************** END PRINTING *********************");
+		
+		}
+	
+	public static void testDeleteComputeNode(String pem, String delNodeName){
+		Slice s = null;
+		try{
+		
+			//r.logger("ndllib TestDriver: testLoad");
+			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+			System.out.println("Opening certificate " + pem + " and key " + pem);
+			TransportContext ctx = new PEMTransportContext("", pem, pem);
+
+			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL	("https://geni.renci.org:11443/orca/xmlrpc"));
+
+			s = Slice.loadManifestFile(sliceProxy, "pruth.1");
+		} catch (Exception e){
+			s.logger().debug("Failed to fetch manifest");
+			return;
+		}
+		
+		
+		
 		//Slice s = Slice.loadRequestFile("/home/geni-orca/test-rdfs/request-test1.rdf");
 		//Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/manifest-test1.rdf");
 		//Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/newest-test-manifest-up-1failed.rdf");
-		Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/newest-test-manifest-halfup.rdf");
+		//Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/newest-test-manifest-halfup.rdf");
 		
 		//s.load("/home/geni-orca/test-rdfs/test1.rdf");
 		//s.loadFile("/home/geni-orca/test-rdfs/test1.rdf");
 	
-		s.logger().debug("******************** START Slice Info *********************");
+		s.logger().debug("******************** START Slice Info " + s.getName() + " *********************");
+		//s.logger().debug(s.getRequest());
+		s.logger().debug(s.getDebugString());
+		s.logger().debug("******************** END PRINTING *********************");
+		
+		
+		
+		
+		ComputeNode cn = (ComputeNode)s.getResourceByName(delNodeName);
+		s.logger().debug("cn: " + cn);
+		s.logger().debug("compute node: " + cn.getName());
+		s.logger().debug("compute node: " + cn.getDomain());
+		s.logger().debug("compute node: " + cn.getNodeType());
+		s.logger().debug("compute node: " + cn.getImageShortName());
+		s.logger().debug("compute node: " + cn.getImageHash());
+		s.logger().debug("compute node: " + cn.getImageUrl());
+		s.logger().debug("compute node: " + cn.getPostBootScript());
+		
+		//s.logger().debug("Interfaces:  " + cn.getInterfaces());
+		
+		cn.delete();
+		
+		s.commit();
+	}
+	
+	public static void testAddComputeNode(String pem, String newNodeName){
+		Slice s = null;
+		try{
+		
+			//r.logger("ndllib TestDriver: testLoad");
+			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+			System.out.println("Opening certificate " + pem + " and key " + pem);
+			TransportContext ctx = new PEMTransportContext("", pem, pem);
+
+			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL	("https://geni.renci.org:11443/orca/xmlrpc"));
+
+			s = Slice.loadManifestFile(sliceProxy, "pruth.1");
+		} catch (Exception e){
+			s.logger().debug("Failed to fetch manifest");
+			return;
+		}
+		
+		
+		
+		//Slice s = Slice.loadRequestFile("/home/geni-orca/test-rdfs/request-test1.rdf");
+		//Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/manifest-test1.rdf");
+		//Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/newest-test-manifest-up-1failed.rdf");
+		//Slice s = Slice.loadManifestFile("/home/geni-orca/test-rdfs/newest-test-manifest-halfup.rdf");
+		
+		//s.load("/home/geni-orca/test-rdfs/test1.rdf");
+		//s.loadFile("/home/geni-orca/test-rdfs/test1.rdf");
+	
+		s.logger().debug("******************** START Slice Info " + s.getName() + " *********************");
 		//s.logger().debug(s.getRequest());
 		//s.logger().debug(s.getDebugString());
 	
 		
-		
-		ComputeNode   newnode = s.addComputeNode("ComputeNode0");
+		ComputeNode   newnode = s.addComputeNode(newNodeName);
 		newnode.setImage("http://geni-images.renci.org/images/standard/centos/centos6.3-v1.0.11.xml","776f4874420266834c3e56c8092f5ca48a180eed","PRUTH-centos");
 		newnode.setNodeType("XO Large");
 		newnode.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
 		newnode.setPostBootScript("master post boot script");
 
-		//s.logger().debug("******************** START Request Info *********************");
-		s.logger().debug(s.getRequest());
+		s.logger().debug("******************** END PRINTING *********************");
+		
+		ComputeNode cn = (ComputeNode)s.getResourceByName(newNodeName);
+		s.logger().debug("cn: " + cn);
+		s.logger().debug("compute node: " + cn.getName());
+		s.logger().debug("compute node: " + cn.getDomain());
+		s.logger().debug("compute node: " + cn.getNodeType());
+		s.logger().debug("compute node: " + cn.getImageShortName());
+		s.logger().debug("compute node: " + cn.getImageHash());
+		s.logger().debug("compute node: " + cn.getImageUrl());
+		s.logger().debug("compute node: " + cn.getPostBootScript());
+		
+		s.logger().debug("Interfaces:  " + cn.getInterfaces());
+		
+		s.commit();
+		
+	}
+	
+	
+	public static void testAddNetwork(String pem, String node1Name, String node2Name, String networkName){
+		Slice s = null;
+		try{
+		
+			//r.logger("ndllib TestDriver: testLoad");
+			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+			System.out.println("Opening certificate " + pem + " and key " + pem);
+			TransportContext ctx = new PEMTransportContext("", pem, pem);
+
+			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL	("https://geni.renci.org:11443/orca/xmlrpc"));
+
+			s = Slice.loadManifestFile(sliceProxy, "pruth.1");
+		} catch (Exception e){
+			s.logger().debug("Failed to fetch manifest");
+			return;
+		}
+		
+			
+		s.logger().debug("******************** START Slice Info " + s.getName() + " *********************");
+		//s.logger().debug(s.getRequest());
 		//s.logger().debug(s.getDebugString());
 		s.logger().debug("******************** END PRINTING *********************");
 		
-		ComputeNode cn = (ComputeNode)s.getResourceByName("Node0");
-		//s.logger().debug("cn: " + cn);
-		s.logger().debug("compute node: " + cn.getName());
-		s.logger().debug("compute node: " + cn.getDomain());
-		s.logger().debug("Interfaces:  " + cn.getInterfaces());
+		ComputeNode node1 = (ComputeNode)s.getResourceByName(node1Name);
+		ComputeNode node2 = (ComputeNode)s.getResourceByName(node2Name);
 		
-		//StitchPort sp = (StitchPort)s.getResourceByName("StitchPort0");
-		//s.logger().debug("stitchprot node: " + sp.getName());
-
-		//StorageNode sn = (StorageNode)s.getResourceByName("Storage0");
-		//s.logger().debug("storage node: " + sn.getName());
+		BroadcastNetwork net = s.addBroadcastLink(networkName);
+		net.stitch(node1);
+		net.stitch(node2);
+	
+		s.commit();
+		
 	}
+	
+	
 /*	
 	public static void testSave(){
 		Slice r = new Slice();

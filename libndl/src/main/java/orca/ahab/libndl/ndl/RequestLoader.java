@@ -123,7 +123,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 	}
 
 	public void ndlNode(Resource ce, OntModel om, Resource ceClass, List<Resource> interfaces) {
-		LIBNDL.logger().debug("Node: " + ce + " of class " + ceClass);
+		LIBNDL.logger().debug("Node: " + ce + " of class " + ceClass + ", ce objext class: " + ce.getClass());
 		
 		if (ce == null)
 			return;

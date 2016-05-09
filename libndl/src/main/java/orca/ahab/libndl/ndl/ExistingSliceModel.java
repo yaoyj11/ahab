@@ -2,6 +2,7 @@ package orca.ahab.libndl.ndl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -16,6 +17,8 @@ import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
 import orca.ahab.libndl.resources.request.InterfaceNode2Net;
+import orca.ahab.libndl.resources.request.Network;
+import orca.ahab.libndl.resources.request.Node;
 import orca.ahab.libndl.resources.request.RequestResource;
 import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
@@ -26,8 +29,8 @@ import orca.ndl.NdlManifestParser;
 import orca.ndl.NdlRequestParser;
 
 public class ExistingSliceModel extends NDLModel{
-	//protected NdlManifestParser sliceModel;
-	protected NdlRequestParser sliceModel;
+	protected NdlManifestParser sliceModel;
+	//protected NdlRequestParser sliceModel;
 	
 	/* map of RequestResource in original slice or request to ndl Resource */
 	protected Map<RequestResource,Resource> slice2NDLMap;
@@ -41,10 +44,13 @@ public class ExistingSliceModel extends NDLModel{
 	public void init(SliceGraph sliceGraph, String rdf){
 		
 		try{
-			RequestLoader rloader = new RequestLoader(sliceGraph,this);
-			sliceModel = rloader.load(rdf);
+			//RequestLoader rloader = new RequestLoader(sliceGraph,this);
+			//sliceModel = rloader.load(rdf);
 
-			String nsGuid = "1111111111"; //hack for now
+			UserAbstractionLoader uloader = new UserAbstractionLoader(sliceGraph,this);
+			sliceModel = uloader.load(rdf);
+			
+			String nsGuid = UUID.randomUUID().toString();
 		
 			ngen = new NdlGenerator(nsGuid, LIBNDL.logger(), true);
 			String nm = (nsGuid == null ? "my-modify" : nsGuid + "/my-modify");
@@ -56,7 +62,8 @@ public class ExistingSliceModel extends NDLModel{
 	}
 
 	protected void mapSliceResource2ModelResource(RequestResource r, Resource i){
-		slice2NDLMap.put(r,i);
+		slice2NDLMap.put(r,i);				
+
 	}
 
 	
@@ -79,15 +86,15 @@ public class ExistingSliceModel extends NDLModel{
 		try {
 			Individual ni = null;
 			
-			if (cn.getNodeCount() > 0){
-				if (cn.getSplittable())
-					ni = ngen.declareServerCloud(name, cn.getSplittable());
-				else
-					ni = ngen.declareServerCloud(name);
-			} else {
+			//if (cn.getNodeCount() > 0){
+			//	if (cn.getSplittable())
+			//		ni = ngen.declareServerCloud(name, cn.getSplittable());
+			//	else
+			//		ni = ngen.declareServerCloud(name);
+			//} else {
 				ni = ngen.declareComputeElement(name);
 				ngen.addVMDomainProperty(ni);
-			}
+			//}
 			
 			mapRequestResource2ModelResource(cn, ni);
 			ngen.declareModifyElementAddElement(reservation, ni);
@@ -98,9 +105,20 @@ public class ExistingSliceModel extends NDLModel{
 	}
 
 	@Override
-	public void add(BroadcastNetwork bn) {
-		// TODO Auto-generated method stub
-		
+	public void add(BroadcastNetwork bn, String name) {
+		logger().debug("ExistingSliceModel:add(BroadcastNetwork)" + name);
+		try {
+			Individual ci = ngen.declareBroadcastConnection(name);;
+			ngen.addGuid(ci, UUID.randomUUID().toString());
+			ngen.addLayerToConnection(ci, "ethernet", "EthernetNetworkElement");
+			ngen.addBandwidthToConnection(ci, (long)10000000);  //TODO: Should be constant default value
+			
+			
+			mapRequestResource2ModelResource(bn, ci);
+			ngen.declareModifyElementAddElement(reservation, ci);
+		} catch (NdlException e) {
+			logger().error("ExistingSliceModel:add(ComputeNode):" + e.getStackTrace());
+		}	
 	}
 
 	@Override
@@ -110,8 +128,49 @@ public class ExistingSliceModel extends NDLModel{
 	}
 
 	@Override
-	public void add(InterfaceNode2Net i) {
-		// TODO Auto-generated method stub
+	public void add(InterfaceNode2Net i) { 
+		logger().debug("ExistingSliceModel:add(InterfaceNode2Net)");
+		Resource r = this.getModelResource(i);
+		Node node = i.getNode();
+		Network net = i.getLink();
+		
+		try{
+		
+		Individual blI = ngen.getRequestIndividual(net.getName()); //not sure this is right
+		//Individual nodeI = ngen.getRequestIndividual(node.getName());
+		 
+		
+		logger().debug("ExistingSliceModel::add(InterfaceNode2Net:  " + node.getURL() + ", " + node.getGUID());
+		Individual nodeI = ngen.declareModifiedComputeElement(node.getURL(), node.getGUID());
+		
+		Individual intI;
+		if (node instanceof StitchPort) {
+			StitchPort sp = (StitchPort)node;
+			if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
+				throw new NdlException("URL and label must be specified in StitchPort");
+			intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
+		} else
+			intI = ngen.declareInterface(net.getName()+"-"+node.getName());
+		
+		ngen.addInterfaceToIndividual(intI, blI);
+		
+		if (nodeI == null)
+			throw new NdlException("Unable to find or create individual for node " + node);
+		
+		ngen.addInterfaceToIndividual(intI, nodeI);
+
+		// see if there is an IP address for this link on this node
+//		if (node.getIp(link) != null) {
+//			// create IP object, attach to interface
+//			Individual ipInd = ngen.addUniqueIPToIndividual(n.getIp(l), oc.getName()+"-"+n.getName(), intI);
+//			if (n.getNm(l) != null)
+//				ngen.addNetmaskToIP(ipInd, netmaskIntToString(Integer.parseInt(n.getNm(l))));
+//		}
+		ngen.declareModifyElementAddElement(reservation, nodeI);
+		} catch (NdlException e){
+			logger().error("ERROR: ExistingSliceModel::add(InterfaceNode2Net) " );
+			e.printStackTrace();
+		}
 		
 	}
 
@@ -123,7 +182,15 @@ public class ExistingSliceModel extends NDLModel{
 
 	@Override
 	public void remove(ComputeNode cn) {
-		// TODO Auto-generated method stub
+		Resource ni = this.getModelResource(cn);
+		try {
+			// I don't understand why I can pass 'null' for the GUID
+			ngen.declareModifyElementRemoveNode(reservation, ni.getURI(), null);
+		} catch (NdlException e) {
+			// TODO Auto-generated catch block
+			logger().error("ExistingSliceModel::remove(ComputeNode cn), Failed to declareModifyElementRemoveNode" );
+			e.printStackTrace();
+		}
 		
 	}
 
@@ -153,7 +220,8 @@ public class ExistingSliceModel extends NDLModel{
 
 	@Override
 	public String getName(ModelResource cn) {
-		return this.getModelResource(cn).getLocalName();
+		//return this.getModelResource(cn).getLocalName();
+		return this.getPrettyName(this.getModelResource(cn));
 	}
 
 	@Override
@@ -239,7 +307,7 @@ public class ExistingSliceModel extends NDLModel{
 
 	@Override
 	public String getPostBootScript(ComputeNode computeNode) {
-		return NdlCommons.getPostBootScript((Individual)this.getModelResource(computeNode));
+		return  NdlCommons.getPostBootScript(this.getModelResource(computeNode));
 	}
 
 
@@ -258,8 +326,17 @@ public class ExistingSliceModel extends NDLModel{
 	
 	@Override
 	public String getDomain(RequestResource requestResource) {
+		if(this.getModelResource(requestResource) instanceof com.hp.hpl.jena.rdf.model.impl.ResourceImpl){
+			//Special case for nodes that are already in the manifest (i.e. are instances of ResourceImpl
+			return RequestGenerator.reverseLookupDomain(NdlCommons.getDomain(this.getModelResource(requestResource)));
+		} 
+		
+		//General case for regular resources
 		return NdlCommons.getDomain((Individual)this.getModelResource(requestResource)).getLocalName();
+		
 	}
+
+	
 
 	
 

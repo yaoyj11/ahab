@@ -3,6 +3,7 @@ package orca.ahab.libndl.resources.request;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.ndl.NDLModel;
@@ -74,6 +75,26 @@ public abstract class RequestResource extends ModelResource{
 	public Collection<Interface> getInterfaces() {
 		return sliceGraph.getInterfaces(this);
 	}
+	
+	
+	
+	public void setURL(String url){
+		this.getNDLModel().setURL(this,url);
+	}
+	 
+	public String getURL(){
+		return this.getNDLModel().getURL(this);
+		
+	}
+	
+	
+	public void setGUID(String guid){
+		this.getNDLModel().setGUID(this,guid);
+	}
+	public String getGUID(){
+		return this.getNDLModel().getGUID(this);
+	}
+	
 	
 	//public Set<ManifestResource> getInstantiation() {
 	//	return instantiation;

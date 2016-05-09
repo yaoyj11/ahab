@@ -64,6 +64,20 @@ public class ModifyGenerator extends NDLGenerator{
 	
 	}
 	/**
+	 * Remove a  nodes 
+	 * 
+	 */
+	public void removeComputeNode(ComputeNode cn, Individual ni) {
+		try {
+			ngen.declareModifyElementRemoveNode(modRes, ni.getURI(), null);
+		} catch (NdlException e) {
+			LIBNDL.logger().debug("ModifyGenerator::removeComputeNode,  Failed to remove compute node");
+			e.printStackTrace();
+		}
+	}
+	
+	
+	/**
 	 * Add a  nodes 
 	 * 
 	 */

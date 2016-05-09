@@ -3,6 +3,7 @@ package orca.ahab.libndl.ndl;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.hp.hpl.jena.ontology.Individual;
@@ -13,6 +14,7 @@ import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
+import orca.ahab.libndl.resources.request.Interface;
 import orca.ahab.libndl.resources.request.InterfaceNode2Net;
 import orca.ahab.libndl.resources.request.RequestResource;
 import orca.ahab.libndl.resources.request.StitchPort;
@@ -32,7 +34,7 @@ public abstract class NDLModel {
 	protected Individual reservation; 
 	
 	abstract public void add(ComputeNode cn, String name);
-	abstract public void add(BroadcastNetwork bn);
+	abstract public void add(BroadcastNetwork bn, String name);
 	abstract public void add(StitchPort sp);
 	abstract public void add(InterfaceNode2Net i);
 	abstract public void add(StorageNode sn);
@@ -84,7 +86,52 @@ public abstract class NDLModel {
 	
 	abstract public String getDomain(RequestResource requestResource);
     abstract public void setDomain(RequestResource requestResource, String d);
+    
+    
+    public String getURL(RequestResource requestResource){
+    	return this.getModelResource(requestResource).getURI();
+    	//return NdlCommons.getURL(this.getModelResource(requestResource));
+    }
+    public void setURL(RequestResource requestResource, String url){
+    	//not implemented
+    }
+    
+	public String getGUID(RequestResource requestResource){
+		return NdlCommons.getGuidProperty(this.getModelResource(requestResource));
+	}
+	public void setGUID(RequestResource requestResource, String guid){
+		//not implemented
+	}
 	
+    
+	/**
+	 * Hacks that should be in ndlcommons
+	 */
+	
+	// sometimes getLocalName is not good enough
+		// so we strip off orca name space and call it a day
+		protected String getTrueName(Resource r) {
+			if (r == null)
+				return null;
+			
+			return StringUtils.removeStart(r.getURI(), NdlCommons.ORCA_NS);
+		}
+		
+		protected String getPrettyName(Resource r) {
+			String rname = getTrueName(r);
+			int start_index = rname.indexOf('#');
+			int end_index = rname.indexOf('/');
+			if(start_index > 0 && end_index == -1){
+				rname = rname.substring(start_index + 1);
+			} else if (start_index > 0 && end_index > 0 && end_index > start_index) {
+				rname = rname.substring(start_index + 1,end_index);
+			}
+			return rname;
+		}
+
+		/****************************************************/
+	
+  
 	
 	
 }

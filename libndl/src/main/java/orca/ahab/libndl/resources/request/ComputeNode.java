@@ -188,13 +188,15 @@ public class ComputeNode extends Node {
 
 		
 	public Interface stitch(RequestResource r){
+		LIBNDL.logger().debug("ComputeNode.stitch"); 
 		Interface stitch = null;
 		if (r instanceof Network){
+			LIBNDL.logger().debug("ComputeNode.stitch:  calling InterfaceNode2Net");
 			stitch = new InterfaceNode2Net(this,(Network)r,sliceGraph);
 		} else {
 			//Can't stitch computenode to r
 			//Should throw exception
-			System.out.println("Error: Cannot stitch OrcaComputeNode to " + r.getClass().getName());
+			LIBNDL.logger().error("Error: Cannot stitch OrcaComputeNode to " + r.getClass().getName());
 			return null;
 		}
 		sliceGraph.addStitch(this,r,stitch);
@@ -212,7 +214,6 @@ public class ComputeNode extends Node {
 	@Override
 	public void delete() {
 		sliceGraph.deleteResource(this);
-		
 	}
 
 	

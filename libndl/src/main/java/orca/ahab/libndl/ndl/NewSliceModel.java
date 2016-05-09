@@ -63,7 +63,7 @@ public class NewSliceModel extends NDLModel {
 	}
 
 	@Override
-	public void add(BroadcastNetwork bn) {
+	public void add(BroadcastNetwork bn, String name) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -190,6 +190,7 @@ public class NewSliceModel extends NDLModel {
 		// TODO Auto-generated method stub
 		
 	}
+
 	
 
 }
