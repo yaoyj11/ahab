@@ -264,20 +264,35 @@ public class SliceGraph   {
 	}
 	
 	public void deleteResource(ComputeNode node){
-		ndlModel.remove(node);
-		
+		ndlModel.remove(node);	
 		deleteResource((RequestResource)node);
 	}
 	
-	//XXXXXXXXXXXXXXXXXX Should be private XXXXXXXXXXXXXXXXXXX
-	public void deleteResource(RequestResource modelResource){
-		for (Interface s: modelResource.getInterfaces()){
-			sliceGraph.removeEdge(s);
+	public void deleteResource(BroadcastNetwork bn){
+		for (Interface i: bn.getInterfaces()){
+			this.deleteResource(i);
 		}
-		sliceGraph.removeVertex(modelResource);
+		ndlModel.remove(bn);
+		
+		sliceGraph.removeVertex(bn);
+		deleteResource((RequestResource)bn);
+	}
+	
+	//XXXXXXXXXXXXXXXXXX Should be private XXXXXXXXXXXXXXXXXXX
+	public void deleteResource(RequestResource requestResource){
+		//for (Interface i: requestResource.getInterfaces()){
+		//	this.deleteResource(i);
+		//}
+	
+		sliceGraph.removeVertex(requestResource);
+		//deleteResource((RequestResource)requestResource);
 	}
 	
 	public void deleteResource(Interface i){
+			
+			//TODO: Only handles InterfaceNode2Net for now
+			ndlModel.remove((InterfaceNode2Net)i);
+			
 			sliceGraph.removeEdge(i);
 	}
 	

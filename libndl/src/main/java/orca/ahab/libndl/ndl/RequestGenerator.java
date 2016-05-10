@@ -69,71 +69,7 @@ public class RequestGenerator extends NDLGenerator{
 		this.ngen = ngen;
 	}
 	
-	//public RequestGenerator(SliceGraph r) {
-	//	request = r;
-	//}
-	
-	
-	public boolean saveRequest(File f) {
-		return saveNewRequest(f);
-	}
-	
-	public boolean saveModifyRequest(File f) {
-		//
-		return true;
-	}
-	
-	
-	/**
-	 * Save to file
-	 * @param f
-	 * @param g
-	 * @param nsGuid
-	 * @return
-	 */
-	public boolean saveNewRequest(File f) {
-//		assert(f != null);
-//
-//		String ndl = convertGraphToNdl();
-//		if (ndl == null){
-//			return false;
-//		}
-//		
-//		try{
-//			FileOutputStream fsw = new FileOutputStream(f);
-//			OutputStreamWriter out = new OutputStreamWriter(fsw, "UTF-8");
-//			out.write(ndl);
-//			out.close();
-//			return true;
-//		} catch(FileNotFoundException e) {
-//			LIBNDL.logger().debug("saveGraph: FileNotFoundException");
-//			;
-//		} catch(UnsupportedEncodingException ex) {
-//			LIBNDL.logger().debug("saveGraph: UnsupportedEncodingException");
-//			;
-//		} catch(IOException ey) {
-//			LIBNDL.logger().debug("saveGraph: IOException");
-//			;
-//		} 
-		return false;
-	}
 
-	
-	
-	/**
-	 * Save to string
-	 * @param f
-	 * @param g
-	 * @param nsGuid
-	 * @return
-	 */  
-	public boolean saveRequest(String f) {
-		return this.saveRequest(new File(f));
-	}
-
-	public boolean saveModifyRequest(String f){
-		return this.saveModifyRequest(new File(f));
-	}
 	
 	public String getRequest(){
 		LIBNDL.logger().debug("RequestGenerator::getRequest");
@@ -141,11 +77,7 @@ public class RequestGenerator extends NDLGenerator{
 		//return convertGraphToNdl();
 	}
 	
-	/**
-	 * Save graph using NDL
-	 * @param f
-	 * @param requestGraph
-	 */
+
 	//public String convertGraphToNdl(SparseMultigraph<OrcaResource, OrcaStitch> g, String nsGuid) {
 //	public String convertGraphToNdl() {
 //		String nsGuid = null;  //TODO: if set to null ndlcommons will pick one for me
@@ -274,7 +206,7 @@ public class RequestGenerator extends NDLGenerator{
 //					Individual ni = ngen.getRequestIndividual(resource.getName());
 //					for(OrcaResource dep: resource.getDependencies()) {
 //						Individual depI = ngen.getRequestIndividual(dep.getName());
-//		btaessawy@gmail.com				if (depI != null) {
+//						if (depI != null) {
 //							ngen.addDependOnToIndividual(depI, ni);
 //						}
 //					}

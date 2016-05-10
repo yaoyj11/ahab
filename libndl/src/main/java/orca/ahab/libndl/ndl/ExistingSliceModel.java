@@ -98,7 +98,6 @@ public class ExistingSliceModel extends NDLModel{
 				ni = ngen.declareComputeElement(name);
 				ngen.addVMDomainProperty(ni);
 			//}
-			
 			mapRequestResource2ModelResource(cn, ni);
 			ngen.declareModifyElementAddElement(reservation, ni);
 		} catch (NdlException e) {
@@ -115,8 +114,7 @@ public class ExistingSliceModel extends NDLModel{
 			ngen.addGuid(ci, UUID.randomUUID().toString());
 			ngen.addLayerToConnection(ci, "ethernet", "EthernetNetworkElement");
 			ngen.addBandwidthToConnection(ci, (long)10000000);  //TODO: Should be constant default value
-			
-			
+		
 			mapRequestResource2ModelResource(bn, ci);
 			ngen.declareModifyElementAddElement(reservation, ci);
 		} catch (NdlException e) {
@@ -140,10 +138,6 @@ public class ExistingSliceModel extends NDLModel{
 		try{
 		
 		Individual blI = ngen.getRequestIndividual(net.getName()); //not sure this is right
-		//Individual nodeI = ngen.getRequestIndividual(node.getName());
-		 
-		
-		logger().debug("ExistingSliceModel::add(InterfaceNode2Net:  " + node.getURL() + ", " + node.getGUID());
 		Individual nodeI = ngen.declareModifiedComputeElement(node.getURL(), node.getGUID());
 		
 		Individual intI;
@@ -152,9 +146,9 @@ public class ExistingSliceModel extends NDLModel{
 			if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
 				throw new NdlException("URL and label must be specified in StitchPort");
 			intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
-		} else
+		} else {
 			intI = ngen.declareInterface(net.getName()+"-"+node.getName());
-		
+		}
 		ngen.addInterfaceToIndividual(intI, blI);
 		
 		if (nodeI == null)
@@ -190,7 +184,6 @@ public class ExistingSliceModel extends NDLModel{
 			// I don't understand why I can pass 'null' for the GUID
 			ngen.declareModifyElementRemoveNode(reservation, ni.getURI(), null);
 		} catch (NdlException e) {
-			// TODO Auto-generated catch block
 			logger().error("ExistingSliceModel::remove(ComputeNode cn), Failed to declareModifyElementRemoveNode" );
 			e.printStackTrace();
 		}
@@ -199,8 +192,20 @@ public class ExistingSliceModel extends NDLModel{
 
 	@Override
 	public void remove(BroadcastNetwork bn) {
-		// TODO Auto-generated method stub
 		
+		logger().debug("ExistingSliceModel::remove(BroadcastNetwork bn): " +   bn.getURL() + ", " + bn.getGUID());
+		
+		//TODO:  fix that it only removes Interfaces to nodes
+		for (Interface i : bn.getInterfaces()){
+			//this.remove((InterfaceNode2Net)i);
+		}
+		
+		try{
+			ngen.declareModifyElementRemoveLink(reservation, bn.getURL(), bn.getGUID());
+		} catch (NdlException e) {
+			logger().error("ExistingSliceModel::remove(BroadcastNetwork bn), Failed to declareModifyElementRemoveLink" );
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -212,7 +217,14 @@ public class ExistingSliceModel extends NDLModel{
 	@Override
 	public void remove(InterfaceNode2Net i) {
 		// TODO Auto-generated method stub
+		Resource ni = this.getModelResource(i);
 		
+		try{
+			ngen.declareModifyElementRemoveNode(reservation, i.getURL(), i.getGUID());
+		} catch (NdlException e) {
+			logger().error("ExistingSliceModel::remove(BroadcastNetwork bn), Failed to declareModifyElementRemoveLink" );
+			e.printStackTrace();
+		}	
 	}
 
 	@Override
@@ -221,123 +233,10 @@ public class ExistingSliceModel extends NDLModel{
 		
 	}
 
-	@Override
-	public String getName(ModelResource cn) {
-		//return this.getModelResource(cn).getLocalName();
-		return this.getPrettyName(this.getModelResource(cn));
-	}
 
-	@Override
-	public void setName(ModelResource cn) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	/******************************** set/get ComputeNode properties **********************/
-	@Override
-	public void setImage(ComputeNode cn, String imageURL, String imageHash, String shortName){
-		try{
-			Individual imageIndividual = ngen.declareDiskImage(imageURL, imageHash, shortName);	
-			ngen.addDiskImageToIndividual(imageIndividual, (Individual)this.getModelResource(cn));
-		}catch (ClassCastException e){
-			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + cn.getName());
-		}catch (NdlException e){
-			LIBNDL.logger().error("NdlException setting image for " + cn.getName());
-		}
-	}
 
-	@Override
-	public String getImageURL(ComputeNode cn) {
-		return NdlCommons.getIndividualsImageURL(this.getModelResource(cn));
-	}
-
-	@Override
-	public String getImageHash(ComputeNode cn) {
-		return NdlCommons.getIndividualsImageHash(this.getModelResource(cn));
-	}
-
-	@Override
-	public String getImageShortName(ComputeNode cn) {
-		//getImageShortName not implemented
-		return "";
-		//return NdlCommons.getIndividualsImageURL(this.getModelResource(cn));		
-	}
-	
-	@Override
-	public void setNodeType(ComputeNode computeNode, String nodeType) {
-		try{
-			Individual ni = (Individual)this.getModelResource(computeNode);
-			
-			if (NDLGenerator.BAREMETAL.equals(nodeType))
-				ngen.addBareMetalDomainProperty(ni);
-			else if (NDLGenerator.FORTYGBAREMETAL.equals(nodeType))
-				ngen.addFourtyGBareMetalDomainProperty(ni);
-			else
-				ngen.addVMDomainProperty(ni);
-			if (NDLGenerator.nodeTypes.get(nodeType) != null) {
-				Pair<String> nt = NDLGenerator.nodeTypes.get(nodeType);
-				ngen.addNodeTypeToCE(nt.getFirst(), nt.getSecond(), ni);
-			}
-			
-		}catch (ClassCastException e){
-			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + computeNode.getName());
-		}catch (NdlException e){
-			LIBNDL.logger().error("NdlException setting image for " + computeNode.getName());
-		}
-	}
-
-	@Override
-	public String getNodeType(ComputeNode computeNode) {
-		// TODO Auto-generated method stub
-		Resource ceType = NdlCommons.getSpecificCE(this.getModelResource(computeNode));
-		return RequestGenerator.reverseNodeTypeLookup(ceType); 
-	}
-
-	@Override
-	public void setPostBootScript(ComputeNode computeNode, String postBootScript) {
-		try{
-			if ((postBootScript != null) && (postBootScript.length() > 0)) {
-				ngen.addPostBootScriptToCE(postBootScript, (Individual)this.getModelResource(computeNode));
-			} 
-		}
-		catch (ClassCastException e){
-			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + computeNode.getName());
-		}catch (NdlException e){
-			LIBNDL.logger().error("NdlException setting image for " + computeNode.getName());
-		}
-		
-	}
-
-	@Override
-	public String getPostBootScript(ComputeNode computeNode) {
-		return  NdlCommons.getPostBootScript(this.getModelResource(computeNode));
-	}
-
-
-
-	@Override
-	public void setDomain(RequestResource requestResource, String d) {
-		try{
-			Individual domI = ngen.declareDomain(NDLGenerator.domainMap.get(d));
-			ngen.addNodeToDomain(domI, (Individual)this.getModelResource(requestResource));
-		}catch (ClassCastException e){
-			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + requestResource.getName());
-		}catch (NdlException e){
-			LIBNDL.logger().error("NdlException setting image for " + requestResource.getName());
-		}
-	}
-	
-	@Override
-	public String getDomain(RequestResource requestResource) {
-		if(this.getModelResource(requestResource) instanceof com.hp.hpl.jena.rdf.model.impl.ResourceImpl){
-			//Special case for nodes that are already in the manifest (i.e. are instances of ResourceImpl
-			return RequestGenerator.reverseLookupDomain(NdlCommons.getDomain(this.getModelResource(requestResource)));
-		} 
-		
-		//General case for regular resources
-		return NdlCommons.getDomain((Individual)this.getModelResource(requestResource)).getLocalName();
-		
-	}
 
 	
 

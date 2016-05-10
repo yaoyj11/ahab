@@ -13,6 +13,8 @@ import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
 import orca.ahab.libndl.resources.request.InterfaceNode2Net;
+import orca.ahab.libndl.resources.request.Network;
+import orca.ahab.libndl.resources.request.Node;
 import orca.ahab.libndl.resources.request.RequestResource;
 import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
@@ -61,8 +63,15 @@ public class NewSliceModel extends NDLModel {
 		try {
 			Individual ni = null;
 			
-			ni = ngen.declareComputeElement(name);
-			ngen.addVMDomainProperty(ni);
+			//if (cn.getNodeCount() > 0){
+			//	if (cn.getSplittable())
+			//		ni = ngen.declareServerCloud(name, cn.getSplittable());
+			//	else
+			//		ni = ngen.declareServerCloud(name);
+			//} else {
+				ni = ngen.declareComputeElement(name);
+				ngen.addVMDomainProperty(ni);
+			//}
 			mapRequestResource2ModelResource(cn, ni);
 			
 			ngen.addResourceToReservation(reservation, ni);
@@ -74,8 +83,18 @@ public class NewSliceModel extends NDLModel {
 
 	@Override
 	public void add(BroadcastNetwork bn, String name) {
-		// TODO Auto-generated method stub
+		logger().debug("NewSliceModel:add(BroadcastNetwork)" + name);
+		try {
+			Individual ci = ngen.declareBroadcastConnection(name);;
+			ngen.addGuid(ci, UUID.randomUUID().toString());
+			ngen.addLayerToConnection(ci, "ethernet", "EthernetNetworkElement");
+			ngen.addBandwidthToConnection(ci, (long)10000000);  //TODO: Should be constant default value
 		
+			mapRequestResource2ModelResource(bn, ci);
+			ngen.addResourceToReservation(reservation, ci);
+		} catch (NdlException e) {
+			logger().error("NewSliceModel:add(ComputeNode):" + e.getStackTrace());
+		}	
 	}
 
 	@Override 
@@ -86,8 +105,44 @@ public class NewSliceModel extends NDLModel {
 
 	@Override
 	public void add(InterfaceNode2Net i) {
-		// TODO Auto-generated method stub
+		logger().debug("NewSliceModel:add(InterfaceNode2Net)");
+		Resource r = this.getModelResource(i);
+		Node node = i.getNode();
+		Network net = i.getLink();
 		
+		try{
+		
+		Individual blI = ngen.getRequestIndividual(net.getName()); //not sure this is right
+		Individual nodeI = ngen.getRequestIndividual(node.getName());
+		 
+		Individual intI;
+		if (node instanceof StitchPort) {
+			StitchPort sp = (StitchPort)node;
+			if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
+				throw new NdlException("URL and label must be specified in StitchPort");
+			intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
+		} else {
+			intI = ngen.declareInterface(net.getName()+"-"+node.getName());
+		}
+		ngen.addInterfaceToIndividual(intI, blI);
+		
+		if (nodeI == null)
+			throw new NdlException("Unable to find or create individual for node " + node);
+		
+		ngen.addInterfaceToIndividual(intI, nodeI);
+
+		// see if there is an IP address for this link on this node
+//		if (node.getIp(link) != null) {
+//			// create IP object, attach to interface
+//			Individual ipInd = ngen.addUniqueIPToIndividual(n.getIp(l), oc.getName()+"-"+n.getName(), intI);
+//			if (n.getNm(l) != null)
+//				ngen.addNetmaskToIP(ipInd, netmaskIntToString(Integer.parseInt(n.getNm(l))));
+//		}
+		ngen.addResourceToReservation(reservation, nodeI);
+		} catch (NdlException e){
+			logger().error("ERROR: NewSliceModel::add(InterfaceNode2Net) " );
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -126,15 +181,7 @@ public class NewSliceModel extends NDLModel {
 		
 	}
 
-	@Override
-	public String getName(ModelResource cn) {
-		return this.getModelResource(cn).getLocalName();
-	}
-
-	@Override
-	public void setName(ModelResource cn) {
-		logger().info("NDLModel:setName not impelemented");		
-	}
+	
 
 	@Override
 	public String getRequest() {
@@ -142,72 +189,7 @@ public class NewSliceModel extends NDLModel {
 		return saver.getRequest();
 	}
 
-	//setImage is the same for new and existing models
-	@Override
-	public void setImage(ComputeNode cn, String imageURL, String imageHash, String shortName) {
-		try{
-			Individual imageIndividual = ngen.declareDiskImage(imageURL, imageHash, shortName);	
-			ngen.addDiskImageToIndividual(imageIndividual, (Individual)this.getModelResource(cn));
-		}catch (ClassCastException e){
-			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + cn.getName());
-		}catch (NdlException e){
-			LIBNDL.logger().error("NdlException setting image for " + cn.getName());
-		}
-		
-	}
 
-	@Override
-	public String getImageURL(ComputeNode cn) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getImageHash(ComputeNode cn) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getImageShortName(ComputeNode cn) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setNodeType(ComputeNode computeNode, String nodeType) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public String getNodeType(ComputeNode computeNode) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setPostBootScript(ComputeNode computeNode, String postBootScript) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public String getPostBootScript(ComputeNode computeNode) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getDomain(RequestResource requestResource) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setDomain(RequestResource requestResource, String d) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	
 
