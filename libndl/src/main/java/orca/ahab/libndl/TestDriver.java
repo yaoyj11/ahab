@@ -56,7 +56,8 @@ public class TestDriver {
 
     	//TestDriver.testNewSlice2(args[0]);
     	//TestDriver.testDeleteLink1(args[0]);
-    	TestDriver.testDeleteNetwork(args[0],"VLAN0");
+    	//TestDriver.testDeleteNetwork(args[0],"VLAN0");
+    	TestDriver.testDelete(args[0], "pruth.slice1");
     	
     	
     	//testSave();
@@ -368,6 +369,28 @@ public class TestDriver {
 		
 		s.commit();
 	}
+	
+	public static void testDelete(String pem, String sliceName){
+		Slice s = null;
+		try{
+		
+			//r.logger("ndllib TestDriver: testLoad");
+			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+			System.out.println("Opening certificate " + pem + " and key " + pem);
+			TransportContext ctx = new PEMTransportContext("", pem, pem);
+
+			ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL	("https://geni.renci.org:11443/orca/xmlrpc"));
+
+			s = Slice.loadManifestFile(sliceProxy, sliceName);
+		} catch (Exception e){
+			s.logger().debug("Failed to fetch manifest");
+			return;
+		}
+		
+		s.delete();
+		
+	}
+	
 	
 	public static void testAddComputeNode(String pem, String newNodeName){
 		Slice s = null;

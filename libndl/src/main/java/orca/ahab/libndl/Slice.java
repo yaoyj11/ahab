@@ -59,8 +59,6 @@ public class Slice {
 		return s;
 	}
 	
-	
-	
 	public static Slice loadRequestFile(String fileName){
 		return Slice.loadRequest(readRDFFile(new File(fileName)));
 	}
@@ -204,6 +202,21 @@ public class Slice {
 			return;
 		}
 	}
+	
+	public void delete(){
+		try{
+			LIBNDL.logger().debug("Name: " + this.getName());
+			LIBNDL.logger().debug("sliceProxy: " + sliceProxy);
+			if(!isNewSlice()){
+				sliceProxy.deleteSlice(this.getName());
+			}
+		} catch (Exception e){
+			this.logger().debug("Failed to delete slice");
+			e.printStackTrace();
+			return;
+		}
+	}
+	
 	
 	
 	/**************************** Get Slice Info ***********************************/
