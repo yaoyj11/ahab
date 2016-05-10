@@ -11,6 +11,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import edu.uci.ics.jung.graph.util.Pair;
 import orca.ahab.libndl.LIBNDL;
+import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
@@ -32,6 +33,9 @@ public abstract class NDLModel {
 	/* ndl generation */
 	protected NdlGenerator ngen;
 	protected Individual reservation; 
+	
+	abstract public void init(SliceGraph sliceGraph, String rdf);
+	abstract public boolean isNewSlice();
 	
 	abstract public void add(ComputeNode cn, String name);
 	abstract public void add(BroadcastNetwork bn, String name);
@@ -128,6 +132,7 @@ public abstract class NDLModel {
 			}
 			return rname;
 		}
+		
 
 		/****************************************************/
 	

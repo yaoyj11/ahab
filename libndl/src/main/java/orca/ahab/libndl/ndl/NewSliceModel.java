@@ -1,5 +1,7 @@
 package orca.ahab.libndl.ndl;
 
+import java.util.UUID;
+
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -19,42 +21,50 @@ import orca.ndl.NdlException;
 import orca.ndl.NdlGenerator;
 
 public class NewSliceModel extends NDLModel {
-	
-	
-	public NewSliceModel(SliceGraph sliceGraph, String rdf) {
+	public NewSliceModel(){
 		super();
 		
+	}
+	
+	
+	public void init(SliceGraph sliceGraph){
+		try{
+			String nsGuid = UUID.randomUUID().toString();
+			ngen = new NdlGenerator(nsGuid, LIBNDL.logger()); 
+			reservation = ngen.declareReservation();
+		} catch (NdlException e) {
+			logger().error("NewSliceModel: " + e.getStackTrace());
+		}
+	}
+	
+	public void init(SliceGraph sliceGraph, String rdf) {
 		logger().debug("NewSliceModel");
 		RequestLoader loader = new RequestLoader(sliceGraph, this);
 		loader.load(rdf);
 		//NdlCommons request = loader.load(rdf);
-	
+
 		try {
-			String nsGuid = "1111111111"; //hack for now
-			ngen = new NdlGenerator(nsGuid, LIBNDL.logger());
+			
+			ngen = loader.getGenerator();
 			reservation = ngen.declareReservation();
 		} catch (NdlException e) {
-			
 			logger().error("NewSliceModel: " + e.getStackTrace());
 		}
 		
 	}
 
+	public boolean isNewSlice(){ return true; };
+	
 	@Override
 	public void add(ComputeNode cn, String name) {
 		logger().debug("NewSliceModel:add(ComputeNode)");
 		try {
-			Individual ni;
-			if (cn.getNodeCount() > 0){
-				if (cn.getSplittable())
-					ni = ngen.declareServerCloud(name, cn.getSplittable());
-				else
-					ni = ngen.declareServerCloud(name);
-			} else {
-				ni = ngen.declareComputeElement(name);
-				ngen.addVMDomainProperty(ni);
-			}
-
+			Individual ni = null;
+			
+			ni = ngen.declareComputeElement(name);
+			ngen.addVMDomainProperty(ni);
+			mapRequestResource2ModelResource(cn, ni);
+			
 			ngen.addResourceToReservation(reservation, ni);
 		} catch (NdlException e) {
 			logger().error("NewSliceModel:add(ComputeNode):" + e.getStackTrace());
@@ -128,13 +138,21 @@ public class NewSliceModel extends NDLModel {
 
 	@Override
 	public String getRequest() {
-		// TODO Auto-generated method stub
-		return null;
+		RequestGenerator saver = new RequestGenerator(ngen);
+		return saver.getRequest();
 	}
 
+	//setImage is the same for new and existing models
 	@Override
 	public void setImage(ComputeNode cn, String imageURL, String imageHash, String shortName) {
-		// TODO Auto-generated method stub
+		try{
+			Individual imageIndividual = ngen.declareDiskImage(imageURL, imageHash, shortName);	
+			ngen.addDiskImageToIndividual(imageIndividual, (Individual)this.getModelResource(cn));
+		}catch (ClassCastException e){
+			LIBNDL.logger().error("Cannot cast ComputeNode resource to individual. " + cn.getName());
+		}catch (NdlException e){
+			LIBNDL.logger().error("NdlException setting image for " + cn.getName());
+		}
 		
 	}
 

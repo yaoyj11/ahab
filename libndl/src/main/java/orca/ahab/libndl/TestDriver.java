@@ -29,7 +29,10 @@ import orca.ahab.libtransport.ISliceTransportAPIv1;
 import orca.ahab.libtransport.ITransportProxyFactory;
 import orca.ahab.libtransport.JKSTransportContext;
 import orca.ahab.libtransport.PEMTransportContext;
+import orca.ahab.libtransport.SSHAccessToken;
+import orca.ahab.libtransport.SliceAccessContext;
 import orca.ahab.libtransport.TransportContext;
+import orca.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import orca.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import orca.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
@@ -49,7 +52,10 @@ public class TestDriver {
     	//testDeleteComputeNode(args[0],"Node1");
     	//testLibtransport(args[0]);
     	//testLoad(args[0],"pruth.1");
-    	TestDriver.testAddNetwork(args[0], "Node0", "Node1", "VLAN0");
+    	//TestDriver.testAddNetwork(args[0], "Node0", "Node1", "VLAN0");
+
+    	TestDriver.testNewSlice1(args[0]);
+    	
     	//testSave();
     	//testLoadAndSave();
     	//testLoadManifest();
@@ -59,6 +65,53 @@ public class TestDriver {
     	///autoIP1();
     	System.out.println("ndllib TestDriver: END");
     	
+	}
+	
+	public static void testNewSlice1(String pem){
+		try{
+	
+			
+			SliceAccessContext<SSHAccessToken> sctx = new SliceAccessContext<>();
+
+			SSHAccessTokenFileFactory fac = new SSHAccessTokenFileFactory("/home/geni-orca/.ssh/id_rsa.pub", false);
+			SSHAccessToken t = fac.getPopulatedToken();
+
+			//fac = new SSHAccessTokenFileFactory("/home/geni-orca/.ssh/id_rsa.pub", false);
+			//SSHAccessToken t1 = fac.getPopulatedToken();
+			
+			sctx.addToken("pruth", "pruth", t);
+			//sctx.addToken("testuser", "some1", t1);
+			
+			sctx.addToken("pruth", t);
+			
+			System.out.println(sctx);
+		
+		ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+		System.out.println("Opening certificate " + pem + " and key " + pem);
+		TransportContext ctx = new PEMTransportContext("", pem, pem);
+
+		ISliceTransportAPIv1 sliceProxy = ifac.getSliceProxy(ctx, new URL("https://geni.renci.org:11443/orca/xmlrpc"));
+		Slice s = Slice.create(sliceProxy, sctx, "pruth.slice1");
+		
+		for (int i = 0; i < 16; i++){
+			ComputeNode   newnode = s.addComputeNode("ComputeNode"+i);
+			newnode.setImage("http://geni-images.renci.org/images/standard/centos/centos6.3-v1.0.11.xml","776f4874420266834c3e56c8092f5ca48a180eed","PRUTH-centos");
+			newnode.setNodeType("XO Large");
+			newnode.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
+			newnode.setPostBootScript("master post boot script");
+		}
+			
+		System.out.println("testNewSlice1: " + s.getDebugString());
+		
+		System.out.println("testNewSlice1: " + s.getRequest());
+		
+		s.commit();
+		} catch (Exception e){
+			e.printStackTrace();
+			System.err.println("Proxy factory test failed");
+			assert(false);
+		}
+		
 	}
 	
 	public static void testLibtransport(String pem){
@@ -96,7 +149,7 @@ public class TestDriver {
 			newnode.setImage("http://geni-images.renci.org/images/standard/centos/centos6.3-v1.0.11.xml","776f4874420266834c3e56c8092f5ca48a180eed","PRUTH-centos");
 			newnode.setNodeType("XO Large");
 			newnode.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
-			newnode.setPostBootScript("master post boot script");
+			newnode.setPostBootScript("master post bootnew Slice(); script");
 			
 			System.out.println("Slice pruth.101 = " + s.getDebugString());
 			

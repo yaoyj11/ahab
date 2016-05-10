@@ -57,7 +57,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import edu.uci.ics.jung.graph.util.Pair;
 
 public class RequestGenerator extends NDLGenerator{
-	private SliceGraph request;
+	//private SliceGraph request;
 	
 	private static RequestGenerator instance;
 	
@@ -65,11 +65,13 @@ public class RequestGenerator extends NDLGenerator{
 	private String outputFormat = null;
 	
 	
-
-	
-	public RequestGenerator(SliceGraph r) {
-		request = r;
+	public RequestGenerator(NdlGenerator ngen) {
+		this.ngen = ngen;
 	}
+	
+	//public RequestGenerator(SliceGraph r) {
+	//	request = r;
+	//}
 	
 	
 	public boolean saveRequest(File f) {
@@ -90,29 +92,29 @@ public class RequestGenerator extends NDLGenerator{
 	 * @return
 	 */
 	public boolean saveNewRequest(File f) {
-		assert(f != null);
-
-		String ndl = convertGraphToNdl();
-		if (ndl == null){
-			return false;
-		}
-		
-		try{
-			FileOutputStream fsw = new FileOutputStream(f);
-			OutputStreamWriter out = new OutputStreamWriter(fsw, "UTF-8");
-			out.write(ndl);
-			out.close();
-			return true;
-		} catch(FileNotFoundException e) {
-			LIBNDL.logger().debug("saveGraph: FileNotFoundException");
-			;
-		} catch(UnsupportedEncodingException ex) {
-			LIBNDL.logger().debug("saveGraph: UnsupportedEncodingException");
-			;
-		} catch(IOException ey) {
-			LIBNDL.logger().debug("saveGraph: IOException");
-			;
-		} 
+//		assert(f != null);
+//
+//		String ndl = convertGraphToNdl();
+//		if (ndl == null){
+//			return false;
+//		}
+//		
+//		try{
+//			FileOutputStream fsw = new FileOutputStream(f);
+//			OutputStreamWriter out = new OutputStreamWriter(fsw, "UTF-8");
+//			out.write(ndl);
+//			out.close();
+//			return true;
+//		} catch(FileNotFoundException e) {
+//			LIBNDL.logger().debug("saveGraph: FileNotFoundException");
+//			;
+//		} catch(UnsupportedEncodingException ex) {
+//			LIBNDL.logger().debug("saveGraph: UnsupportedEncodingException");
+//			;
+//		} catch(IOException ey) {
+//			LIBNDL.logger().debug("saveGraph: IOException");
+//			;
+//		} 
 		return false;
 	}
 
@@ -134,7 +136,9 @@ public class RequestGenerator extends NDLGenerator{
 	}
 	
 	public String getRequest(){
-		return convertGraphToNdl();
+		LIBNDL.logger().debug("RequestGenerator::getRequest");
+		return getFormattedOutput(ngen,outputFormat);
+		//return convertGraphToNdl();
 	}
 	
 	/**
@@ -143,217 +147,217 @@ public class RequestGenerator extends NDLGenerator{
 	 * @param requestGraph
 	 */
 	//public String convertGraphToNdl(SparseMultigraph<OrcaResource, OrcaStitch> g, String nsGuid) {
-	public String convertGraphToNdl() {
-		String nsGuid = null;  //TODO: if set to null ndlcommons will pick one for me
-		LIBNDL.logger().debug("convertGraphToNdl");
-		String res = null;
-
-
-		try {
-			ngen = new NdlGenerator(nsGuid, LIBNDL.logger());
-
-			reservation = ngen.declareReservation();
-			Individual term = ngen.declareTerm();
-
-			// not an immediate reservation? declare term beginning
-			if (this.request.getTerm().getStart() != null) {
-				Individual tStart = ngen.declareTermBeginning(this.request.getTerm().getStart());
-				ngen.addBeginningToTerm(tStart, term);
-			}
-
-			// now duration
-			this.request.getTerm().normalizeDuration();
-			Individual duration = ngen.declareTermDuration(this.request.getTerm().getDurationDays(), 
-					this.request.getTerm().getDurationHours(), this.request.getTerm().getDurationMins());
-			ngen.addDurationToTerm(duration, term);
-			ngen.addTermToReservation(term, reservation);
-			/*				
-				// openflow
-				ngen.addOpenFlowCapable(reservation, r.getOfNeededVersion());
-
-				// add openflow details
-				if (r.getOfNeededVersion() != null) {
-					Individual ofSliceI = ngen.declareOfSlice("of-slice");
-					ngen.addSliceToReservation(reservation, ofSliceI);
-					ngen.addOfPropertiesToSlice(r.getOfUserEmail(), 
-							r.getOfSlicePass(), 
-							r.getOfCtrlUrl(), 
-							ofSliceI);
-				}
-			 */
-
-			
-
-
-			Individual ni;
-			//Handle stitchports
-			for (StitchPort sp: request.getStitchPorts()){
-				ni = ngen.declareStitchingNode(sp.getName());
-				ngen.addResourceToReservation(reservation, ni);
-			}
-
-			//Handle storage nodes
-			for (StorageNode snode: request.getStorageNodes()){
-				ni = ngen.declareISCSIStorageNode(snode.getName(), 
-						snode.getCapacity(),
-						snode.getFSType(), snode.getFSParam(), snode.getMntPoint(), 
-						snode.getDoFormat());
-				if (snode.getDomain() != null) {
-					Individual domI = ngen.declareDomain(domainMap.get(snode.getDomain()));
-					ngen.addNodeToDomain(domI, ni);
-				}
-				ngen.addResourceToReservation(reservation, ni);
-			} 
-
-			/* Create compute elements in the request.  
-			* 
-			* If the compute node is only of size 1 (i.e if there is only one compute node)
-			* then we could create a node instead of a group.  There is no reason to do this
-			* b/c a group of one is the same as an individual node with the exception that 
-			* an individual node cannot be modified to add replicas of itself.   In addition, 
-			* the current controller will change a group of one to a node even if we do not 
-			* want it to. 
-			*  
-			*/ 
-			for (ComputeNode cn: request.getComputeNodes()){
-				// nodes and nodegroups
-				if (cn.getNodeCount() > 0){
-					if (cn.getSplittable())
-						ni = ngen.declareServerCloud(cn.getName(), cn.getSplittable());
-					else
-						ni = ngen.declareServerCloud(cn.getName());
-				} else {
-					ni = ngen.declareComputeElement(cn.getName());
-					ngen.addVMDomainProperty(ni);
-				}
-
-				ngen.addResourceToReservation(reservation, ni);
-
-				// for clusters, add number of nodes, declare as cluster (VM domain)
-				if (cn.getNodeCount() > 0){
-					ngen.addNumCEsToCluster(cn.getNodeCount(), ni);
-					ngen.addVMDomainProperty(ni);
-				}
-
-				// node type 
-				setNodeTypeOnInstance(cn.getNodeType(), ni);
-
-				// check if image is set in this node
-				if (cn.getImageUrl() != null) {
-					Individual imI = ngen.declareDiskImage(cn.getImageUrl().toString(), cn.getImageHash(), cn.getImageShortName());
-					ngen.addDiskImageToIndividual(imI, ni);
-				} else {
-					// only bare-metal can specify no image
-					if (!NdlCommons.isBareMetal(ni))
-						throw new NdlException("Node " + cn.getName() + " is not bare-metal and does not specify an image");
-
-				}
-
-				LIBNDL.logger().debug("About to add domain " + cn.getDomain());
-				// if no global domain domain is set, declare a domain and add inDomain property
-				//if (!globalDomain && (cn.getDomain() != null)) {
-				if (cn.getDomain() != null) {
-					LIBNDL.logger().debug("adding domain " + cn.getDomain());
-					Individual domI = ngen.declareDomain(domainMap.get(cn.getDomain()));
-					ngen.addNodeToDomain(domI, ni);
-				}
-
-				// post boot script
-				if ((cn.getPostBootScript() != null) && (cn.getPostBootScript().length() > 0)) {
-					ngen.addPostBootScriptToCE(cn.getPostBootScript(), ni);
-				}
-			}
-
-			/*
-				// node dependencies (done afterwards to be sure all nodes are declared)
-				for (OrcaResource resource: request.getResources()) {
-					Individual ni = ngen.getRequestIndividual(resource.getName());
-					for(OrcaResource dep: resource.getDependencies()) {
-						Individual depI = ngen.getRequestIndividual(dep.getName());
-		btaessawy@gmail.com				if (depI != null) {
-							ngen.addDependOnToIndividual(depI, ni);
-						}
-					}
-				}
-			 */
-
-			/* Create networks in the request.  
-			* 
-			* If the network has only two compute elements then we could make it a point2point link.
-			* I'm not sure why we would want this b/c a broadcast link with two end points will manifest 
-			* in the same way but is flexible in that a modify could add an additional compute element 
-			* to the network  
-			*  
-			*/ 
-			for (BroadcastNetwork e: request.getBroadcastLinks()) {
-				LIBNDL.logger().debug("saving OrcaBroadcastLink");
-				//checkLinkSanity(e);
-				boolean hasStorage = false;
-				for(Interface i : e.getInterfaces()){
-					if (i instanceof InterfaceNode2Net){
-						if(((InterfaceNode2Net)i).getNode() instanceof StorageNode){
-							hasStorage = true;
-							break;
-						}
-						
-					}
-				}
-				
-				if(!hasStorage){
-					Individual ei = ngen.declareBroadcastConnection(e.getName());
-					ngen.addResourceToReservation(reservation, ei);
-
-					if (e.getBandwidth() > 0)
-						ngen.addBandwidthToConnection(ei, e.getBandwidth());
-
-					if (e.getLabel() != null) 
-						ngen.addLabelToIndividual(ei, e.getLabel());
-
-					// TODO: deal with layers later
-					ngen.addLayerToConnection(ei, "ethernet", "EthernetNetworkElement");
-
-					// TODO: latency
-				} else {			
-					//networks to storage must be point 2 point
-					Individual ei = ngen.declareNetworkConnection(e.getName());
-					ngen.addResourceToReservation(reservation, ei);
-
-					if (e.getBandwidth() > 0)
-						ngen.addBandwidthToConnection(ei, e.getBandwidth());
-				
-					if (e.getLabel() != null) 
-						ngen.addLabelToIndividual(ei, e.getLabel());
-				
-					// TODO: deal with layers later
-					ngen.addLayerToConnection(ei, "ethernet", "EthernetNetworkElement");
-
-					// TODO: latency
-				}
-			}
-
-			//Process stitches
-			for (Interface stitch: request.getInterfaces()){
-				if (stitch instanceof InterfaceNode2Net){
-					InterfaceNode2Net stitch_n2l = (InterfaceNode2Net)stitch;
-					Individual ei = ngen.getRequestIndividual(stitch_n2l.getLink().getName());
-					processNodeAndLink(stitch_n2l, ei);
-				} else {
-					LIBNDL.logger().error("Error: unkown stitch type, skipping: " + stitch);
-				}
-			}
-			res = getFormattedOutput(ngen, outputFormat);
-
-		} catch (Exception e) {
-
-			e.printStackTrace();
-			return null;
-		} finally {
-			if (ngen != null)
-				ngen.done();
-		}
-
-		return res;
-	}
+//	public String convertGraphToNdl() {
+//		String nsGuid = null;  //TODO: if set to null ndlcommons will pick one for me
+//		LIBNDL.logger().debug("convertGraphToNdl");
+//		String res = null;
+//
+//
+//		try {
+//			ngen = new NdlGenerator(nsGuid, LIBNDL.logger());
+//
+//			reservation = ngen.declareReservation();
+//			Individual term = ngen.declareTerm();
+//
+//			// not an immediate reservation? declare term beginning
+//			if (this.request.getTerm().getStart() != null) {
+//				Individual tStart = ngen.declareTermBeginning(this.request.getTerm().getStart());
+//				ngen.addBeginningToTerm(tStart, term);
+//			}
+//
+//			// now duration
+//			this.request.getTerm().normalizeDuration();
+//			Individual duration = ngen.declareTermDuration(this.request.getTerm().getDurationDays(), 
+//					this.request.getTerm().getDurationHours(), this.request.getTerm().getDurationMins());
+//			ngen.addDurationToTerm(duration, term);
+//			ngen.addTermToReservation(term, reservation);
+//			/*				
+//				// openflow
+//				ngen.addOpenFlowCapable(reservation, r.getOfNeededVersion());
+//
+//				// add openflow details
+//				if (r.getOfNeededVersion() != null) {
+//					Individual ofSliceI = ngen.declareOfSlice("of-slice");
+//					ngen.addSliceToReservation(reservation, ofSliceI);
+//					ngen.addOfPropertiesToSlice(r.getOfUserEmail(), 
+//							r.getOfSlicePass(), 
+//							r.getOfCtrlUrl(), 
+//							ofSliceI);
+//				}
+//			 */
+//
+//			
+//
+//
+//			Individual ni;
+//			//Handle stitchports
+//			for (StitchPort sp: request.getStitchPorts()){
+//				ni = ngen.declareStitchingNode(sp.getName());
+//				ngen.addResourceToReservation(reservation, ni);
+//			}
+//
+//			//Handle storage nodes
+//			for (StorageNode snode: request.getStorageNodes()){
+//				ni = ngen.declareISCSIStorageNode(snode.getName(), 
+//						snode.getCapacity(),
+//						snode.getFSType(), snode.getFSParam(), snode.getMntPoint(), 
+//						snode.getDoFormat());
+//				if (snode.getDomain() != null) {
+//					Individual domI = ngen.declareDomain(domainMap.get(snode.getDomain()));
+//					ngen.addNodeToDomain(domI, ni);
+//				}
+//				ngen.addResourceToReservation(reservation, ni);
+//			} 
+//
+//			/* Create compute elements in the request.  
+//			* 
+//			* If the compute node is only of size 1 (i.e if there is only one compute node)
+//			* then we could create a node instead of a group.  There is no reason to do this
+//			* b/c a group of one is the same as an individual node with the exception that 
+//			* an individual node cannot be modified to add replicas of itself.   In addition, 
+//			* the current controller will change a group of one to a node even if we do not 
+//			* want it to. 
+//			*  
+//			*/ 
+//			for (ComputeNode cn: request.getComputeNodes()){
+//				// nodes and nodegroups
+//				if (cn.getNodeCount() > 0){
+//					if (cn.getSplittable())
+//						ni = ngen.declareServerCloud(cn.getName(), cn.getSplittable());
+//					else
+//						ni = ngen.declareServerCloud(cn.getName());
+//				} else {
+//					ni = ngen.declareComputeElement(cn.getName());
+//					ngen.addVMDomainProperty(ni);
+//				}
+//
+//				ngen.addResourceToReservation(reservation, ni);
+//
+//				// for clusters, add number of nodes, declare as cluster (VM domain)
+//				if (cn.getNodeCount() > 0){
+//					ngen.addNumCEsToCluster(cn.getNodeCount(), ni);
+//					ngen.addVMDomainProperty(ni);
+//				}
+//
+//				// node type 
+//				setNodeTypeOnInstance(cn.getNodeType(), ni);
+//
+//				// check if image is set in this node
+//				if (cn.getImageUrl() != null) {
+//					Individual imI = ngen.declareDiskImage(cn.getImageUrl().toString(), cn.getImageHash(), cn.getImageShortName());
+//					ngen.addDiskImageToIndividual(imI, ni);
+//				} else {
+//					// only bare-metal can specify no image
+//					if (!NdlCommons.isBareMetal(ni))
+//						throw new NdlException("Node " + cn.getName() + " is not bare-metal and does not specify an image");
+//
+//				}
+//
+//				LIBNDL.logger().debug("About to add domain " + cn.getDomain());
+//				// if no global domain domain is set, declare a domain and add inDomain property
+//				//if (!globalDomain && (cn.getDomain() != null)) {
+//				if (cn.getDomain() != null) {
+//					LIBNDL.logger().debug("adding domain " + cn.getDomain());
+//					Individual domI = ngen.declareDomain(domainMap.get(cn.getDomain()));
+//					ngen.addNodeToDomain(domI, ni);
+//				}
+//
+//				// post boot script
+//				if ((cn.getPostBootScript() != null) && (cn.getPostBootScript().length() > 0)) {
+//					ngen.addPostBootScriptToCE(cn.getPostBootScript(), ni);
+//				}
+//			}
+//
+//			/*
+//				// node dependencies (done afterwards to be sure all nodes are declared)
+//				for (OrcaResource resource: request.getResources()) {
+//					Individual ni = ngen.getRequestIndividual(resource.getName());
+//					for(OrcaResource dep: resource.getDependencies()) {
+//						Individual depI = ngen.getRequestIndividual(dep.getName());
+//		btaessawy@gmail.com				if (depI != null) {
+//							ngen.addDependOnToIndividual(depI, ni);
+//						}
+//					}
+//				}
+//			 */
+//
+//			/* Create networks in the request.  
+//			* 
+//			* If the network has only two compute elements then we could make it a point2point link.
+//			* I'm not sure why we would want this b/c a broadcast link with two end points will manifest 
+//			* in the same way but is flexible in that a modify could add an additional compute element 
+//			* to the network  
+//			*  
+//			*/ 
+//			for (BroadcastNetwork e: request.getBroadcastLinks()) {
+//				LIBNDL.logger().debug("saving OrcaBroadcastLink");
+//				//checkLinkSanity(e);
+//				boolean hasStorage = false;
+//				for(Interface i : e.getInterfaces()){
+//					if (i instanceof InterfaceNode2Net){
+//						if(((InterfaceNode2Net)i).getNode() instanceof StorageNode){
+//							hasStorage = true;
+//							break;
+//						}
+//						
+//					}
+//				}
+//				
+//				if(!hasStorage){
+//					Individual ei = ngen.declareBroadcastConnection(e.getName());
+//					ngen.addResourceToReservation(reservation, ei);
+//
+//					if (e.getBandwidth() > 0)
+//						ngen.addBandwidthToConnection(ei, e.getBandwidth());
+//
+//					if (e.getLabel() != null) 
+//						ngen.addLabelToIndividual(ei, e.getLabel());
+//
+//					// TODO: deal with layers later
+//					ngen.addLayerToConnection(ei, "ethernet", "EthernetNetworkElement");
+//
+//					// TODO: latency
+//				} else {			
+//					//networks to storage must be point 2 point
+//					Individual ei = ngen.declareNetworkConnection(e.getName());
+//					ngen.addResourceToReservation(reservation, ei);
+//
+//					if (e.getBandwidth() > 0)
+//						ngen.addBandwidthToConnection(ei, e.getBandwidth());
+//				
+//					if (e.getLabel() != null) 
+//						ngen.addLabelToIndividual(ei, e.getLabel());
+//				
+//					// TODO: deal with layers later
+//					ngen.addLayerToConnection(ei, "ethernet", "EthernetNetworkElement");
+//
+//					// TODO: latency
+//				}
+//			}
+//
+//			//Process stitches
+//			for (Interface stitch: request.getInterfaces()){
+//				if (stitch instanceof InterfaceNode2Net){
+//					InterfaceNode2Net stitch_n2l = (InterfaceNode2Net)stitch;
+//					Individual ei = ngen.getRequestIndividual(stitch_n2l.getLink().getName());
+//					processNodeAndLink(stitch_n2l, ei);
+//				} else {
+//					LIBNDL.logger().error("Error: unkown stitch type, skipping: " + stitch);
+//				}
+//			}
+//			res = getFormattedOutput(ngen, outputFormat);
+//
+//		} catch (Exception e) {
+//
+//			e.printStackTrace();
+//			return null;
+//		} finally {
+//			if (ngen != null)
+//				ngen.done();
+//		}
+//
+//		return res;
+//	}
 
 	private String getFormattedOutput(NdlGenerator ng, String oFormat) {
 		if (oFormat == null)
@@ -402,53 +406,53 @@ public class RequestGenerator extends NDLGenerator{
 	 * @param edgeI
 	 * @throws NdlException
 	 */
-	private void processNodeAndLink(InterfaceNode2Net s, Individual edgeI) throws NdlException {
-		Node n = s.getNode();  
-		Network e = s.getLink();
- 		
-		Individual intI;
-		
-		//Add storage dependency:  shouldn't the controller do this???
-		if (s.getNode() instanceof StorageNode){
-			Individual storInd = ngen.getRequestIndividual(s.getNode().getName());
-			InterfaceNode2Net iface = null;
-			for (Interface i : s.getLink().getInterfaces()){
-				if(i != s && i instanceof InterfaceNode2Net){
-					iface = (InterfaceNode2Net)i;
-					break;
-				}
-			}
-			Individual nodeInd = ngen.getRequestIndividual(iface.getNode().getName());
-			if ((storInd == null) || (nodeInd == null))
-				throw new NdlException("Unable to find individual for node " + s.getNode() + " or " + n);
-			ngen.addDependOnToIndividual(storInd, nodeInd);
-		}
-		
-		if (n instanceof StitchPort) {
-			StitchPort sp = (StitchPort)n;
-			if ((sp.getPort() == null) || (sp.getPort().length() == 0) || 
-					(sp.getLabel() == null) || (sp.getLabel().length() == 0))
-				throw new NdlException("URL and label must be specified in StitchPort");
-			intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
-		} else {
-			intI = ngen.declareInterface(e.getName()+"-"+n.getName());
-		}
-		// add to link
-		ngen.addInterfaceToIndividual(intI, edgeI);
-
-		//add to node
-		Individual nodeI = ngen.getRequestIndividual(n.getName());
-		ngen.addInterfaceToIndividual(intI, nodeI);
-		
-		// see if there is an IP address for this link on this node
-		if (s.getIpAddress() != null) {
-			// create IP object, attach to interface
-			Individual ipInd = ngen.addUniqueIPToIndividual(s.getIpAddress(), e.getName()+"-"+n.getName(), intI);
-			if (s.getNetmask() != null){
-				ngen.addNetmaskToIP(ipInd, s.getNetmask());
-			}
-		}
-	}
+//	private void processNodeAndLink(InterfaceNode2Net s, Individual edgeI) throws NdlException {
+//		Node n = s.getNode();  
+//		Network e = s.getLink();
+// 		
+//		Individual intI;
+//		
+//		//Add storage dependency:  shouldn't the controller do this???
+//		if (s.getNode() instanceof StorageNode){
+//			Individual storInd = ngen.getRequestIndividual(s.getNode().getName());
+//			InterfaceNode2Net iface = null;
+//			for (Interface i : s.getLink().getInterfaces()){
+//				if(i != s && i instanceof InterfaceNode2Net){
+//					iface = (InterfaceNode2Net)i;
+//					break;
+//				}
+//			}
+//			Individual nodeInd = ngen.getRequestIndividual(iface.getNode().getName());
+//			if ((storInd == null) || (nodeInd == null))
+//				throw new NdlException("Unable to find individual for node " + s.getNode() + " or " + n);
+//			ngen.addDependOnToIndividual(storInd, nodeInd);
+//		}
+//		
+//		if (n instanceof StitchPort) {
+//			StitchPortetFormattedOutput(output sp = (StitchPort)n;
+//			if ((sp.getPort() == null) || (sp.getPort().length() == 0) || 
+//					(sp.getLabel() == null) || (sp.getLabel().length() == 0))
+//				throw new NdlException("URL and label must be specified in StitchPort");
+//			intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
+//		} else {
+//			intI = ngen.declareInterface(e.getName()+"-"+n.getName());
+//		}
+//		// add to link
+//		ngen.addInterfaceToIndividual(intI, edgeI);
+//
+//		//add to node
+//		Individual nodeI = ngen.getRequestIndividual(n.getName());
+//		ngen.addInterfaceToIndividual(intI, nodeI);
+//		
+//		// see if there is an IP address for this link on this node
+//		if (s.getIpAddress() != null) {
+//			// create IP object, attach to interface
+//			Individual ipInd = ngen.addUniqueIPToIndividual(s.getIpAddress(), e.getName()+"-"+n.getName(), intI);
+//			if (s.getNetmask() != null){
+//				ngen.addNetmaskToIP(ipInd, s.getNetmask());
+//			}
+//		}
+//	}
 	
 
 	
@@ -463,7 +467,7 @@ public class RequestGenerator extends NDLGenerator{
 		if ((l.getLabel() != null) && 
 				(((pn.getFirst().getDomain() != null) && 
 				(!pn.getFirst().getDomain().equals(pn.getSecond().getDomain()))) ||
-				(pn.getSecond().getDomain() != null) && 
+				(pn.geetFormattedOutput(outputtSecond().getDomain() != null) && 
 				(!pn.getSecond().getDomain().equals(pn.getFirst().getDomain()))))
 			throw new NdlException("Link " + l.getName() + " is invalid: it specifies a desired VLAN tag, but the nodes are bound to different domains");
 		
@@ -490,7 +494,7 @@ public class RequestGenerator extends NDLGenerator{
 		boolean sharedStorage = oc.linkToSharedStorage();
 		
 		if (!sharedStorage)
-			return;
+			return;etFormattedOutput(output
 		
 		List<OrcaStorageNode> snodes = new ArrayList<OrcaStorageNode>();
 		List<OrcaNode> otherNodes = new ArrayList<OrcaNode>();

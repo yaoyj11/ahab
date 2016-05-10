@@ -45,6 +45,7 @@ import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
 import orca.ndl.INdlRequestModelListener;
 import orca.ndl.NdlCommons;
+import orca.ndl.NdlGenerator;
 import orca.ndl.NdlRequestParser;
 
 import org.apache.commons.lang.StringUtils;
@@ -60,6 +61,8 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 	private NDLModel ndlModel;
 	private RequestReservationTerm term = new RequestReservationTerm();
 
+	private NdlRequestParser nrp;
+	
 	public RequestLoader(SliceGraph sliceGraph, NDLModel ndlModel){
 		this.sliceGraph = sliceGraph;
 		this.ndlModel = ndlModel;
@@ -73,7 +76,6 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 	 * @return
 	 */
 	public NdlRequestParser load(String rdf) {
-		NdlRequestParser nrp;
 		try {
 			nrp = new NdlRequestParser(rdf, this);
 			nrp.doLessStrictChecking(); //TODO: Should be removed...
@@ -89,7 +91,16 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		return nrp;
 	}
 
-	
+	public NdlGenerator getGenerator() {
+		NdlGenerator ngen = null;
+		try{
+		return new NdlGenerator(nrp, LIBNDL.logger());
+		} catch (Exception e){
+			LIBNDL.logger().error(e);
+			LIBNDL.logger().debug("error loading NdlGenerator");
+		}
+		return ngen;
+	}
 	
 
 	public void ndlReservation(Resource i, final OntModel m) {
@@ -389,6 +400,10 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		//ol.setLatency(latency);
 		ol.setLabel(NdlCommons.getLayerLabelLiteral(bl));	
 	}
+
+
+
+
 
 
 

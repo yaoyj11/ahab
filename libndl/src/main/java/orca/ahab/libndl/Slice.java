@@ -21,9 +21,11 @@ import orca.ahab.libndl.resources.request.RequestResource;
 import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
 import orca.ahab.libndl.util.IP4Subnet;
+import orca.ahab.libtransport.AccessToken;
 import orca.ahab.libtransport.ISliceTransportAPIv1;
 import orca.ahab.libtransport.ITransportProxyFactory;
 import orca.ahab.libtransport.PEMTransportContext;
+import orca.ahab.libtransport.SliceAccessContext;
 import orca.ahab.libtransport.TransportContext;
 import orca.ahab.libtransport.util.ContextTransportException;
 import orca.ahab.libtransport.util.TransportException;
@@ -42,14 +44,22 @@ public class Slice {
 	private SliceGraph sliceGraph;
 	private ISliceTransportAPIv1 sliceProxy;
 	private String name;
+	private SliceAccessContext<? extends AccessToken> sliceContext;
 	
 	private Slice(){
 		sliceGraph = new SliceGraph(this);
 	}
 	
-	public static Slice create(){
-		return new Slice();
+	public static Slice create(ISliceTransportAPIv1 sliceProxy, SliceAccessContext<? extends AccessToken> sctx, String name){
+		Slice s = new Slice();
+		s.sliceGraph.loadNewRequest();
+		s.setName(name);
+		s.setSliceProxy(sliceProxy);
+		s.setSliceContext(sctx);
+		return s;
 	}
+	
+	
 	
 	public static Slice loadRequestFile(String fileName){
 		return Slice.loadRequest(readRDFFile(new File(fileName)));
@@ -171,12 +181,23 @@ public class Slice {
 		return this.name;
 	}
 	
+	public boolean isNewSlice(){
+		return sliceGraph.getNDLModel().isNewSlice();
+	}
+	
+	
 	public void commit() {
 		try{
 			LIBNDL.logger().debug("Name: " + this.getName());
 			LIBNDL.logger().debug("Req: " + this.getRequest());
 			LIBNDL.logger().debug("sliceProxy: " + sliceProxy);
-			sliceProxy.modifySlice(this.getName(), this.getRequest());
+			if(isNewSlice()){
+				LIBNDL.logger().debug("commit new slice");
+				sliceProxy.createSlice(this.getName(), this.getRequest(),this.getSliceContext());
+			} else {
+				LIBNDL.logger().debug("commit modify slice");
+				sliceProxy.modifySlice(this.getName(), this.getRequest());
+			}
 		} catch (Exception e){
 			this.logger().debug("Failed to commit changes");
 			e.printStackTrace();
@@ -296,6 +317,14 @@ public class Slice {
 	public IP4Subnet allocateSubnet(int dEFAULT_SIZE) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public SliceAccessContext<? extends AccessToken> getSliceContext() {
+		return sliceContext;
+	}
+
+	public void setSliceContext(SliceAccessContext<? extends AccessToken> sliceContext) {
+		this.sliceContext = sliceContext;
 	}
 	 
 }

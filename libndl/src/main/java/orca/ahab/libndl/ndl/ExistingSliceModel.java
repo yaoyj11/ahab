@@ -51,7 +51,8 @@ public class ExistingSliceModel extends NDLModel{
 			sliceModel = uloader.load(rdf);
 			
 			String nsGuid = UUID.randomUUID().toString();
-		
+			
+			
 			ngen = new NdlGenerator(nsGuid, LIBNDL.logger(), true);
 			String nm = (nsGuid == null ? "my-modify" : nsGuid + "/my-modify");
 			reservation = ngen.declareModifyReservation(nm);
@@ -60,6 +61,8 @@ public class ExistingSliceModel extends NDLModel{
 		}
 					
 	}
+	
+	public boolean isNewSlice(){ return false; };
 
 	protected void mapSliceResource2ModelResource(RequestResource r, Resource i){
 		slice2NDLMap.put(r,i);				

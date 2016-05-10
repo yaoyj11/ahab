@@ -23,6 +23,7 @@
 
 package orca.ahab.libndl;
 
+import java.awt.Dialog.ModalExclusionType;
 import java.io.File;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -441,9 +442,17 @@ public class SliceGraph   {
 	
 	/*************************************   RDF Functions:  save, load, getRDFString, etc. ************************************/
 	
+	public void loadNewRequest(){
+		rawLoadedRDF = "New Request";
+		NewSliceModel model = new NewSliceModel();
+		model.init(this);
+		this.ndlModel = model;
+	}
+	
 	public void loadRequestRDF(String rdf){
 		rawLoadedRDF = rdf;
-		this.ndlModel = new NewSliceModel(this,rdf);
+		this.ndlModel = new NewSliceModel();
+		this.ndlModel.init(this,rdf);
 	}
 	
 	public void loadManifestRDF(String rdf){
@@ -460,15 +469,15 @@ public class SliceGraph   {
 	}
 	
 	public void saveNewRequest(String file){
-		RequestGenerator saver = new RequestGenerator(this);
-		SliceGraph r = new SliceGraph(slice);
-		saver.saveRequest(file);
+		//RequestGenerator saver = new RequestGenerator(this);
+		//SliceGraph r = new SliceGraph(slice);
+		//saver.saveRequest(file);
 	}
 	
 	public void saveModifyRequest(String file){
-		RequestGenerator saver = new RequestGenerator(this);
-		SliceGraph r = new SliceGraph(slice);
-		saver.saveModifyRequest(file);
+		//RequestGenerator saver = new RequestGenerator(this);
+		//SliceGraph r = new SliceGraph(slice);
+		//saver.saveModifyRequest(file);
 	}
 	
 	public String getRDFString(){
