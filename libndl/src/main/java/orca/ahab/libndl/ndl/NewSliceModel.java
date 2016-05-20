@@ -70,6 +70,7 @@ public class NewSliceModel extends NDLModel {
 			//		ni = ngen.declareServerCloud(name);
 			//} else {
 				ni = ngen.declareComputeElement(name);
+				ngen.addGuid(ni, UUID.randomUUID().toString());
 				ngen.addVMDomainProperty(ni);
 			//}
 			mapRequestResource2ModelResource(cn, ni);
@@ -139,6 +140,7 @@ public class NewSliceModel extends NDLModel {
 //				ngen.addNetmaskToIP(ipInd, netmaskIntToString(Integer.parseInt(n.getNm(l))));
 //		}
 		ngen.addResourceToReservation(reservation, nodeI);
+		this.mapRequestResource2ModelResource(i, intI); 
 		} catch (NdlException e){
 			logger().error("ERROR: NewSliceModel::add(InterfaceNode2Net) " );
 			e.printStackTrace();

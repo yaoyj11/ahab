@@ -37,4 +37,12 @@ public abstract class Interface extends ModelResource{
 		this.a = a;
 		this.b = b;
 	}
+
+	public boolean contains(RequestResource testa, RequestResource testb) {
+		if((a.equals(testa) && b.equals(testb)) ||  
+		   (a.equals(testb) && b.equals(testa))	) {
+				return true;
+			}
+		return false;
+	}
 }

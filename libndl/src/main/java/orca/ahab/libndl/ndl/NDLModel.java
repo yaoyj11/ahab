@@ -1,8 +1,10 @@
 package orca.ahab.libndl.ndl;
 
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -110,7 +112,7 @@ public abstract class NDLModel {
 	public void setGUID(ModelResource modelResource, String guid){
 		//not implemented
 	}
-	
+
 	public void setImage(ComputeNode cn, String imageURL, String imageHash, String shortName){
 		try{
 			Individual imageIndividual = ngen.declareDiskImage(imageURL, imageHash, shortName);	
@@ -198,8 +200,44 @@ public abstract class NDLModel {
 		return  NdlCommons.getPostBootScript(this.getModelResource(computeNode));
 	}
 
+	public List<String>  getManagementServices(ComputeNode computeNode) {
+		List<String> services = NdlCommons.getNodeServices(this.getModelResource(computeNode));
+		//LIBNDL.logger().debug("NDLModel::getManagementIP: " + services);
+		return services;
+	}
 
 
+	public String getIP(InterfaceNode2Net interfaceNode2Net) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	public void setIP(InterfaceNode2Net interfaceNode2Net, String ipAddress) {
+		//LIBNDL.logger().debug("NDLModel::setIP:  " + this.getModelResource(interfaceNode2Net));	
+		try {
+			Individual interfaceIndivdual = (Individual) this.getModelResource(interfaceNode2Net);
+			LIBNDL.logger().debug("NDLModel::setIP:  interfaceIndivdual = " + interfaceIndivdual);
+			LIBNDL.logger().debug("NDLModel::setIP:  interfaceIndivdual.getName = " + interfaceNode2Net.getName());
+			Individual ipInd = ngen.addUniqueIPToIndividual(ipAddress, interfaceNode2Net.getName(), interfaceIndivdual);
+			ngen.addNetmaskToIP(ipInd, "255.255.0.0");
+		} catch (NdlException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	public String getNetMask(InterfaceNode2Net interfaceNode2Net) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	public void setNetMask(InterfaceNode2Net interfaceNode2Net, String netmask) {
+//		try {
+//			//Individual interfaceIndivdual = (Individual) this.getModelResource(interfaceNode2Net);
+//			Individual ipInd = ngen.getRequestIndividual(interfaceNode2Net.getName());
+//			ngen.addNetmaskToIP(ipInd, netmask);
+//		} catch (NdlException e) {
+//			e.printStackTrace();
+//		}
+		
+	}
 	
 	public void setDomain(RequestResource requestResource, String d) {
 		try{
@@ -248,6 +286,7 @@ public abstract class NDLModel {
 			}
 			return rname;
 		}
+		
 		
 
 		/****************************************************/

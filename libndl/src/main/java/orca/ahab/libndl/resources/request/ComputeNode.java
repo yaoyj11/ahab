@@ -186,6 +186,26 @@ public class ComputeNode extends Node {
 		return splittable;
 	}
 
+	public List<String> getManagmentServices() {
+		return this.getNDLModel().getManagementServices(this);
+	}
+	
+	public String getManagementIP(){
+		try{
+			List<String> services = this.getNDLModel().getManagementServices(this);
+			for (String s : services){
+				if (s.startsWith("ssh")){
+					String delims = "[:@]+";
+					String[] tokens = s.split(delims);
+					return tokens[2];
+				}
+			}
+		}catch (Exception e){
+			return null;
+		}
+		return null;
+	}
+	
 		
 	public Interface stitch(RequestResource r){
 		LIBNDL.logger().debug("ComputeNode.stitch"); 
@@ -193,6 +213,7 @@ public class ComputeNode extends Node {
 		if (r instanceof Network){
 			LIBNDL.logger().debug("ComputeNode.stitch:  calling InterfaceNode2Net");
 			stitch = new InterfaceNode2Net(this,(Network)r,sliceGraph);
+			
 		} else {
 			//Can't stitch computenode to r
 			//Should throw exception
@@ -215,6 +236,8 @@ public class ComputeNode extends Node {
 	public void delete() {
 		sliceGraph.deleteResource(this);
 	}
+
+	
 
 	
 	

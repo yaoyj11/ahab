@@ -263,8 +263,10 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 	}
 
 	public void ndlInterface(Resource intf, OntModel om, Resource conn, Resource node, String ip, String mask) {
-	
-		LIBNDL.logger().debug("Interface: " + intf + " link: " + conn + " node: " + node);
+		LIBNDL.logger().debug("PRUTH-Interface: " + intf + " link: " + conn + " node: " + node);
+		
+		try{
+		
 		if(intf == null){
 			
 			return;
@@ -298,8 +300,6 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 			//InterfaceNode2Net stitch = (InterfaceNode2Net)onode.stitch(olink);
 			InterfaceNode2Net stitch = sliceGraph.buildInterfaceNode2Net((Node)onode, (Network)olink);
 			ndlModel.mapRequestResource2ModelResource((ModelResource)stitch, intf);
-			stitch.setIpAddress(ip);  
-			stitch.setNetmask(mask);
 			return;
 		} 
 		
@@ -325,6 +325,12 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 			InterfaceNode2Net stitch = sliceGraph.buildInterfaceNode2Net((Node)onode, (Network)olink);
 			return;
 		}	
+		
+		}catch (Exception e){
+			LIBNDL.logger().debug("PRUTH-Interface: Exception: " + e.getMessage() );
+			e.printStackTrace();
+		}
+		
 		
 		//shouldnt get here
 		LIBNDL.logger().debug("Stitching to unknown node type: " + node + ", " + node.getClass());

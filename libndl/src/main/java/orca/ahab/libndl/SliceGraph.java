@@ -203,26 +203,31 @@ public class SliceGraph   {
 	/************************ build resources and add them to ndl model ************/
 	public ComputeNode addComputeNode(String name){
 		ComputeNode node = buildComputeNode(name);
+		node.setIsNew(true);
 		ndlModel.add(node,name);	
 		return node;
 	}
 	public StorageNode addStorageNode(String name){
 		StorageNode node = buildStorageNode(name);
+		node.setIsNew(true);
 		ndlModel.add(node);
 		return node;
 	}
 	public StitchPort addStitchPort(String name){
 		StitchPort node = buildStitchPort(name);
+		node.setIsNew(true);
 		ndlModel.add(node);
 		return node;
 	}
 	public Network addLink(String name){
 		BroadcastNetwork link = buildLink(name);
+		link.setIsNew(true);
 		ndlModel.add(link, name);
 		return link;
 	}
 	public BroadcastNetwork addBroadcastLink(String name){
 		BroadcastNetwork link = buildBroadcastLink(name);
+		link.setIsNew(true);
 		ndlModel.add(link, name);
 		return link;
 	}

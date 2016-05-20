@@ -22,10 +22,12 @@ import com.hp.hpl.jena.rdf.model.Resource;
  */
 public abstract class RequestResource extends ModelResource{
 	
+	boolean isNew;
 
-
+	
 	public RequestResource(SliceGraph sliceGraph) {
 		super(sliceGraph);
+		isNew = false;
 	}
 
 	// reservation state - should probably be an enumeration
@@ -38,7 +40,21 @@ public abstract class RequestResource extends ModelResource{
 	
 
 	public abstract Interface stitch(RequestResource r);
-
+	
+	
+	public Interface getInterface(RequestResource r){
+		
+		System.out.println("getInterface: " +sliceGraph.getInterfaces(this));
+		for (Interface iface: sliceGraph.getInterfaces(this)){
+			System.out.println("Possible iface: " + iface);
+			if(iface.contains(this,r)){
+				System.out.println("Found it: " + iface);
+				return iface;
+			}
+		}
+		System.out.println("Iface not found");
+		return null;
+	}
 	
 	
 	
@@ -52,7 +68,13 @@ public abstract class RequestResource extends ModelResource{
 //		return null;
 //	}
 	
-
+	public void setIsNew(boolean isNew){
+		this.isNew = isNew;
+	}
+	
+	public boolean isNew(){
+		return isNew;
+	}
 
 	public String getState() {
 		return state;

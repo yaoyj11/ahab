@@ -1,7 +1,9 @@
 package orca.ahab.libndl.ndl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.hp.hpl.jena.ontology.Individual;
@@ -38,7 +40,6 @@ public class ExistingSliceModel extends NDLModel{
 	
 	public ExistingSliceModel() {
 		super();
-		
 	}
 
 	public void init(SliceGraph sliceGraph, String rdf){
@@ -87,7 +88,7 @@ public class ExistingSliceModel extends NDLModel{
 	public void add(ComputeNode cn, String name) {
 		logger().debug("ExistingSliceModel:add(ComputeNode)");
 		try {
-			Individual ni = null;
+				Individual ni = null;
 			
 			//if (cn.getNodeCount() > 0){
 			//	if (cn.getSplittable())
@@ -95,7 +96,9 @@ public class ExistingSliceModel extends NDLModel{
 			//	else
 			//		ni = ngen.declareServerCloud(name);
 			//} else {
+				
 				ni = ngen.declareComputeElement(name);
+				ngen.addGuid(ni, UUID.randomUUID().toString());
 				ngen.addVMDomainProperty(ni);
 			//}
 			mapRequestResource2ModelResource(cn, ni);
@@ -134,41 +137,62 @@ public class ExistingSliceModel extends NDLModel{
 		Resource r = this.getModelResource(i);
 		Node node = i.getNode();
 		Network net = i.getLink();
-		
-		try{
-		
-		Individual blI = ngen.getRequestIndividual(net.getName()); //not sure this is right
-		Individual nodeI = ngen.declareModifiedComputeElement(node.getURL(), node.getGUID());
-		
-		Individual intI;
-		if (node instanceof StitchPort) {
-			StitchPort sp = (StitchPort)node;
-			if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
-				throw new NdlException("URL and label must be specified in StitchPort");
-			intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
-		} else {
-			intI = ngen.declareInterface(net.getName()+"-"+node.getName());
-		}
-		ngen.addInterfaceToIndividual(intI, blI);
-		
-		if (nodeI == null)
-			throw new NdlException("Unable to find or create individual for node " + node);
-		
-		ngen.addInterfaceToIndividual(intI, nodeI);
 
-		// see if there is an IP address for this link on this node
-//		if (node.getIp(link) != null) {
-//			// create IP object, attach to interface
-//			Individual ipInd = ngen.addUniqueIPToIndividual(n.getIp(l), oc.getName()+"-"+n.getName(), intI);
-//			if (n.getNm(l) != null)
-//				ngen.addNetmaskToIP(ipInd, netmaskIntToString(Integer.parseInt(n.getNm(l))));
-//		}
-		ngen.declareModifyElementAddElement(reservation, nodeI);
+		try{
+			Individual blI = null;
+			if (net.isNew()){
+				blI = ngen.getRequestIndividual(net.getName()); 
+			} else {
+				//blI = ngen.declareModifiedComputeElement(net.getURL(), net.getGUID());
+				//ngen.declareModifyElementModifyNode(reservation, blI); //is this needed????
+				blI = ngen.declareModifiedBroadcastConnection(net.getURL());
+				//ngen.declareModifyElementModifyNode(reservation, blI);
+				ngen.declareModifyElementAddElement(reservation, blI);
+			}
+			
+			Individual nodeI;
+			if (node.isNew()){
+				//New nodes
+				nodeI = ngen.getRequestIndividual(node.getName());
+			} else {
+				logger().debug("ExistingSliceModel:add(InterfaceNode2Net): node.getURL = " + node.getURL());
+				
+				//Existing  node
+				nodeI = ngen.declareModifiedComputeElement(node.getURL(), node.getGUID());
+				ngen.declareModifyElementModifyNode(reservation, nodeI);
+			}
+				
+			
+			Individual intI;
+			if (node instanceof StitchPort) {
+				StitchPort sp = (StitchPort)node;
+				if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
+					throw new NdlException("URL and label must be specified in StitchPort");
+				intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
+			} else {
+				intI = ngen.declareInterface(net.getName()+"-"+node.getName());
+			}
+			ngen.addInterfaceToIndividual(intI, blI);
+
+			if (nodeI == null)
+				throw new NdlException("Unable to find or create individual for node " + node);
+			
+		
+			ngen.addInterfaceToIndividual(intI, nodeI);
+			this.mapRequestResource2ModelResource(i, intI); 
+
+			// see if there is an IP address for this link on this node
+			//		if (node.getIp(link) != null) {
+			//			// create IP object, attach to interface
+			//			Individual ipInd = ngen.addUniqueIPToIndividual(n.getIp(l), oc.getName()+"-"+n.getName(), intI);
+			//			if (n.getNm(l) != null)
+			//				ngen.addNetmaskToIP(ipInd, netmaskIntToString(Integer.parseInt(n.getNm(l))));
+			//		}
 		} catch (NdlException e){
 			logger().error("ERROR: ExistingSliceModel::add(InterfaceNode2Net) " );
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	@Override

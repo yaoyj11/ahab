@@ -3,6 +3,8 @@
  */
 package orca.ahab.libndl.resources.request;
 
+import com.hp.hpl.jena.sparql.function.library.namespace;
+
 import orca.ahab.libndl.SliceGraph;
 
 /**
@@ -13,8 +15,8 @@ public class InterfaceNode2Net extends Interface{
 	//private OrcaNode a;  -- from OrcaStitch
 	//private OrcaLink b;  -- from OrcaStitch
 
-	private String ipAddress; 
-	private String netmask;
+	//private String ipAddress; 
+	//private String netmask;
 	private String macAddress;
 	
 	public InterfaceNode2Net(Node n, Network l, SliceGraph sliceGraph){
@@ -34,16 +36,20 @@ public class InterfaceNode2Net extends Interface{
 		this.b = link;
 	}
 	public String getIpAddress() {
-		return ipAddress;
+		return this.getNDLModel().getIP(this);
+		//return ipAddress;
 	}
 	public void setIpAddress(String ipAddress) {
-		this.ipAddress = ipAddress;
+		this.getNDLModel().setIP(this, ipAddress);
+		//this.ipAddress = ipAddress;
 	}
 	public String getNetmask() {
-		return netmask;
+		return this.getNDLModel().getNetMask(this);
+		//return netmask;
 	}
 	public void setNetmask(String netmask) {
-		this.netmask = netmask;
+		this.getNDLModel().setNetMask(this, netmask);
+		//this.netmask = netmask;
 	}
 	public String getMacAddress() {
 		return macAddress;
@@ -67,8 +73,8 @@ public class InterfaceNode2Net extends Interface{
 		else
 			rtnStr += "null to ";	
 	
-		rtnStr += ", ipAddress: " + this.ipAddress;
-		rtnStr += ", netmask: " + this.netmask;
+		//rtnStr += ", ipAddress: " + this.ipAddress;
+		//rtnStr += ", netmask: " + this.netmask;
 		rtnStr += ", mac: " + this.macAddress;
 		
 		return rtnStr;
