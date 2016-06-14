@@ -9,7 +9,7 @@ parser.add_option("-i", "--slice-id", dest="sliceID",
 parser.add_option("-s", "--server", dest="server",
                   help="XMLRPC server URL", metavar="URL", default='https://localhost:9443/xmlrpc')
 parser.add_option("-d", "--new-end-date", dest="newEndDate",
-		  help="New end date", metavar="DATE")
+		  help="New end date in RFC3339 format (e.g. 2008-09-08T15:47:31Z)", metavar="DATE")
 parser.add_option("-c", "--cert", dest="cert", 
                   help="PEM file with cert")
 parser.add_option("-p", "--private-key", dest="privateKey", 
