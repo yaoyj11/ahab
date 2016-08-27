@@ -1,17 +1,9 @@
 package orca.ahab.libndl.resources.request;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 
 import orca.ahab.libndl.SliceGraph;
-import orca.ahab.libndl.ndl.NDLModel;
 import orca.ahab.libndl.resources.common.ModelResource;
-import orca.ahab.libndl.LIBNDL;
-import orca.ahab.libndl.Slice;
-
-import com.hp.hpl.jena.rdf.model.Resource;
 
 
 /**

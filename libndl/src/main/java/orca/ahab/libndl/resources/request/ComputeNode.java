@@ -45,8 +45,6 @@ public class ComputeNode extends Node {
 	ArrayList<orca.ahab.libndl.resources.manifest.Node> manifestNodes; 
 		
 	
-
-
 	protected List<String> managementAccess = null;
 
 	// list of open ports
@@ -62,6 +60,11 @@ public class ComputeNode extends Node {
 	public void addManifestNode(orca.ahab.libndl.resources.manifest.Node node){
 		manifestNodes.add(node);
 		nodeCount++;
+	}
+
+	@Override
+	public String getState(){
+		return getNDLModel().getState(this);
 	}
 	
 	public Collection<orca.ahab.libndl.resources.manifest.Node> getManifestNodes(){
