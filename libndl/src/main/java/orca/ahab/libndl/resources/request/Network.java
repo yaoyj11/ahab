@@ -72,12 +72,18 @@ public abstract class Network extends RequestResource {
     		label = null;
     }
     
+    @Override
+    public String getState() {
+    	return getNDLModel().getState(this);
+    }
+
     public String getLabel() {
     	return label;
     }
     
     public Long getBandwidth() {
-    	return bandwidth;
+//    	return bandwidth;
+    	return getNDLModel().getBandwidth(this);
     }
     
     public long getLatency() {
