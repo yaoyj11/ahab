@@ -65,7 +65,7 @@ public class StitchPort extends Network {
 		bandwidth = b;
 	}
 	
-	public Long getBandwidth() {
+	public long getBandwidth() {
 		return bandwidth;
 	}
 		
