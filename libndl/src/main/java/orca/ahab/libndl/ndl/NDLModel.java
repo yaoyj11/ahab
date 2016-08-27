@@ -198,7 +198,7 @@ public abstract class NDLModel {
 	public String getState(ComputeNode cn) {
 		return NdlCommons.getResourceStateAsString(getModelResource(cn));
 	}
-
+	
 	public String getName(ModelResource cn) {
 		//return this.getModelResource(cn).getLocalName();
 		return this.getPrettyName(this.getModelResource(cn));
@@ -485,51 +485,12 @@ public abstract class NDLModel {
 		}
 	}
 	
+	public String getState(Network network){
+		return NdlCommons.getResourceStateAsString(getModelResource(network));
+	}
+
 	public String getIP(InterfaceNode2Net interfaceNode2Net) {
-		String ip = null;
-		try {
-			Resource interfaceResource = this.getModelResource(interfaceNode2Net);
-			LIBNDL.logger().debug("NDLModel::getIP:  interfaceIndivdual = " + interfaceResource);
-			LIBNDL.logger().debug("NDLModel::getIP:  interfaceIndivdual.getName = " + interfaceNode2Net.getName());
-			//Individual ipInd = ngen.addUniqueIPToIndividual(ipAddress, interfaceNode2Net.getName(), interfaceIndivdual);
-			//ngen.addNetmaskToIP(ipInd, "255.255.0.0");
-			//ip = NdlCommons.getAddressIP(interfaceResource);
-			
-			//<j.10:localIPAddress
-			Resource ipResource = interfaceResource.getProperty(NdlCommons.ip4LocalIPAddressProperty).getResource();
-			LIBNDL.logger().debug("NDLModel::getIP: ipResource = " + ipResource);
-			 ///<j.7:label_ID>172.16.1.100</j.7:label_ID>
-			 ip = NdlCommons.getLabelID(ipResource);
-			LIBNDL.logger().debug("NDLModel::getIP: ipStr = " + ip);
-			
-//	    	Iterator i = null;
-
-//	    	OntModel om = this.getJenaModel();
-//	    	LIBNDL.logger().debug("NDLModel::getIP: om = " + om);
-//	    	om.listStatements(interfaceResource, (Property) null /*NdlCommons.inRequestNetworkConnection*/, (RDFNode) null /*interfaceResource*/);
-//	    	
-//	    	for (i = om.listStatements(interfaceResource, (Property) null /*NdlCommons.inRequestNetworkConnection*/, (RDFNode) null /*interfaceResource*/); i.hasNext();){
-//	    		Statement st = (Statement) i.next();
-//	    		LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
-//	    		LIBNDL.logger().debug("resource type: " + getType(st.getSubject()));
-//
-//	    		//if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
-//	    		//	LIBNDL.logger().debug("adding vlan: " + st.getSubject());
-//	    		//	//ip =rtnList.add(st.getSubject()); st.getSubject(); 
-//	    		// }
-//	    	}
-
-			
-			
-			
-			
-			
-		} catch (Exception e) {
-			//e.printStackTrace();
-		}
-		
-		
-		return ip;
+		return NdlCommons.getAddressIP(getModelResource(interfaceNode2Net));
 	}
 	
 	public void setIP(InterfaceNode2Net interfaceNode2Net, String ipAddress) {
