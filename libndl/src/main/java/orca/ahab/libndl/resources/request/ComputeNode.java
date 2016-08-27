@@ -62,6 +62,11 @@ public class ComputeNode extends Node {
 		nodeCount++;
 	}
 
+	@Override
+	public String getState(){
+		return getNDLModel().getState(this);
+	}
+	
 	public Collection<orca.ahab.libndl.resources.manifest.Node> getManifestNodes(){
 		return manifestNodes;
 	}
