@@ -72,6 +72,11 @@ public abstract class Network extends RequestResource {
     		label = null;
     }
     
+    @Override
+    public String getState() {
+    	return getNDLModel().getState(this);
+    }
+
     public String getLabel() {
     	return label;
     }

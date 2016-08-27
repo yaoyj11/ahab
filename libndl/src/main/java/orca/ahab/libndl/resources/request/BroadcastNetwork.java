@@ -79,7 +79,6 @@ public class BroadcastNetwork extends Network {
 	
 	public long getBandwidth() {
 		return this.getNDLModel().getBandwidth(this); 
-		//return bandwidth;
 	}
 		
 	public Interface stitch(RequestResource r){
