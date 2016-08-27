@@ -24,7 +24,6 @@ package orca.ahab.libndl.resources.request;
 
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
-import orca.ahab.libndl.Slice;
 import orca.ahab.libndl.util.IP4Subnet;
 
 public abstract class Network extends RequestResource {
@@ -58,7 +57,8 @@ public abstract class Network extends RequestResource {
 	//}
     
     public void setBandwidth(long bw) {
-    	bandwidth = bw;
+//    	bandwidth = bw;
+    	this.getNDLModel().setBandwidth(this, bw);
     }
 
     public void setLatency(long l) {
@@ -70,6 +70,11 @@ public abstract class Network extends RequestResource {
     		label = l;
     	else
     		label = null;
+    }
+    
+    @Override
+    public String getState() {
+    	return getNDLModel().getState(this);
     }
 
     public String getLabel() {

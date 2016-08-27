@@ -4,12 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.Collection;
 
-import orca.ahab.libndl.ndl.ExistingSliceModel;
-import orca.ahab.libndl.ndl.NDLModel;
-import orca.ahab.libndl.ndl.NewSliceModel;
 import orca.ahab.libndl.ndl.RequestGenerator;
 import orca.ahab.libndl.resources.common.ModelResource;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
@@ -23,16 +19,10 @@ import orca.ahab.libndl.resources.request.StorageNode;
 import orca.ahab.libndl.util.IP4Subnet;
 import orca.ahab.libtransport.AccessToken;
 import orca.ahab.libtransport.ISliceTransportAPIv1;
-import orca.ahab.libtransport.ITransportProxyFactory;
-import orca.ahab.libtransport.PEMTransportContext;
 import orca.ahab.libtransport.SliceAccessContext;
-import orca.ahab.libtransport.TransportContext;
 import orca.ahab.libtransport.util.ContextTransportException;
 import orca.ahab.libtransport.util.TransportException;
-import orca.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
-import orca.ndl.NdlRequestParser;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import edu.uci.ics.jung.graph.SparseMultigraph;
@@ -65,8 +55,6 @@ public class Slice {
 	}
 	
 	
-	
-	
 	public static Slice loadRequest(String requestRDFString){
 		Slice s = new Slice();
 		s.sliceGraph.loadRequestRDF(requestRDFString);
@@ -80,8 +68,6 @@ public class Slice {
 		s.setSliceProxy(sliceProxy);
 		return s;
 	}
-	
-	
 	
 
 	public static Slice loadManifestFile(String fileName){
@@ -201,7 +187,6 @@ public class Slice {
 		return sliceGraph.getNDLModel().isNewSlice();
 	}
 	
-	
 	public void commit(int count, int sleepInterval){
 		boolean done = false;
 		int i = 0;
@@ -225,7 +210,7 @@ public class Slice {
 		
 		
 	}
-	
+
 	public void commit() {
 		try{
 			LIBNDL.logger().debug("Name: " + this.getName());
