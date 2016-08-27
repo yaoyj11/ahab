@@ -77,7 +77,7 @@ public class BroadcastNetwork extends Network {
 		//bandwidth = b;
 	}
 	
-	public Long getBandwidth() {
+	public long getBandwidth() {
 		return this.getNDLModel().getBandwidth(this); 
 		//return bandwidth;
 	}
