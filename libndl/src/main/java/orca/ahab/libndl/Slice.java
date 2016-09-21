@@ -47,6 +47,7 @@ public class Slice {
 	private SliceAccessContext<? extends AccessToken> sliceContext;
 	
 	private Slice(){
+		LIBNDL.setLogger();
 		sliceGraph = new SliceGraph(this);
 	}
 	
@@ -92,6 +93,17 @@ public class Slice {
 		s.sliceGraph.loadManifestRDF(manifestRDFString);
 		
 		return s; 
+	}
+	
+	//refresh the slice by pulling a new manifest.  Note: this resets any pending modifications
+	public void refresh(){
+		this.sliceGraph = new SliceGraph(this);
+		try {
+			this.sliceGraph.loadManifestRDF(sliceProxy.sliceStatus(this.name));
+		} catch (TransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private static String readRDFFile(File f){
@@ -183,6 +195,30 @@ public class Slice {
 		return sliceGraph.getNDLModel().isNewSlice();
 	}
 	
+	
+	public void commit(int count, int sleepInterval){
+		boolean done = false;
+		int i = 0;
+		do{
+			i++;
+			try{
+				this.commit();
+				done = true;
+			} catch (Exception e){
+				
+				System.out.print("Slice commit failed: sleeping for " + sleepInterval + " seconds. ");
+				
+				try {
+				    Thread.sleep(sleepInterval*1000); //1000 milliseconds is one second.
+				} catch(InterruptedException ex) {  
+				    Thread.currentThread().interrupt();
+				}
+				
+			}
+		}while (!done && i < count);
+		
+		
+	}
 	
 	public void commit() {
 		try{
