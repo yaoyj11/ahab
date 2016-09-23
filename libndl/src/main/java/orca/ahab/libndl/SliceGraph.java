@@ -177,8 +177,8 @@ public class SliceGraph   {
 		sliceGraph.addVertex(node);
 		return node;
 	}
-	public StitchPort buildStitchPort(String name){
-		StitchPort node = new StitchPort(this,name);
+	public StitchPort buildStitchPort(String name, String label, String port){
+		StitchPort node = new StitchPort(this,name,label,port);
 		sliceGraph.addVertex(node);
 		return node;
 	}
@@ -210,13 +210,13 @@ public class SliceGraph   {
 	public StorageNode addStorageNode(String name){
 		StorageNode node = buildStorageNode(name);
 		node.setIsNew(true);
-		ndlModel.add(node);
+		ndlModel.add(node, name);
 		return node;
 	}
-	public StitchPort addStitchPort(String name){
-		StitchPort node = buildStitchPort(name);
+	public StitchPort addStitchPort(String name, String label, String port){
+		StitchPort node = buildStitchPort(name, label, port);
 		node.setIsNew(true);
-		ndlModel.add(node);
+		ndlModel.add(node, name, label, port);
 		return node;
 	}
 	public Network addLink(String name){

@@ -42,9 +42,9 @@ public abstract class NDLModel {
 	
 	abstract public void add(ComputeNode cn, String name);
 	abstract public void add(BroadcastNetwork bn, String name);
-	abstract public void add(StitchPort sp);
+	abstract public void add(StitchPort sp, String name, String label, String port);
 	abstract public void add(InterfaceNode2Net i);
-	abstract public void add(StorageNode sn);
+	abstract public void add(StorageNode sn, String name);
 	
 	abstract public void remove(ComputeNode cn);
 	abstract public void remove(BroadcastNetwork bn);

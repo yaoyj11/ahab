@@ -125,12 +125,22 @@ public class ExistingSliceModel extends NDLModel{
 		}	
 	}
 
-	@Override
-	public void add(StitchPort sp) {
+	@Override 
+	public void add(StitchPort sp, String name, String label, String port) {
 		// TODO Auto-generated method stub
-		
+        Individual ni = null;
+        try{
+                //OrcaStitchPort sp = (OrcaStitchPort)n;
+                ni = ngen.declareStitchingNode(name);
+                mapRequestResource2ModelResource(sp, ni);
+                ngen.addResourceToReservation(reservation, ni);
+		} catch (NdlException e){
+			logger().error("ERROR: NewSliceModel::add(StitchPort) " );
+			e.printStackTrace();
+		}
 	}
-
+	
+	
 	@Override
 	public void add(InterfaceNode2Net i) { 
 		logger().debug("ExistingSliceModel:add(InterfaceNode2Net)");
@@ -164,14 +174,14 @@ public class ExistingSliceModel extends NDLModel{
 				
 			
 			Individual intI;
-			if (node instanceof StitchPort) {
-				StitchPort sp = (StitchPort)node;
-				if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
-					throw new NdlException("URL and label must be specified in StitchPort");
-				intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
-			} else {
+			//if (node instanceof StitchPort) {
+			//	StitchPort sp = (StitchPort)node;
+			//	if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
+			//		throw new NdlException("URL and label must be specified in StitchPort");
+			//	intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
+			//} else {
 				intI = ngen.declareInterface(net.getName()+"-"+node.getName());
-			}
+			//}
 			ngen.addInterfaceToIndividual(intI, blI);
 
 			if (nodeI == null)
@@ -196,7 +206,7 @@ public class ExistingSliceModel extends NDLModel{
 	}
 
 	@Override
-	public void add(StorageNode sn) {
+	public void add(StorageNode sn, String name) {
 		// TODO Auto-generated method stub
 		
 	}

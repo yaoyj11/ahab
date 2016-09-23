@@ -6,6 +6,7 @@ import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.util.Pair;
 import orca.ahab.libndl.LIBNDL;
 import orca.ahab.libndl.SliceGraph;
 import orca.ahab.libndl.resources.common.ModelResource;
@@ -68,7 +69,7 @@ public class NewSliceModel extends NDLModel {
 			//		ni = ngen.declareServerCloud(name, cn.getSplittable());
 			//	else
 			//		ni = ngen.declareServerCloud(name);
-			//} else {
+			//} else {sp.getName()
 				ni = ngen.declareComputeElement(name);
 				ngen.addGuid(ni, UUID.randomUUID().toString());
 				ngen.addVMDomainProperty(ni);
@@ -99,35 +100,75 @@ public class NewSliceModel extends NDLModel {
 	}
 
 	@Override 
-	public void add(StitchPort sp) {
+	public void add(StitchPort sp, String name, String label, String port) {
 		// TODO Auto-generated method stub
-		
+		logger().debug("add(StitchPort sp) sp: " + sp);
+        Individual ni = null;
+        try{
+        		//Add the stitchport
+                ni = ngen.declareStitchingNode(name);
+                mapRequestResource2ModelResource(sp, ni);
+                ngen.addResourceToReservation(reservation, ni);
+                ngen.addGuid(ni, UUID.randomUUID().toString());
+                
+                
+                //Add a link to the stitchport 
+                Individual ei = ngen.declareNetworkConnection(name+"-net");
+                ngen.addGuid(ei, UUID.randomUUID().toString());
+        		if (reservation != null)
+        			ngen.addResourceToReservation(reservation, ei);
+
+        		//if (sp.getBandwidth() > 0)
+        		//	ngen.addBandwidthToConnection(ei, sp.getBandwidth());
+        		
+        		ngen.addLabelToIndividual(ei, label);
+        		
+                ngen.addLayerToConnection(ei, "ethernet", "EthernetNetworkElement");
+                
+                //processNodeAndLink(pn.getFirst(), e, ei);
+                logger().debug("add(StitchPort sp) port: " + port);
+                logger().debug("add(StitchPort sp) label: " + label);
+                Individual spIface = ngen.declareStitchportInterface(port, label);
+                
+                ngen.addInterfaceToIndividual(spIface, ei);
+                ngen.addInterfaceToIndividual(spIface, ni);
+              
+		} catch (NdlException e){
+			logger().error("ERROR: NewSliceModel::add(StitchPort) " );
+			e.printStackTrace();
+		}
+        
 	}
 
 	@Override
 	public void add(InterfaceNode2Net i) {
-		logger().debug("NewSliceModel:add(InterfaceNode2Net)");
 		Resource r = this.getModelResource(i);
 		Node node = i.getNode();
 		Network net = i.getLink();
 		
 		try{
 		
-		Individual blI = ngen.getRequestIndividual(net.getName()); //not sure this is right
+		Individual blI  = null; //ngen.getRequestIndividual(net.getName()+"-net"); //not sure this is right
 		Individual nodeI = ngen.getRequestIndividual(node.getName());
-		 
+		
 		Individual intI;
-		if (node instanceof StitchPort) {
-			StitchPort sp = (StitchPort)node;
-			if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
-				throw new NdlException("URL and label must be specified in StitchPort");
-			intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
+		if (net instanceof StitchPort) {
+			//StitchPort sp = (StitchPort)net;
+			blI  = ngen.getRequestIndividual(net.getName()+"-net");
+			//if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
+			//	throw new NdlException("URL and label must be specified in StitchPort");
+			//intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
 		} else {
-			intI = ngen.declareInterface(net.getName()+"-"+node.getName());
+			blI  = ngen.getRequestIndividual(net.getName());
 		}
+		intI = ngen.declareInterface(net.getName()+"-"+node.getName());
+		
 		ngen.addInterfaceToIndividual(intI, blI);
 		
 		if (nodeI == null)
+			throw new NdlException("Unable to find or create individual for node " + node);
+		
+		if (intI == null)
 			throw new NdlException("Unable to find or create individual for node " + node);
 		
 		ngen.addInterfaceToIndividual(intI, nodeI);
@@ -148,7 +189,7 @@ public class NewSliceModel extends NDLModel {
 	}
 
 	@Override
-	public void add(StorageNode sn) {
+	public void add(StorageNode sn, String name) {
 		// TODO Auto-generated method stub
 		
 	}

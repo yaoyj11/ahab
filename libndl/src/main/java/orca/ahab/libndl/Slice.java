@@ -148,8 +148,8 @@ public class Slice {
 		return sliceGraph.addStorageNode(name);
 	}
 
-	public StitchPort addStitchPort(String name){
-		return sliceGraph.addStitchPort(name);	 
+	public StitchPort addStitchPort(String name, String label, String port){
+		return sliceGraph.addStitchPort(name, label, port);	 
 	}
 	SparseMultigraph<RequestResource, Interface> g = new SparseMultigraph<RequestResource, Interface>();
 
