@@ -118,8 +118,8 @@ public class NewSliceModel extends NDLModel {
         		if (reservation != null)
         			ngen.addResourceToReservation(reservation, ei);
 
-        		//if (sp.getBandwidth() > 0)
-        		//	ngen.addBandwidthToConnection(ei, sp.getBandwidth());
+        		if (sp.getBandwidth() > 0)
+        			ngen.addBandwidthToConnection(ei, sp.getBandwidth());
         		
         		ngen.addLabelToIndividual(ei, label);
         		
