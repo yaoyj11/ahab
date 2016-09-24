@@ -410,7 +410,6 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 		if (l == null)
 			return;
 		
-
 		//om.listStatements(null, null, l);
  		LIBNDL.logger().debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     ndlNetworkConnection     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ");
  		//NdlCommons.getResourceType(r)
@@ -430,7 +429,6 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 //		ol.setBandwidth(bandwidth);
 //		ol.setLatency(latency);
 //		ol.setLabel(NdlCommons.getLayerLabelLiteral(l));
-			
 	}
 
 	public void ndlInterface(Resource intf, OntModel om, Resource conn, Resource node, String ip, String mask) {
