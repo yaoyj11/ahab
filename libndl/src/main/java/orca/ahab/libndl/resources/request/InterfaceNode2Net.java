@@ -3,8 +3,6 @@
  */
 package orca.ahab.libndl.resources.request;
 
-import com.hp.hpl.jena.sparql.function.library.namespace;
-
 import orca.ahab.libndl.SliceGraph;
 
 /**
@@ -44,15 +42,10 @@ public class InterfaceNode2Net extends Interface{
 		//this.ipAddress = ipAddress;
 	}
 	public String getNetmask() {
-		return this.getNDLModel().getNetMask(this);
-		//return netmask;
+		return getNDLModel().getNetMask(this);
 	}
 	public void setNetmask(String netmask) {
-		this.getNDLModel().setNetMask(this, netmask);
-		//this.netmask = netmask;
-	}
-	public String getMacAddress() {
-		return macAddress;
+		getNDLModel().setNetMask(this, netmask);
 	}
 	public void setMacAddress(String macAddress) {
 		this.macAddress = macAddress;
