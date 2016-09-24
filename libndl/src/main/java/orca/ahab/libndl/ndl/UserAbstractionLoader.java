@@ -411,7 +411,6 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 		if (l == null)
 			return;
 		
-
 		//om.listStatements(null, null, l);
  		LIBNDL.logger().debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     ndlNetworkConnection     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ");
  		//NdlCommons.getResourceType(r)
