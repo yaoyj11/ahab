@@ -483,10 +483,6 @@ public abstract class NDLModel {
 		}
 	}
 	
-	public String getState(Network network){
-		return NdlCommons.getResourceStateAsString(getModelResource(network));
-	}
-
 	public String getIP(InterfaceNode2Net interfaceNode2Net) {
 		return NdlCommons.getAddressIP(getModelResource(interfaceNode2Net));
 	}
