@@ -150,7 +150,7 @@ public abstract class NDLModel {
 		return "getImageShortName not implemented";
 		//return NdlCommons.getIndividualsImageURL(this.getModelResource(cn));		
 	}
-	
+
 	public void setBandwidth(BroadcastNetwork broadcastNetwork, long b) {
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXX  setting       bandwidth   XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
@@ -485,10 +485,6 @@ public abstract class NDLModel {
 		}
 	}
 	
-	public String getState(Network network){
-		return NdlCommons.getResourceStateAsString(getModelResource(network));
-	}
-
 	public String getIP(InterfaceNode2Net interfaceNode2Net) {
 		return NdlCommons.getAddressIP(getModelResource(interfaceNode2Net));
 	}
