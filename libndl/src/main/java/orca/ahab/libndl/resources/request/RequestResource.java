@@ -72,7 +72,6 @@ public abstract class RequestResource extends ModelResource{
 		return this.getNDLModel().getState(this);
 	}
 
-
 	public String getDomain() {
 		return this.getNDLModel().getDomain(this);
 	}
