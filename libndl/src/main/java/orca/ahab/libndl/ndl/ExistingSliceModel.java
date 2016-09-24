@@ -125,12 +125,54 @@ public class ExistingSliceModel extends NDLModel{
 		}	
 	}
 
-	@Override
-	public void add(StitchPort sp) {
+	@Override 
+	public void add(StitchPort sp, String name, String label, String port) {
 		// TODO Auto-generated method stub
-		
-	}
+		logger().debug("add(StitchPort sp) sp: " + sp);
+        Individual ni = null;
+        try{
+        		//Add the stitchport
+                ni = ngen.declareStitchingNode(name);
+                mapRequestResource2ModelResource(sp, ni);
+                ngen.addResourceToReservation(reservation, ni);
+                ngen.addGuid(ni, UUID.randomUUID().toString());
+                
+                
+                //Add a link to the stitchport 
+                Individual ei = ngen.declareNetworkConnection(name+"-net");
+                ngen.addGuid(ei, UUID.randomUUID().toString());
+        		if (reservation != null)
+        			ngen.addResourceToReservation(reservation, ei);
 
+        		if (sp.getBandwidth() > 0)
+        			ngen.addBandwidthToConnection(ei, sp.getBandwidth());
+        		
+        		ngen.addLabelToIndividual(ei, label);
+        		
+                ngen.addLayerToConnection(ei, "ethernet", "EthernetNetworkElement");
+                
+                //processNodeAndLink(pn.getFirst(), e, ei);
+                logger().debug("add(StitchPort sp) port: " + port);
+                logger().debug("add(StitchPort sp) label: " + label);
+                Individual spIface = ngen.declareStitchportInterface(port, label);
+                
+                ngen.addInterfaceToIndividual(spIface, ei);
+                ngen.addInterfaceToIndividual(spIface, ni);
+                
+                ngen.declareModifyElementAddElement(reservation, ei);
+                ngen.declareModifyElementAddElement(reservation, ni);
+              
+		} catch (NdlException e){
+			logger().error("ERROR: NewSliceModel::add(StitchPort) " );
+			e.printStackTrace();
+		}
+        
+	}
+	
+
+
+	
+	
 	@Override
 	public void add(InterfaceNode2Net i) { 
 		logger().debug("ExistingSliceModel:add(InterfaceNode2Net)");
@@ -141,17 +183,36 @@ public class ExistingSliceModel extends NDLModel{
 		try{
 			Individual blI = null;
 			if (net.isNew()){
-				blI = ngen.getRequestIndividual(net.getName()); 
+				logger().debug("ExistingSliceModel:add(InterfaceNode2Net) 100:  isNew");
+				//blI = ngen.getRequestIndividual(net.getName()); 
+				if (net instanceof StitchPort) {
+					logger().debug("ExistingSliceModel:add(InterfaceNode2Net) 110:  is stitchport");
+					//StitchPort sp = (StitchPort)net;
+					blI  = ngen.getRequestIndividual(net.getName()+"-net");
+					//if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
+					//	throw new NdlException("URL and label must be specified in StitchPort");
+					//intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
+				} else {
+					logger().debug("ExistingSliceModel:add(InterfaceNode2Net) 120:  !is sittchport");
+					blI  = ngen.getRequestIndividual(net.getName());
+				}
 			} else {
+				logger().debug("ExistingSliceModel:add(InterfaceNode2Net) 130:  !isNew");
 				//blI = ngen.declareModifiedComputeElement(net.getURL(), net.getGUID());
 				//ngen.declareModifyElementModifyNode(reservation, blI); //is this needed????
 				blI = ngen.declareModifiedBroadcastConnection(net.getURL());
 				//ngen.declareModifyElementModifyNode(reservation, blI);
 				ngen.declareModifyElementAddElement(reservation, blI);
 			}
+			logger().debug("ExistingSliceModel:add(InterfaceNode2Net) 140:  blI: " + blI);
+			
+			
 			
 			Individual nodeI;
 			if (node.isNew()){
+				
+			
+				
 				//New nodes
 				nodeI = ngen.getRequestIndividual(node.getName());
 			} else {
@@ -162,16 +223,16 @@ public class ExistingSliceModel extends NDLModel{
 				ngen.declareModifyElementModifyNode(reservation, nodeI);
 			}
 				
-			
+			logger().debug("ExistingSliceModel:add(InterfaceNode2Net) 150:  nodeI:  " + nodeI);
 			Individual intI;
-			if (node instanceof StitchPort) {
-				StitchPort sp = (StitchPort)node;
-				if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
-					throw new NdlException("URL and label must be specified in StitchPort");
-				intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
-			} else {
+			//if (node instanceof StitchPort) {
+			//	StitchPort sp = (StitchPort)node;
+			//	if ((sp.getLabel() == null) || (sp.getLabel().length() == 0))
+			//		throw new NdlException("URL and label must be specified in StitchPort");
+			//	intI = ngen.declareStitchportInterface(sp.getPort(), sp.getLabel());
+			//} else {
 				intI = ngen.declareInterface(net.getName()+"-"+node.getName());
-			}
+			//}
 			ngen.addInterfaceToIndividual(intI, blI);
 
 			if (nodeI == null)
@@ -196,7 +257,7 @@ public class ExistingSliceModel extends NDLModel{
 	}
 
 	@Override
-	public void add(StorageNode sn) {
+	public void add(StorageNode sn, String name) {
 		// TODO Auto-generated method stub
 		
 	}

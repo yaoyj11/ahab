@@ -25,14 +25,16 @@ import orca.ahab.libndl.Slice;
 * OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS 
 * IN THE WORK.
 */
-public class StitchPort extends Node {
+public class StitchPort extends Network {
 	private static final String STITCHING_PORT = "Stitching port";
 	public static final String STITCHING_DOMAIN_SHORT_NAME = "Stitching domain";
 	protected String label;
 	protected String port;
 	
-	public StitchPort(SliceGraph sliceGraph, String name) {
+	public StitchPort(SliceGraph sliceGraph, String name, String label, String port) {
 		super(sliceGraph, name);
+		this.label = label;
+		this.port = port;
 	}
 
 	public void setLabel(String l) {
@@ -57,6 +59,15 @@ public class StitchPort extends Node {
 		return port;
 	}
 	
+	public void setBandwidth(long b) {
+		bandwidth = b;
+	}
+	
+	public long getBandwidth() {
+		return bandwidth;
+	}
+		
+	
 	/** 
 	 * Create a detailed printout of properties
 	 * @return
@@ -78,17 +89,17 @@ public class StitchPort extends Node {
 //	}
 
 	
-	public Interface stitch(RequestResource r){
-		Interface stitch = null;
-		if (r instanceof Network){
-			stitch = new InterfaceNode2Net(this,(Network)r,sliceGraph);		
+	public InterfaceNode2Net stitch(RequestResource r){
+		InterfaceNode2Net stitch = null;
+		if (r instanceof Node){
+			stitch = new InterfaceNode2Net((Node)r,this,sliceGraph);	
 		} else {
 			//Can't stitch computenode to r
 			//Should throw exception
 			System.out.println("Error: Cannot stitch OrcaStitchPort to " + r.getClass().getName());
 			return null;
 		}
-		sliceGraph.addStitch(this,r,stitch);
+		sliceGraph.addStitch(r,this,stitch);
 		
 		return stitch;
 	}

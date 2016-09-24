@@ -226,7 +226,7 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 		if(NdlCommons.isStitchingNode(ce)){
 			LIBNDL.logger().debug("\n\n\n ************************************** FOUND STITCHPORT NODE *************************************** \n\n\n");
 			LIBNDL.logger().debug("Found a stitchport");
-			StitchPort newStitchport = this.sliceGraph.buildStitchPort(getPrettyName(ce));
+			StitchPort newStitchport = this.sliceGraph.buildStitchPort(getPrettyName(ce),"FAKE_LABEL","FAKE_PORT");
 			ndlModel.mapSliceResource2ModelResource(newStitchport, ce);
 			
 			return;

@@ -182,15 +182,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 
 
 
-		} else if (NdlCommons.isStitchingNode(ce)) {
-			LIBNDL.logger().debug("BUILDING: Stitching Node: " + ce.getLocalName() );
-			// stitching node
-			// For some reason the properties of the stitchport are stored on the interface (not here)
-			StitchPort sp = this.sliceGraph.buildStitchPort(ce.getLocalName());
-			ndlModel.mapRequestResource2ModelResource(sp, ce);
-			ndlModel.printRequest2NDLMap();
-			newNode = sp;
-		} else if (NdlCommons.isNetworkStorage(ce)) {
+		}  else if (NdlCommons.isNetworkStorage(ce)) {
 			LIBNDL.logger().debug("BUILDING: Storage Node: " + ce.getLocalName() );
 			// storage node
 			StorageNode snode = this.sliceGraph.buildStorageNode(ce.getLocalName());
@@ -264,11 +256,19 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 		if (l == null)
 			return;
 		
-		Network ol = this.sliceGraph.buildLink(l.getLocalName());
-		ndlModel.mapRequestResource2ModelResource(ol, l);
-		ol.setBandwidth(bandwidth);
-		ol.setLatency(latency);
-		ol.setLabel(NdlCommons.getLayerLabelLiteral(l));
+		if (NdlCommons.isStitchingNode(l)) {
+			LIBNDL.logger().debug("BUILDING: Stitching Node: " + l.getLocalName() );
+			// stitching node
+			// For some reason the properties of the stitchport are stored on the interface (not here)
+			StitchPort sp = this.sliceGraph.buildStitchPort(l.getLocalName(),"FAKE_LABEL","FAKE_PORT");
+			ndlModel.mapRequestResource2ModelResource(sp, l);
+		} else {
+			Network ol = this.sliceGraph.buildLink(l.getLocalName());
+			ndlModel.mapRequestResource2ModelResource(ol, l);
+			ol.setBandwidth(bandwidth);
+			ol.setLatency(latency);
+			ol.setLabel(NdlCommons.getLayerLabelLiteral(l));
+		}
 	}
 
 	public void ndlInterface(Resource intf, OntModel om, Resource conn, Resource node, String ip, String mask) {

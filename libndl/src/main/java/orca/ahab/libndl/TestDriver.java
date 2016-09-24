@@ -327,8 +327,8 @@ public class TestDriver {
     	
     	
     	TestDriver.deleteAllSDXNetworks(args[0], "pruth.sdx.1");
-    	TestDriver.setupSDXTreeNetwork(args[0],"pruth.sdx.1" );
-    	//TestDriver.setupSDXLinearNetwork(args[0],"pruth.sdx.1" );
+    	//TestDriver.setupSDXTreeNetwork(args[0],"pruth.sdx.1" );
+    	TestDriver.setupSDXLinearNetwork(args[0],"pruth.sdx.1" );
     	//TestDriver.getPublicIP(args[0], "pruth.sdn.103", "sw3");
     	
 
