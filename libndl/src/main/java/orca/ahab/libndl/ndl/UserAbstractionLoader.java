@@ -420,7 +420,6 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
  			LIBNDL.logger().debug("NOT NdlCommons.isLinkConnection(l)");
  		}
  		
- 		
  		//super hack to pre-calculate state because parts of model close after parsing
  		LIBNDL.logger().debug("looking for statements: begin");
  		String state = "Active";
