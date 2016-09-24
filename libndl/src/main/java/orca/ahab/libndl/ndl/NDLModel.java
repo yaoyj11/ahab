@@ -150,7 +150,7 @@ public abstract class NDLModel {
 		return "getImageShortName not implemented";
 		//return NdlCommons.getIndividualsImageURL(this.getModelResource(cn));		
 	}
-	
+
 	public void setBandwidth(BroadcastNetwork broadcastNetwork, long b) {
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXX  setting       bandwidth   XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
@@ -204,10 +204,8 @@ public abstract class NDLModel {
 		return this.getPrettyName(this.getModelResource(cn));
 	}
 
-	
 	public void setName(ModelResource cn) {
 		// TODO Auto-generated method stub
-		
 	}
 	
 	//Jena helper method
@@ -439,6 +437,14 @@ public abstract class NDLModel {
 		return RequestGenerator.reverseNodeTypeLookup(ceType); 
 	}
 
+	public String getReservationNotice(RequestResource rr) {
+		return NdlCommons.getResourceReservationNotice(getModelResource(rr));
+	}
+	
+	public String getState(RequestResource rr) {
+		return NdlCommons.getResourceStateAsString(getModelResource(rr));
+	}
+	
 	
 	public void setPostBootScript(ComputeNode computeNode, String postBootScript) {
 		try{
@@ -458,7 +464,7 @@ public abstract class NDLModel {
 		return  NdlCommons.getPostBootScript(this.getModelResource(computeNode));
 	}
 
-	public List<String>  getManagementServices(ComputeNode computeNode) {
+	public List<String> getManagementServices(ComputeNode computeNode) {
 		List<String> services = NdlCommons.getNodeServices(this.getModelResource(computeNode));
 		//LIBNDL.logger().debug("NDLModel::getManagementIP: " + services);
 		return services;
@@ -477,10 +483,6 @@ public abstract class NDLModel {
 		}
 	}
 	
-	public String getState(Network network){
-		return NdlCommons.getResourceStateAsString(getModelResource(network));
-	}
-
 	public String getIP(InterfaceNode2Net interfaceNode2Net) {
 		return NdlCommons.getAddressIP(getModelResource(interfaceNode2Net));
 	}
