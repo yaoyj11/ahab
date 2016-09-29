@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.impl.PropertyImpl;
 
 import edu.uci.ics.jung.graph.util.Pair;
 import orca.ahab.libndl.LIBNDL;
@@ -150,6 +151,39 @@ public abstract class NDLModel {
 		// TODO Auto-generated method stub
 		
 	}
+	
+     private boolean isType(Resource r, Resource resourceClass){
+		
+		//Test for type of subject (if any)
+		Resource candidateResourceClass = r.getProperty(new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).getResource();
+	
+		if(candidateResourceClass != null && candidateResourceClass.equals(resourceClass)){
+			return true;
+		}
+		return false;
+		
+	}
+	
+	
+	public String getState(ModelResource cn) {
+		return this.getState(this.getModelResource(cn));
+	}
+	
+	
+	
+	public String getState(Resource r) {
+		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX  NDLModel.getState XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+		
+		if (NdlCommons.isStitchingNode(r)){
+			System.out.println("getState(StitchPort sp)" + r.getLocalName());
+			return null;
+		}
+		
+		//works for compute nodes (and maybe some other things)
+		return NdlCommons.getResourceStateAsString(r);
+		}
+
+
 	
 	public void setNodeType(ComputeNode computeNode, String nodeType) {
 		try{

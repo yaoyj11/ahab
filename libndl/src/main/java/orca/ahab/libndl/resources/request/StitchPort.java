@@ -36,7 +36,8 @@ public class StitchPort extends Network {
 		this.label = label;
 		this.port = port;
 	}
-
+	
+	
 	public void setLabel(String l) {
     	if ((l != null) && l.length() > 0)
     		label = l;

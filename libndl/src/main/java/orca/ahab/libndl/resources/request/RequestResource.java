@@ -77,7 +77,8 @@ public abstract class RequestResource extends ModelResource{
 	}
 
 	public String getState() {
-		return state;
+		return this.getNDLModel().getState(this);
+		//return state;
 	}
 
 	protected void setState(String s) {

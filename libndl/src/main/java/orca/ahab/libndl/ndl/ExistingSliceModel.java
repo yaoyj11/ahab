@@ -127,7 +127,6 @@ public class ExistingSliceModel extends NDLModel{
 
 	@Override 
 	public void add(StitchPort sp, String name, String label, String port) {
-		// TODO Auto-generated method stub
 		logger().debug("add(StitchPort sp) sp: " + sp);
         Individual ni = null;
         try{
