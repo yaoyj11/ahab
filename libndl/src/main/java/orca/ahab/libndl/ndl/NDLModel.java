@@ -1,7 +1,10 @@
 package orca.ahab.libndl.ndl;
 
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.List;
@@ -10,7 +13,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.hp.hpl.jena.ontology.Individual;
+import com.hp.hpl.jena.ontology.OntModel;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.impl.PropertyImpl;
 
 import edu.uci.ics.jung.graph.util.Pair;
@@ -152,10 +158,18 @@ public abstract class NDLModel {
 		
 	}
 	
+	//Jena helper method
+	private Resource getType(Resource r){
+		if(r == null) return null;
+		
+		return r.getProperty(new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).getResource();
+	}
+	
+	//Jena helper method
      private boolean isType(Resource r, Resource resourceClass){
 		
 		//Test for type of subject (if any)
-		Resource candidateResourceClass = r.getProperty(new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).getResource();
+		Resource candidateResourceClass = getType(r);  //r.getProperty(new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).getResource();
 	
 		if(candidateResourceClass != null && candidateResourceClass.equals(resourceClass)){
 			return true;
@@ -164,7 +178,100 @@ public abstract class NDLModel {
 		
 	}
 	
-	
+   //Jena helper method
+   //Returns the link object from the request for a given stitchport object in the request  
+     private Resource getLinkFromStitchPort(Resource sp){
+    	 LIBNDL.logger().debug("^^^^^^^^^^^^^^^^^^^^ getLinkFromStitchPort: BEGIN");
+    	 //LIBNDL.logger().debug("StitchPort: " + ce.getLocalName() + ", " + ce.getURI());
+    	 //LIBNDL.logger().debug("Interface = " + spIface.getLocalName() + ", " + spIface.getURI()); 
+
+    	 Iterator i = null;
+    	 
+    	 OntModel om = (OntModel) sp.getModel();
+    	 //get interface to link
+    	 
+    	 Resource spIface = null;
+    	 for (i = om.listStatements(sp, new PropertyImpl("http://geni-orca.renci.org/owl/topology.owl#hasInterface"), (RDFNode) null); i.hasNext();){
+    		 Statement st = (Statement) i.next();
+    		 LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
+    		 LIBNDL.logger().debug("resource type: " + getType(st.getResource()));
+    		 
+    		//if (isType(st.getResource(),NdlCommons.N) {
+    		//	 //LIBNDL.logger().debug("XXXXXXXXXXXXXXXX SETTING  LinkConnection resource: " + st.getSubject());
+    		//	 spLinkConnection = st.getSubject(); 
+    		//	 break;
+    		// }
+    		spIface = st.getResource();
+    	 }
+    	 LIBNDL.logger().debug("Getting link");
+    	 Resource spLink = null;
+    	 for (i = om.listStatements(null, new PropertyImpl("http://geni-orca.renci.org/owl/topology.owl#hasInterface"), (RDFNode) spIface); i.hasNext();){
+    		 Statement st = (Statement) i.next();
+    		 LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
+    		 LIBNDL.logger().debug("subject type: " + getType(st.getSubject()) + ", resource type: " + getType(st.getResource()));
+    		 //http://geni-orca.renci.org/owl/topology.owl#NetworkConnection
+    		if (isType(st.getSubject(),NdlCommons.topologyNetworkConnectionClass)) {
+    			 //LIBNDL.logger().debug("XXXXXXXXXXXXXXXX SETTING  LinkConnection resource: " + st.getSubject());
+    			 spLink = st.getSubject(); 
+    			 break;
+    		 }
+    		//spIface = st.getResource();
+    	 }
+    	 LIBNDL.logger().debug("link = " + spLink);
+
+    	 LIBNDL.logger().debug("^^^^^^^^^^^^^^^^^^^^ getLinkFromStitchPort: END");
+    	 return spLink;
+		
+	}
+    
+    private Collection<Resource> getVLANsFromLink(Resource l){
+    	LIBNDL.logger().debug("getVLANsFromLink:BEGIN");
+    	ArrayList<Resource> rtnList = new ArrayList<Resource>();
+    	
+    	
+    	Iterator i = null;
+
+    	OntModel om = (OntModel) l.getModel();
+
+    	for (i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, (RDFNode) l); i.hasNext();){
+    		Statement st = (Statement) i.next();
+    		LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
+    		LIBNDL.logger().debug("resource type: " + getType(st.getSubject()));
+
+    		if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
+    			LIBNDL.logger().debug("adding vlan: " + st.getSubject());
+    			 rtnList.add(st.getSubject()); 
+    		 }
+    	}
+
+    	LIBNDL.logger().debug("getVLANsFromLink:END");
+    	return rtnList;
+    }
+    
+    private String getStateOfLink(Resource l){
+    	boolean active = true;
+    	
+    	LIBNDL.logger().debug("VLANs from Link " + l);
+    	for  (Resource r : getVLANsFromLink(l)){
+    		LIBNDL.logger().debug("VLAN: " + r + ", state: " + NdlCommons.getResourceStateAsString(r));
+    		
+    		if(NdlCommons.getResourceStateAsString(r).equals("Failed")){
+    			return "Failed";
+    		}
+    		
+    		if(!NdlCommons.getResourceStateAsString(r).equals("Active")){
+    			active = false;
+    		}
+    	}
+    	
+    	if (active) {
+    		return "Active";
+    	} else {
+    		return "Building";
+    	}    	
+    }
+     
+     
 	public String getState(ModelResource cn) {
 		return this.getState(this.getModelResource(cn));
 	}
@@ -176,7 +283,10 @@ public abstract class NDLModel {
 		
 		if (NdlCommons.isStitchingNode(r)){
 			System.out.println("getState(StitchPort sp)" + r.getLocalName());
-			return null;
+			Resource link =  getLinkFromStitchPort(r);
+			System.out.println("getState(StitchPort sp): link = " + link);
+			
+			return getStateOfLink(link);
 		}
 		
 		//works for compute nodes (and maybe some other things)
