@@ -1,5 +1,8 @@
 package orca.ahab.libndl.ndl;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.UUID;
 
 import com.hp.hpl.jena.ontology.Individual;
@@ -32,9 +35,23 @@ public class NewSliceModel extends NDLModel {
 	
 	public void init(SliceGraph sliceGraph){
 		try{
+
 			String nsGuid = UUID.randomUUID().toString();
 			ngen = new NdlGenerator(nsGuid, LIBNDL.logger()); 
 			reservation = ngen.declareReservation();
+			
+			
+			Individual term = ngen.declareTerm();
+			
+			Date start = new Date();
+			Individual tStart = ngen.declareTermBeginning(start);
+			ngen.addBeginningToTerm(tStart, term);
+		
+			Individual duration = ngen.declareTermDuration(1,0,0);  // days, hours, mins
+			
+			ngen.addDurationToTerm(duration, term);
+			ngen.addTermToReservation(term, reservation);
+			
 		} catch (NdlException e) {
 			logger().error("NewSliceModel: " + e.getStackTrace());
 		}
