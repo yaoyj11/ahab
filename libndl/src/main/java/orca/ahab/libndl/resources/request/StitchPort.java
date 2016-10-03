@@ -31,10 +31,11 @@ public class StitchPort extends Network {
 	protected String label;
 	protected String port;
 	
-	public StitchPort(SliceGraph sliceGraph, String name, String label, String port) {
+	public StitchPort(SliceGraph sliceGraph, String name, String label, String port, long bandwidth) {
 		super(sliceGraph, name);
 		this.label = label;
 		this.port = port;
+		this.setBandwidth(bandwidth);
 	}
 	
 	
@@ -64,7 +65,7 @@ public class StitchPort extends Network {
 		bandwidth = b;
 	}
 	
-	public long getBandwidth() {
+	public Long getBandwidth() {
 		return bandwidth;
 	}
 		

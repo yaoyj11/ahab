@@ -260,7 +260,7 @@ public class RequestLoader extends NDLLoader  implements INdlRequestModelListene
 			LIBNDL.logger().debug("BUILDING: Stitching Node: " + l.getLocalName() );
 			// stitching node
 			// For some reason the properties of the stitchport are stored on the interface (not here)
-			StitchPort sp = this.sliceGraph.buildStitchPort(l.getLocalName(),"FAKE_LABEL","FAKE_PORT");
+			StitchPort sp = this.sliceGraph.buildStitchPort(l.getLocalName(),"FAKE_LABEL","FAKE_PORT",bandwidth);
 			ndlModel.mapRequestResource2ModelResource(sp, l);
 		} else {
 			Network ol = this.sliceGraph.buildLink(l.getLocalName());

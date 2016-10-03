@@ -31,7 +31,7 @@ public abstract class Network extends RequestResource {
 	//default size for auto ip
 	private static int DEFAULT_SIZE = 256;
 	
-    protected long bandwidth;
+    protected Long bandwidth;
     protected long latency;
     protected String label = null;
     protected String realName = null;
@@ -64,7 +64,7 @@ public abstract class Network extends RequestResource {
     	return label;
     }
     
-    public long getBandwidth() {
+    public Long getBandwidth() {
     	return bandwidth;
     }
     

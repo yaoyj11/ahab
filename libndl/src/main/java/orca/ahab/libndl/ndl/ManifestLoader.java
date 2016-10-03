@@ -229,7 +229,8 @@ public class ManifestLoader extends NDLLoader implements INdlManifestModelListen
 			LIBNDL.logger().debug("Found a stitchport");
 			String label = NdlCommons.getLayerLabelLiteral(interfaces.get(0));
 			String port = NdlCommons.getLinkTo(interfaces.get(0)).toString();
-			StitchPort newStitchport = this.sliceGraph.buildStitchPort(getPrettyName(ce),label,port);
+			long bandwidth = 10000000;
+			StitchPort newStitchport = this.sliceGraph.buildStitchPort(getPrettyName(ce),label,port,bandwidth);
 			
 			ndlModel.mapSliceResource2ModelResource(newStitchport, ce);
 			

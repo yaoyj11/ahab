@@ -333,7 +333,8 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 				if (NdlCommons.getLinkTo(interfaces.get(0)) != null){
 					port = NdlCommons.getLinkTo(interfaces.get(0)).toString();
 				}
-				StitchPort newStitchport = this.sliceGraph.buildStitchPort(spName,label,port);
+				long bandwidth = 10000000;
+				StitchPort newStitchport = this.sliceGraph.buildStitchPort(spName,label,port,bandwidth);
 								
 				ndlModel.mapRequestResource2ModelResource(newStitchport, spRequest);
 				LIBNDL.logger().debug("\n\n\n ************************************** Done WITH STITCHPORT NODE *************************************** \n\n\n");

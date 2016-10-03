@@ -73,7 +73,7 @@ public class BroadcastNetwork extends Network {
 		bandwidth = b;
 	}
 	
-	public long getBandwidth() {
+	public Long getBandwidth() {
 		return bandwidth;
 	}
 		
