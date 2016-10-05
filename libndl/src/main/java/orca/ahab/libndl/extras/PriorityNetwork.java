@@ -13,6 +13,7 @@ import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
 import orca.ahab.libndl.resources.request.InterfaceNode2Net;
+import orca.ahab.libndl.resources.request.Network;
 import orca.ahab.libndl.resources.request.Node;
 import orca.ahab.libtransport.ISliceTransportAPIv1;
 import orca.ahab.libtransport.ITransportProxyFactory;
@@ -24,6 +25,7 @@ import orca.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 
 public class PriorityNetwork {
 
+	private ComputeNode controller;
 	private ArrayList<String> siteList;
 	private HashMap<String,ComputeNode> switches;
 	private HashMap<String,BroadcastNetwork> localAttachmentPoints;
@@ -33,6 +35,7 @@ public class PriorityNetwork {
 	private String name;
 	private String controllerSiteStr;
 	private String controllerPublicIP;
+	
 	
 	//Hack so we can update slice
 	public static PriorityNetwork create(Slice s, String name){
@@ -45,6 +48,48 @@ public class PriorityNetwork {
 		return sdn;
 	}
 	
+	public static PriorityNetwork get(Slice s, String name){
+		PriorityNetwork net = new PriorityNetwork(s, name, "PSC (Pittsburgh, TX, USA) XO Rack");
+		
+		net.init();
+		
+		s.logger().debug("PriorityNetwork.init controller = " + net.controller);
+		s.logger().debug("PriorityNetwork.init siteList = " + net.siteList);
+		s.logger().debug("PriorityNetwork.init switches = " + net.switches);
+		s.logger().debug("PriorityNetwork.init localAttachmentPoints = " + net.localAttachmentPoints);
+		s.logger().debug("PriorityNetwork.init interdomainSwitchLinks = " + net.interdomainSwitchLinks);
+		
+		return net;
+	}
+	
+	//initialized a priority network from an existing slice
+	private void init(){
+		for (Node n : s.getNodes()){
+			//if controller
+			if(n.getName().equals(name+"_controller")){
+				this.controller = (ComputeNode) s.getResourceByName(name+"_controller"); 
+			}
+			//if switch
+			if(n.getName().startsWith(name+"_sw")){
+				switches.put(n.getName().replace(name+"_sw_", ""), (ComputeNode) n);
+				siteList.add(n.getName().replace(name+"_sw_", ""));
+			}
+		}
+		
+		for (Network n : s.getLinks()){
+			//if local attachment point
+			if(n.getName().startsWith(name+"_vlan_sw_")){
+				localAttachmentPoints.put(n.getName().replace(name+"_vlan_sw_",""), (BroadcastNetwork) n); 
+			}
+			//if interdomain switch link
+			if(n.getName().startsWith(name+"_net_")){
+				//rivate HashMap<String,ComputeNode> switches;
+				interdomainSwitchLinks.put(n.getName().replace(name+"_net_",""), (BroadcastNetwork) n);
+			}
+		}
+		
+		
+	}
 	
 	private static PriorityNetwork create(Slice s, String name, String controllerSite){
 		PriorityNetwork sdn = new PriorityNetwork(s, name, controllerSite);
@@ -52,6 +97,8 @@ public class PriorityNetwork {
 		
 		return sdn;
 	}
+	
+	
 	
 	private PriorityNetwork(Slice s, String name, String controllerSiteStr){
 		this.s = s;
@@ -100,10 +147,41 @@ public class PriorityNetwork {
 		
 	}
 	
-	public boolean isReady(){
-		localAttachmentPoints.get(0).getState();
+	public String getState(String site){
+		ComputeNode sw = switches.get(site);		
+		Network net = localAttachmentPoints.get(site);
 		
-		return true;
+		
+		s.logger().debug("PriorityNetwork.getState(): net = " + net);
+		s.logger().debug("PriorityNetwork.getState(): sw = " + sw);
+		s.logger().debug("PriorityNetwork.getState(): net.getState() = " + net.getState());
+		s.logger().debug("PriorityNetwork.getState(): sw.getState() = " + sw.getState());
+		
+		
+		if(net.getState().equals("Active") && sw.getState().equals("Active")){
+			return "Active";
+		}
+		
+		if(net.getState().equals("Failed") || sw.getState().equals("Failed")){
+			return "Failed";
+		}
+		
+		return "Building";
+	}
+	
+	public String getState(){
+		
+		String state = "Active";
+		for( String site : siteList){
+			if(this.getState(site).equals("Failed")){
+				return "Failed";
+			}
+			
+			if(this.getState(site).equals("Building")){
+				state = "Building";
+			}
+		}		
+		return state;
 	}
 	
 	private void startController(){
@@ -138,7 +216,8 @@ public class PriorityNetwork {
 			s.refresh();
 			
 			System.out.println("controllerPublicIP: " + controllerPublicIP);
-
+			
+			this.controller = (ComputeNode) s.getResourceByName(controllerName);
 		} catch (Exception e){
 			e.printStackTrace();
 			System.err.println("Proxy factory test failed");
@@ -158,7 +237,7 @@ public class PriorityNetwork {
 		String switchPostBootScript=getSDNSwitchScript(SDNControllerIP);
 		
 		String switchName = this.name + "_sw_"+name;
-		String networkName = this.name + "vlan-sw"+name;
+		String networkName = this.name + "_vlan_sw_"+name;
 		
 		//setup the node
 		ArrayList<ComputeNode> switches = new ArrayList<ComputeNode>();
@@ -182,7 +261,7 @@ public class PriorityNetwork {
 			ComputeNode node1 = this.switches.get(parentName);
 			ComputeNode node2 = sw;
 	
-			String interdomainNetworkName = this.name + "-net-" +  parentName + "-" + name;
+			String interdomainNetworkName = this.name + "_net_" +  parentName + "_" + name;
 			BroadcastNetwork interdomainNet = s.addBroadcastLink(interdomainNetworkName);
 			Interface int1 = interdomainNet.stitch(node1);
 			Interface int2 = interdomainNet.stitch(node2);
