@@ -287,11 +287,11 @@ public abstract class NDLModel {
 			System.out.println("getState(StitchPort sp): link = " + link);
 			
 			return getStateOfLink(link);
-		}
+		} 
 		
 		//works for compute nodes (and maybe some other things)
 		return NdlCommons.getResourceStateAsString(r);
-		}
+	}
 
 
 	

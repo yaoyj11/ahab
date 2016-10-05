@@ -100,6 +100,12 @@ public class PriorityNetwork {
 		
 	}
 	
+	public boolean isReady(){
+		localAttachmentPoints.get(0).getState();
+		
+		return true;
+	}
+	
 	private void startController(){
 
 		//Create the controller
@@ -287,7 +293,17 @@ public class PriorityNetwork {
 			" ovs-vsctl set-controller br0 tcp:${controller_ip}:6633 \n" +
 			" ovs-vsctl set controller br0 connection-mode=out-of-band \n" +
 			" ovs-appctl fdb/show br0 \n" +
-			" sleep 60 \n" +
+			
+			" while true; do \n" +
+			"     sleep 10 \n" +
+			"     ping -c 1 8.8.8.8\n" +
+			"     if [ \"$?\" == \"0\" ]; then \n" +
+			"        #error iface dne                             \n" +                                                                                                              
+			"        echo Network is up! \n" +
+			"        break \n" +
+			"     fi \n" +
+			"done\n" +
+			"\n" +
 			" while true; do \n" +
 			"  #check to see if bridge is consistant \n" +
 			"   is_bridge_consistant \"br0\" \n" +

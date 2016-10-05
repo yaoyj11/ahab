@@ -425,11 +425,12 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
  		} else {
  			LIBNDL.logger().debug("Not NdlCommons.isMulticastDevice(l)");
  		}
-//		Network ol = this.sliceGraph.buildLink(l.getLocalName());
-//		ndlModel.mapRequestResource2ModelResource(ol, l);
-//		ol.setBandwidth(bandwidth);
-//		ol.setLatency(latency);
-//		ol.setLabel(NdlCommons.getLayerLabelLiteral(l));
+		
+		Network ol = this.sliceGraph.buildLink(l.getLocalName());
+		ndlModel.mapRequestResource2ModelResource(ol, l);
+		ol.setBandwidth(bandwidth);
+		ol.setLatency(latency);
+		ol.setLabel(NdlCommons.getLayerLabelLiteral(l));
 			
 	}
 
