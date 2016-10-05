@@ -54,10 +54,13 @@ public class BroadcastNetwork extends Network {
 	protected long bandwidth;
 	
 	
+	
+	
 	public BroadcastNetwork(SliceGraph sliceGraph, String name) {
 		super(sliceGraph, name);
 	}
-
+	
+	
 	public void setLabel(String l) {
     	if ((l != null) && l.length() > 0)
     		label = l;

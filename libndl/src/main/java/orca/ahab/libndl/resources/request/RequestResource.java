@@ -28,10 +28,10 @@ public abstract class RequestResource extends ModelResource{
 	public RequestResource(SliceGraph sliceGraph) {
 		super(sliceGraph);
 		isNew = false;
+		
 	}
+	
 
-	// reservation state - should probably be an enumeration
-	protected String state = null;
 	
 	//User controlled properties:
 	//protected String name;
@@ -78,14 +78,8 @@ public abstract class RequestResource extends ModelResource{
 
 	public String getState() {
 		return this.getNDLModel().getState(this);
-		//return state;
 	}
 
-	protected void setState(String s) {
-		state = s;
-	}
-
-	
 
 	public String getDomain() {
 		return this.getNDLModel().getDomain(this);

@@ -35,7 +35,8 @@ import orca.ndl.NdlException;
 import orca.ndl.NdlGenerator;
 
 public abstract class NDLModel {
-	
+	//reference to the whole jena model
+	OntModel jenaModel = null;
 	
 	/* map of RequestResource in slice changes to ndl Resource */
 	protected Map<ModelResource, Resource> request2NDLMap; 
@@ -77,6 +78,15 @@ public abstract class NDLModel {
 	protected Resource getModelResource(ModelResource cn){
 		return request2NDLMap.get(cn);
 	}
+	
+	protected void setJenaModel(OntModel om){
+		jenaModel = om;
+	}
+	
+	protected OntModel getJenaModel(){
+		return jenaModel;
+	}
+
 	
 	public void printRequest2NDLMap(){
 		LIBNDL.logger().debug("NDLModle::printRequest2NDLMap: " + request2NDLMap);
@@ -231,7 +241,7 @@ public abstract class NDLModel {
     	
     	Iterator i = null;
 
-    	OntModel om = (OntModel) l.getModel();
+    	OntModel om = this.getJenaModel();
 
     	for (i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, (RDFNode) l); i.hasNext();){
     		Statement st = (Statement) i.next();
@@ -270,8 +280,56 @@ public abstract class NDLModel {
     		return "Building";
     	}    	
     }
+    
+    private Collection<Resource> getVLANsFromBroadcastLink(Resource l){
+    	LIBNDL.logger().debug("getVLANsFromBroadcastLink:BEGIN. l = " + l + ", type = " + getType(l));
+    	
+    	ArrayList<Resource> rtnList = new ArrayList<Resource>();
+    	
+    	
+    	Iterator i = null;
+
+    	OntModel om = (OntModel) l.getModel();
+    	
+    	for (i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, (RDFNode) l); i.hasNext();){
+    		Statement st = (Statement) i.next();
+    		LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
+    		LIBNDL.logger().debug("resource type: " + getType(st.getSubject()));
+
+    		if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
+    			
+    			LIBNDL.logger().debug("adding vlan: " + st.getSubject());
+    			 rtnList.add(st.getSubject()); 
+    		 }
+    	}
+
+    	LIBNDL.logger().debug("getVLANsFromBroadcastLink:END");
+    	return rtnList;
+    }
      
-     
+    private String getStateOfBroadcastLink(Resource l){
+    	boolean active = true;
+    	
+    	LIBNDL.logger().debug("VLANs from Link " + l);
+    	for  (Resource r : getVLANsFromBroadcastLink(l)){
+    		LIBNDL.logger().debug("VLAN: " + r + ", state: " + NdlCommons.getResourceStateAsString(r));
+    		
+    		if(NdlCommons.getResourceStateAsString(r).equals("Failed")){
+    			return "Failed";
+    		}
+    		
+    		if(!NdlCommons.getResourceStateAsString(r).equals("Active")){
+    			active = false;
+    		}
+    	}
+    	
+    	if (active) {
+    		return "Active";
+    	} else {
+    		return "Building";
+    	}    	
+    }
+    
 	public String getState(ModelResource cn) {
 		return this.getState(this.getModelResource(cn));
 	}
@@ -280,6 +338,12 @@ public abstract class NDLModel {
 	
 	public String getState(Resource r) {
 		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX  NDLModel.getState XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+		LIBNDL.logger().debug("Resource : " + r + ", type: " + getType(r));
+		
+		if(NdlCommons.getResourceStateAsString(r) != null){
+			LIBNDL.logger().debug("Getting state directly");
+			return NdlCommons.getResourceStateAsString(r);
+		}
 		
 		if (NdlCommons.isStitchingNode(r)){
 			System.out.println("getState(StitchPort sp)" + r.getLocalName());
@@ -288,9 +352,18 @@ public abstract class NDLModel {
 			
 			return getStateOfLink(link);
 		} 
+
+		//if (NdlCommons.isLinkConnection(r)){
+		//needs AND NOT a p2p link connecting a stitchport
+		//if (isType(r,NdlCommons.topologyBroadcastConnectionClass)) {
+		if (isType(r,NdlCommons.topologyNetworkConnectionClass)) {
+ 			LIBNDL.logger().debug("Getting state of NdlCommons.isLinkConnection(r)");
+ 			return getStateOfBroadcastLink(r);
+ 		} 
 		
+		//LIBNDL.logger().debug("Getting state of OTHER");
 		//works for compute nodes (and maybe some other things)
-		return NdlCommons.getResourceStateAsString(r);
+		return null; //NdlCommons.getResourceStateAsString(r);
 	}
 
 

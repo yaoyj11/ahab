@@ -41,7 +41,6 @@ public abstract class Node extends RequestResource {
 		//this.name = name; //name should be unique... i think
 		//this.domain = null;
 		this.dependencies = null;
-		this.state = null;
 	}
 
 	

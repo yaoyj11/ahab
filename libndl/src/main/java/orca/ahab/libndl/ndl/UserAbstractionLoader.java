@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -420,18 +421,43 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
  			LIBNDL.logger().debug("NOT NdlCommons.isLinkConnection(l)");
  		}
  		
-		if (NdlCommons.isMulticastDevice(l)){
- 			LIBNDL.logger().debug("NdlCommons.isMulticastDevice(l)");
- 		} else {
- 			LIBNDL.logger().debug("Not NdlCommons.isMulticastDevice(l)");
- 		}
-		
+ 		
+ 		//super hack to pre-calculate state because parts of model close after parsing
+ 		LIBNDL.logger().debug("looking for statements: begin");
+ 		String state = "Active";
+ 		Iterator i = null;
+ 		for (i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, (RDFNode) l); i.hasNext();){
+    		Statement st = (Statement) i.next();
+    		LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
+    		//LIBNDL.logger().debug("resource type: " + getType(st.getSubject()));
+
+    		if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
+    			
+    			LIBNDL.logger().debug("adding vlan: " + st.getSubject());
+    			if(NdlCommons.getResourceStateAsString(st.getSubject()).equals("Failed")){
+    				LIBNDL.logger().debug("State = " + NdlCommons.getResourceStateAsString(st.getSubject()));
+        			state = "Failed" ;
+        		}
+        		
+        		if(!NdlCommons.getResourceStateAsString(st.getSubject()).equals("Active")){
+        			LIBNDL.logger().debug("State = " + NdlCommons.getResourceStateAsString(st.getSubject()));
+        			state = "Building";
+        			break;
+        		}
+    		 }
+    	}
+ 		LIBNDL.logger().debug("looking for statements: end");
+ 		LIBNDL.logger().debug("State = " + state);
+ 		
 		Network ol = this.sliceGraph.buildLink(l.getLocalName());
 		ndlModel.mapRequestResource2ModelResource(ol, l);
 		ol.setBandwidth(bandwidth);
 		ol.setLatency(latency);
 		ol.setLabel(NdlCommons.getLayerLabelLiteral(l));
-			
+	
+		//hack
+		LIBNDL.logger().debug("Setting state = " + state);
+		//ol.setState(state);
 	}
 
 	public void ndlInterface(Resource intf, OntModel om, Resource conn, Resource node, String ip, String mask) {
@@ -509,6 +535,7 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 	}
 	
 	public void ndlSlice(Resource sl, OntModel m) {
+		ndlModel.setJenaModel(m);
 		
 		LIBNDL.logger().debug("UserAbstractionLoader::ndlSlice, Slice: " + sl + ", sliceState(sliceGraph) = " + NdlCommons.getGeniSliceStateName(sl));
 		// check that this is an OpenFlow slice and get its details
@@ -612,12 +639,16 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 	}
 
 
-
+	private ArrayList<Resource> crossConnects = null;
 	@Override
 	public void ndlCrossConnect(Resource c, OntModel m, long bw, String label, List<Resource> interfaces,
 			Resource parent) {
-		// TODO Auto-generated method stub
+		if(crossConnects == null){
+			crossConnects = new ArrayList<Resource>();
+		}
 		
+		LIBNDL.logger().debug("Adding CrossConnect: " + c);
+		crossConnects.add(c);
 	}
 
 

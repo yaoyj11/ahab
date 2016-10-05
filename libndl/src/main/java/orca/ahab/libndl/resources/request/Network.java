@@ -30,7 +30,7 @@ import orca.ahab.libndl.util.IP4Subnet;
 public abstract class Network extends RequestResource {
 	//default size for auto ip
 	private static int DEFAULT_SIZE = 256;
-	
+		
     protected Long bandwidth;
     protected long latency;
     protected String label = null;
@@ -45,6 +45,18 @@ public abstract class Network extends RequestResource {
         this.ipSubnet = null;
     }
 
+    //hack
+	//hack for state of some networks 
+	//protected String state = null;
+	//public void setState(String state) {
+	//	LIBNDL.logger().debug("Network.setState(): " + this + ", state = " + state);
+	//    this.state = state;
+	//}
+    ///public String getState() {
+    //	LIBNDL.logger().debug("Network.getState():  " + this + ", state = " + this.state);
+	//	return this.state;
+	//}
+    
     public void setBandwidth(long bw) {
     	bandwidth = bw;
     }
