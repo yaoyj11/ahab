@@ -153,14 +153,19 @@ public class Slice {
 	}
 	SparseMultigraph<RequestResource, Interface> g = new SparseMultigraph<RequestResource, Interface>();
 
-	public Network addLink(String name){
-		return sliceGraph.addLink(name);
-	}
+	//public Network addLink(String name){
+	//	return sliceGraph.addLink(name);
+	//}
 
-	public BroadcastNetwork addBroadcastLink(String name){
-		return sliceGraph.addBroadcastLink(name);
+	
+	public BroadcastNetwork addBroadcastLink(String name, long bandwidth){
+		return sliceGraph.addBroadcastLink(name, bandwidth);
 	}
-		
+	
+	public BroadcastNetwork addBroadcastLink(String name){
+		return this.addBroadcastLink(name,10000000l);
+	}
+	
 	public RequestResource getResourceByName(String nm){
 		return sliceGraph.getResourceByName(nm);
 	}

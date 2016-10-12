@@ -49,7 +49,7 @@ public abstract class NDLModel {
 	abstract public boolean isNewSlice();
 	
 	abstract public void add(ComputeNode cn, String name);
-	abstract public void add(BroadcastNetwork bn, String name);
+	abstract public void add(BroadcastNetwork bn, String name, long bandwidth);
 	abstract public void add(StitchPort sp, String name, String label, String port);
 	abstract public void add(InterfaceNode2Net i);
 	abstract public void add(StorageNode sn, String name);
@@ -155,7 +155,50 @@ public abstract class NDLModel {
 		//return NdlCommons.getIndividualsImageURL(this.getModelResource(cn));		
 	}
 	
+	public void setBandwidth(BroadcastNetwork broadcastNetwork, long b) {
+//		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+//		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXX  setting       bandwidth   XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+//		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+//
+//		
+//		try {
+//			Resource rbn = this.getModelResource(broadcastNetwork);
+//			
+//			Individual ibn = ngen.getRequestIndividual(rbn.getLocalName());
+//			
+//			LIBNDL.logger().debug("rbn = : " + rbn + ", ibn = " + ibn);
+//			if (b > 0){
+//
+//				ngen.addBandwidthToConnection(ibn, b);
+//
+//			}
+//
+//		} catch (NdlException e) {
+//			// TODO Auto-generated catch block
+//			LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+//			LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXX  failed set bandwidth   XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+//			LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+//
+//		e.printStackTrace();
+//			System.exit(1);
+//		}
+//		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXX  END set bandwidth   XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+//		
+		
 
+	}
+	public Long getBandwidth(BroadcastNetwork broadcastNetwork) {
+
+		//Individual bn = (Individual)this.getModelResource(broadcastNetwork);
+		//try {
+		//	ngen.addBandwidthToConnection(bn);
+		//
+		//} catch (NdlException e) {
+		//	e.printStackTrace();
+		//}
+		return null;
+	}
+	
 	
 	public String getName(ModelResource cn) {
 		//return this.getModelResource(cn).getLocalName();
@@ -503,6 +546,7 @@ public abstract class NDLModel {
 			}
 			return rname;
 		}
+
 		
 		
 

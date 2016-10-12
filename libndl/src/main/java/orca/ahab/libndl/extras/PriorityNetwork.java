@@ -2,11 +2,19 @@ package orca.ahab.libndl.extras;
 
 
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.xml.ws.WebServiceRef;
 
 import orca.ahab.libndl.Slice;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
@@ -36,6 +44,7 @@ public class PriorityNetwork {
 	private String controllerSiteStr;
 	private String controllerPublicIP;
 	
+	private long bandwidth;
 	
 	//Hack so we can update slice
 	public static PriorityNetwork create(Slice s, String name){
@@ -91,13 +100,18 @@ public class PriorityNetwork {
 		
 	}
 	
-	private static PriorityNetwork create(Slice s, String name, String controllerSite){
+	public static PriorityNetwork create(Slice s, String name, String controllerSite, long bandwidth){
 		PriorityNetwork sdn = new PriorityNetwork(s, name, controllerSite);
-		
-		
+		sdn.setBandwidth(bandwidth);
+		sdn.startController();
 		return sdn;
 	}
 	
+	
+
+	private static PriorityNetwork create(Slice s, String name, String controllerSite){
+		return PriorityNetwork.create(s, name, controllerSite, 1000000000l);
+	}                                                          
 	
 	
 	private PriorityNetwork(Slice s, String name, String controllerSiteStr){
@@ -110,9 +124,13 @@ public class PriorityNetwork {
 		switches = new HashMap<String,ComputeNode>();
 		localAttachmentPoints = new HashMap<String,BroadcastNetwork>();
 		interdomainSwitchLinks = new HashMap<String,BroadcastNetwork>();
+		
+		this.bandwidth = bandwidth;
 	}
 	
-	
+	private void setBandwidth(long bandwidth) {
+		this.bandwidth = bandwidth;
+	}
 	
 	
 	public void bind(String name, String rdfID){
@@ -142,6 +160,7 @@ public class PriorityNetwork {
 	public void QoS_setPriority(String site1, String site2, int priority){
 		
 	}
+
 
 	public void QoS_commit(){
 		
@@ -186,13 +205,18 @@ public class PriorityNetwork {
 	
 	private void startController(){
 
+		
 		//Create the controller
-		String controllerImageShortName="Centos7-SDN-controller.v0.4";
-		String controllerImageURL ="http://geni-images.renci.org/images/pruth/SDN/Centos7-SDN-controller.v0.4/Centos7-SDN-controller.v0.4.xml";
-		String controllerImageHash ="b71cbdbd8de5b2d187ae9a3efb0a19a170b92183";
+		
+		//String controllerImageShortName="Centos7-SDN-controller.v0.4";
+		//String controllerImageURL ="http://geni-images.renci.org/images/pruth/SDN/Centos7-SDN-controller.v0.4/Centos7-SDN-controller.v0.4.xml";
+		//String controllerImageHash ="b71cbdbd8de5b2d187ae9a3efb0a19a170b92183";
+		String controllerImageShortName="RYU-Ubuntu-14.04-v0.1";
+		String controllerImageURL ="http://geni-images.renci.org/images/pruth/SDN/RYU-Ubuntu-14.04-v0.1/RYU-Ubuntu-14.04-v0.1.xml";
+		String controllerImageHash ="b623bd059f18c9c55ab57f50151e7cbaa9c2b942";
 		String controllerDomain=controllerSiteStr;//"RENCI (Chapel Hill, NC USA) XO Rack";
 		String contorllerNodeType="XO Medium";
-		String controllerPostBootScript="#!/bin/bash\n echo hello, world > /tmp/bootscript.log";
+		String controllerPostBootScript=getSDNControllerScript();
 		String controllerName=name + "_controller";
 
 		try{
@@ -201,13 +225,13 @@ public class PriorityNetwork {
 			controllerNode.setNodeType(contorllerNodeType);
 			controllerNode.setDomain(controllerDomain);
 			controllerNode.setPostBootScript(controllerPostBootScript);
-
-			String switchImageShortName="Centos6.7-SDN.v0.1";
-			String switchImageURL ="http://geni-images.renci.org/images/pruth/SDN/Centos6.7-SDN.v0.1/Centos6.7-SDN.v0.1.xml";
-			String switchImageHash ="77ec2959ff3333f7f7e89be9ad4320c600aa6d77";
-			String switchDomain=controllerDomain;
-			String switchNodeType="XO Medium";
-			String switchPostBootScript=getSDNControllerScript();
+//
+//			String switchImageShortName="Centos6.7-SDN.v0.1";
+//			String switchImageURL ="http://geni-images.renci.org/images/pruth/SDN/Centos6.7-SDN.v0.1/Centos6.7-SDN.v0.1.xml";
+//			String switchImageHash ="77ec2959ff3333f7f7e89be9ad4320c600aa6d77";
+//			String switchDomain=controllerDomain;
+//			String switchNodeType="XO Medium";
+//			String switchPostBootScript=getSDNControllerScript();
 
 			s.commit(10, 20);
 			
@@ -230,6 +254,7 @@ public class PriorityNetwork {
 		//String sliceName="pruth.sdn.2";	
 		
 		String switchImageShortName="Centos6.7-SDN.v0.1";
+
 		String switchImageURL ="http://geni-images.renci.org/images/pruth/SDN/Centos6.7-SDN.v0.1/Centos6.7-SDN.v0.1.xml";
 		String switchImageHash ="77ec2959ff3333f7f7e89be9ad4320c600aa6d77";
 		String switchDomain=site;
@@ -247,7 +272,9 @@ public class PriorityNetwork {
 		sw.setDomain(switchDomain);
 		sw.setPostBootScript(switchPostBootScript);
 
-		BroadcastNetwork net = s.addBroadcastLink(networkName);
+		BroadcastNetwork net = s.addBroadcastLink(networkName,bandwidth);
+		//net.setBandwidth(bandwidth);
+		
 		Interface localIface = net.stitch(sw);
 		
 		this.switches.put(name, sw);
@@ -262,7 +289,9 @@ public class PriorityNetwork {
 			ComputeNode node2 = sw;
 	
 			String interdomainNetworkName = this.name + "_net_" +  parentName + "_" + name;
-			BroadcastNetwork interdomainNet = s.addBroadcastLink(interdomainNetworkName);
+			BroadcastNetwork interdomainNet = s.addBroadcastLink(interdomainNetworkName, bandwidth);
+			//interdomainNet.setBandwidth(bandwidth);
+			
 			Interface int1 = interdomainNet.stitch(node1);
 			Interface int2 = interdomainNet.stitch(node2);
 		
@@ -321,9 +350,16 @@ public class PriorityNetwork {
 		
 	private static String  getSDNControllerScript(){
 		return "#!/bin/bash \n" +
-				"#script not build yet";
+				"sed '/OFPFlowMod(/,/)/s/)/, table_id=1)/' /usr/local/lib/python2.7/dist-packages/ryu/app/simple_switch_13.py > /usr/local/lib/python2.7/dist-packages/ryu/app/qos_simple_switch_13.py \n" +   
+				"/usr/local/bin/ryu-manager --log-file /tmp/ryu.log  ryu.app.rest_qos ryu.app.qos_simple_switch_13 ryu.app.rest_conf_switch ryu.app.ofctl_rest  2>&1 > /tmp/ryu.stdout & \n "; 
+				
+				
+				//"/usr/local/bin/ryu-manager --log-file /tmp/ryu.log /usr/local/lib/python2.7/dist-packages/ryu/app/simple_switch.py 2>&1 > /tmp/ryu.stdout &  \n";
+		
 	}
 	
+	
+
 	private static String getSDNSwitchScript(String SDNControllerIP){
 	    
 		return "#!/bin/bash \n" +
@@ -363,6 +399,17 @@ public class PriorityNetwork {
 			"     return 0 \n" +
 			" } \n" +
 			" \n" +
+			
+			" while true; do \n" +
+			"     sleep 10 \n" +
+			"     ping -c 1 8.8.8.8\n" +
+			"     if [ \"$?\" == \"0\" ]; then \n" +                                                                                                          
+			"        echo Network is up! \n" +
+			"        break \n" +
+			"     fi \n" +
+			"done\n" +
+			//"sleep 120 \n" +  //take this out
+			
 			" /etc/init.d/openvswitch restart \n" +
 			" sleep 60 \n" +
 			" ovs-vsctl add-br br0 \n" +
@@ -372,16 +419,11 @@ public class PriorityNetwork {
 			" ovs-vsctl set-controller br0 tcp:${controller_ip}:6633 \n" +
 			" ovs-vsctl set controller br0 connection-mode=out-of-band \n" +
 			" ovs-appctl fdb/show br0 \n" +
+			" ovs-vsctl set Bridge br0 protocols=OpenFlow13 \n" +
+			" ovs-vsctl set-manager ptcp:6632 \n" +
+
 			
-			" while true; do \n" +
-			"     sleep 10 \n" +
-			"     ping -c 1 8.8.8.8\n" +
-			"     if [ \"$?\" == \"0\" ]; then \n" +
-			"        #error iface dne                             \n" +                                                                                                              
-			"        echo Network is up! \n" +
-			"        break \n" +
-			"     fi \n" +
-			"done\n" +
+			
 			"\n" +
 			" while true; do \n" +
 			"  #check to see if bridge is consistant \n" +
@@ -417,4 +459,104 @@ public class PriorityNetwork {
 			" " ;
 	}
 
+	/****************************************************************************
+	 * 
+	 *   web services functions for communicating with ryu controller 
+	 * 
+	 * 
+	 */
+	
+//	public void getRYUSwitches(){
+//		System.out.println("in getRYUSwitches");
+//		URL url;
+//		try {
+//			url = new URL("http://147.72.248.17:8080/stats/switches");
+//			BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));
+//			for (String line; (line = reader.readLine()) != null;) {
+//			       System.out.println(line);
+//			}
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//
+//	}
+//	
+	private final String USER_AGENT = "Mozilla/5.0";
+	// HTTP GET request
+	public  void getRYUSwitches() throws Exception {
+
+		String url = "http://147.72.248.17:8080/stats/switches";
+
+		URL obj = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+		// optional default is GET
+		con.setRequestMethod("GET");
+
+		//add request header
+		con.setRequestProperty("User-Agent", USER_AGENT);
+
+		int responseCode = con.getResponseCode();
+		System.out.println("\nSending 'GET' request to URL : " + url);
+		System.out.println("Response Code : " + responseCode);
+
+		BufferedReader in = new BufferedReader(
+		        new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+		}
+		in.close();
+
+		//print result
+		System.out.println(response.toString());
+
+	}
+	
+	
+	// HTTP POST request
+	private void sendPost() throws Exception {
+
+		String url = "https://selfsolve.apple.com/wcResults.do";
+		URL obj = new URL(url);
+		HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+
+		//add reuqest header
+		con.setRequestMethod("POST");
+		con.setRequestProperty("User-Agent", USER_AGENT);
+		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+
+		String urlParameters = "sn=C02G8416DRJM&cn=&locale=&caller=&num=12345";
+
+		// Send post request
+		con.setDoOutput(true);
+		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+		wr.writeBytes(urlParameters);
+		wr.flush();
+		wr.close();
+
+		int responseCode = con.getResponseCode();
+		System.out.println("\nSending 'POST' request to URL : " + url);
+		System.out.println("Post parameters : " + urlParameters);
+		System.out.println("Response Code : " + responseCode);
+
+		BufferedReader in = new BufferedReader(
+		        new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+		}
+		in.close();
+
+		//print result
+		System.out.println(response.toString());
+
+	}
+
+	
 }

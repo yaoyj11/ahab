@@ -219,16 +219,16 @@ public class SliceGraph   {
 		ndlModel.add(node, name, label, port);
 		return node;
 	}
-	public Network addLink(String name){
+	public Network addLink(String name, long bandwidth){
 		BroadcastNetwork link = buildLink(name);
 		link.setIsNew(true);
-		ndlModel.add(link, name);
+		ndlModel.add(link, name, bandwidth);
 		return link;
 	}
-	public BroadcastNetwork addBroadcastLink(String name){
+	public BroadcastNetwork addBroadcastLink(String name, long bandwidth){
 		BroadcastNetwork link = buildBroadcastLink(name);
 		link.setIsNew(true);
-		ndlModel.add(link, name);
+		ndlModel.add(link, name, bandwidth);
 		return link;
 	}
 	

@@ -101,13 +101,13 @@ public class NewSliceModel extends NDLModel {
 	}
 
 	@Override
-	public void add(BroadcastNetwork bn, String name) {
+	public void add(BroadcastNetwork bn, String name, long bandwidth) {
 		logger().debug("NewSliceModel:add(BroadcastNetwork)" + name);
 		try {
 			Individual ci = ngen.declareBroadcastConnection(name);;
 			ngen.addGuid(ci, UUID.randomUUID().toString());
 			ngen.addLayerToConnection(ci, "ethernet", "EthernetNetworkElement");
-			ngen.addBandwidthToConnection(ci, (long)10000000);  //TODO: Should be constant default value
+			ngen.addBandwidthToConnection(ci, bandwidth);  //TODO: Should be constant default value
 		
 			mapRequestResource2ModelResource(bn, ci);
 			ngen.addResourceToReservation(reservation, ci);
