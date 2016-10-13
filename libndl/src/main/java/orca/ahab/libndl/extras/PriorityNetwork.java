@@ -82,6 +82,8 @@ public class PriorityNetwork {
 	
 	//initialized a priority network from an existing slice
 	private void init(){
+		this.bandwidth = 1000000000l;
+		
 		for (Node n : s.getNodes()){
 			//if controller
 			if(n.getName().equals(this.generateControllerName() /*priorityNetworkName+"_controller"*/)){
@@ -93,6 +95,8 @@ public class PriorityNetwork {
 				//siteList.add(n.getName().replace(this.generateSwitchNamePrefix(), ""));
 				switches.put(this.getSiteNameFromSwitchName(n.getName()), (ComputeNode) n);
 				siteList.add(this.getSiteNameFromSwitchName(n.getName()));
+				priorities.put(this.getSiteNameFromSwitchName(n.getName()), 1);
+				siteIDs.put(this.getSiteNameFromSwitchName(n.getName()), this.getSiteIDFromSwitchName(n.getName()));
 			}
 		}
 		
@@ -215,11 +219,31 @@ public class PriorityNetwork {
 		
 		return rtnStr;
 	}
-
-	
 	private Long getSiteID(String name){
 		return siteIDs.get(name);
 	}
+	
+	private String getSiteDPID(String name){
+		return  generateSwitchDPID_dec(siteIDs.get(name));
+	}
+	
+	private String getSiteDPID_hex(String name){
+        Long dpid = generateSwitchDPID_Long(siteIDs.get(name));
+		
+		
+		
+		String dpidStr = Long.toHexString(dpid);
+		
+		//System.out.println("generateSwitchDPID_mac(10): id = " + id + ", dpid = " + dpid + ", dpidStr = " + dpidStr);
+		
+		//pad with zeros
+		while (dpidStr.length() < 16){
+			dpidStr = "0" + dpidStr;
+		}
+		
+		return  dpidStr;
+	}
+	
 	
 	private void setBandwidth(long bandwidth) {
 		this.bandwidth = bandwidth;
@@ -253,21 +277,25 @@ public class PriorityNetwork {
 		s.logger().debug("AddNode2Net request:  " + s.getRequest());
 		
 		
-		
-		//Update priorities if needed
-		//Add new sites
-		this.processNewSites();
-		//(re)set priorities
+
 		
 	}
 	
 	private void processNewSites(){
 		
-		while(!newSites.isEmpty()){
-			String site = newSites.remove(0);
+		//while(!newSites.isEmpty()){
+		for (String site : siteList){
 			//set ovsdb
-			//dddd
+			//this.
+			try {
+				this.sendPost_SetOVSDB_addr(site);
+				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+	
 	}
 	
 	
@@ -278,7 +306,18 @@ public class PriorityNetwork {
 
 
 	public void QoS_commit(){
-		
+		//Update priorities if needed
+		//Add new sites
+		System.out.println("this.processNewSites");
+		this.processNewSites();
+		//(re)set priorities
+		try {
+			System.out.println("this.postSetQueues");
+			this.postSetQueues();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public String getState(String site){
@@ -362,6 +401,7 @@ public class PriorityNetwork {
 		this.siteList.add(name);
 		long switchNum = siteList.indexOf(name);
 		this.siteIDs.put(name,switchNum);
+		this.priorities.put(name, 1);
 		
 		String switchImageShortName="Centos6.7-SDN.v0.1";
 
@@ -461,7 +501,7 @@ public class PriorityNetwork {
 	private static String  getSDNControllerScript(){
 		return "#!/bin/bash \n" +
 				"sed '/OFPFlowMod(/,/)/s/)/, table_id=1)/' /usr/local/lib/python2.7/dist-packages/ryu/app/simple_switch_13.py > /usr/local/lib/python2.7/dist-packages/ryu/app/qos_simple_switch_13.py \n" +   
-				"/usr/local/bin/ryu-manager --log-file /tmp/ryu.log  ryu.app.rest_qos ryu.app.qos_simple_switch_13 ryu.app.rest_conf_switch ryu.app.ofctl_rest  2>&1 > /tmp/ryu.stdout & \n "; 
+				"/usr/local/bin/ryu-manager --log-file /tmp/ryu.log  ryu.app.rest_qos ryu.app.qos_simple_switch_13 ryu.app.rest_conf_switch  2>&1 > /tmp/ryu.stdout & \n ";  //ryu.app.ofctl_rest 
 				
 				
 				//"/usr/local/bin/ryu-manager --log-file /tmp/ryu.log /usr/local/lib/python2.7/dist-packages/ryu/app/simple_switch.py 2>&1 > /tmp/ryu.stdout &  \n";
@@ -487,6 +527,8 @@ public class PriorityNetwork {
 			" echo \"setting ovs to use controller \" ${controller_ip} \n" +
 			" ovs-vsctl set-controller br0 tcp:${controller_ip}:6633 \n" +
 			"     ovs-vsctl set controller br0 connection-mode=out-of-band \n" +
+			" ovs-vsctl set Bridge br0 protocols=OpenFlow13 \n" +
+			" ovs-vsctl set-manager ptcp:6632 \n" +
 			"     		 \n" +
 			" } \n" +
 			" \n" +
@@ -521,7 +563,7 @@ public class PriorityNetwork {
 			//"sleep 120 \n" +  //take this out
 			
 			" /etc/init.d/openvswitch restart \n" +
-			" sleep 60 \n" +
+			" sleep 10 \n" +
 			" ovs-vsctl add-br br0 \n" +
 			"ovs-vsctl set bridge br0 other-config:hwaddr=" + PriorityNetwork.generateSwitchDPID_mac(switchNum)+ "\n" + 
 			
@@ -669,89 +711,132 @@ public class PriorityNetwork {
 
 	}
 	
-	// HTTP POST request
-	private void sendPost() throws Exception {
-
-		String url = "https://selfsolve.apple.com/wcResults.do";
-		URL obj = new URL(url);
-		HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
-
-		//add reuqest header
-		con.setRequestMethod("POST");
-		con.setRequestProperty("User-Agent", USER_AGENT);
-		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-
-		String urlParameters = "sn=C02G8416DRJM&cn=&locale=&caller=&num=12345";
-
-		// Send post request
-		con.setDoOutput(true);
-		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-		wr.writeBytes(urlParameters);
-		wr.flush();
-		wr.close();
-
-		int responseCode = con.getResponseCode();
-		System.out.println("\nSending 'POST' request to URL : " + url);
-		System.out.println("Post parameters : " + urlParameters);
-		System.out.println("Response Code : " + responseCode);
-
-		BufferedReader in = new BufferedReader(
-		        new InputStreamReader(con.getInputStream()));
-		String inputLine;
-		StringBuffer response = new StringBuffer();
-
-		while ((inputLine = in.readLine()) != null) {
-			response.append(inputLine);
+	public void putOVSDB_test(){
+		try {
+			sendPost_SetOVSDB_addr(siteList.get(0));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println("putOVSDB failed" );
+			e.printStackTrace();
 		}
-		in.close();
-
-		//print result
-		System.out.println(response.toString());
-
 	}
+	
 
-	// HTTP POST request
-		private void sendPost_SetOVSDB_addr() throws Exception {
+	public  void postSetQueues() throws Exception {
+		//curl -X POST -d '{"port_name": "s1-eth1", "type": "linux-htb", "max_rate": "1000000", "queues": [{"max_rate": "500000"}, {"min_rate": "800000"}]}' http://localhost:8080/qos/queue/0000000000000001
+
+		
+		
+		//calc total priority
+		int totalPriority = 0;
+		for (String site : siteList){
+			totalPriority += priorities.get(site);
+		}
+		System.out.println("postSetQueues: totalPriority = " +totalPriority);
+		
+		String urlParameters = "{\"type\": \"linux-htb\"" +
+			       ", \"max_rate\": \"" + this.bandwidth  +  "\"" +
+			       ", \"queues\": [";
+		
+		//add rates to urlParameters
+		for (String site : siteList){
+			System.out.println("postSetQueues: totalPriority = " +totalPriority + ", priorities.get(site)= " + priorities.get(site) + ", this.bandwidth = " + this.bandwidth);
+			long siteBandwidth =  (long)(((float)(priorities.get(site))/(float)totalPriority)*this.bandwidth);
+			urlParameters +=  "{\"max_rate\": \""+ siteBandwidth + "\"},";
+		}
+		urlParameters = urlParameters.substring(0, urlParameters.length()-1);
+		urlParameters += "]}"; 
+			     
+		//urlParameters = "{\"type\": \"linux-htb\", \"max_rate\": \"1000000\", \"queues\": [{\"max_rate\": \"500000\"}]}";
+		 
+		System.out.println("postSetQueues urlParameters: " + urlParameters);
+		
+		for(String site : siteList){
+			//http://localhost:8080/qos/queue/0000000000000001
+			String url = "http://" + this.controllerPublicIP + ":8080/qos/queue/" + this.getSiteDPID_hex(site);
+			System.out.println("url : " + url);
+			URL obj = new URL(url);
+			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+			//add reuqest header
+			con.setRequestMethod("POST");
+			con.setRequestProperty("User-Agent", USER_AGENT);
+			con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+
+			
+
+			// Send post request
+			con.setDoOutput(true);
+			DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+			wr.writeBytes(urlParameters);
+			wr.flush();
+			wr.close();
+
+			int responseCode = con.getResponseCode();
+			System.out.println("\nSending 'POST' request to URL : " + url);
+			System.out.println("Post parameters : " + urlParameters);
+			System.out.println("ResponseC02G8416DRJM Code : " + responseCode);
+
+			BufferedReader in = new BufferedReader(
+			        new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer response = new StringBuffer();
+
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+
+			//print result
+			System.out.println(response.toString());
+		}
+	}
+	
+	
+
+
+	
+		private void sendPost_SetOVSDB_addr(String siteName) throws Exception {
 			
 			
-//			//curl -X PUT -d '"tcp:127.0.0.1:8000”’ http://localhost:8080/v1.0/conf/switches/0000121d02890549/ovsdb_addr
-//			
-//			
-//			String url = "https://"+ this.controllerPublicIP + ":8080/v1.0/conf/switches/"; // + XXX + "/ovsdb_addr";
-//			URL obj = new URL(url);
-//			HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
-//
-//			//add reuqest header
-//			con.setRequestMethod("POST");
-//			con.setRequestProperty("User-Agent", USER_AGENT);
-//			con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-//
-//			String urlParameters = "tcp:";         // + switchPublicIP + ":6632";
-//
-//			// Send post request
-//			con.setDoOutput(true);
-//			DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-//			wr.writeBytes(urlParameters);
-//			wr.flush();
-//			wr.close();
-//
-//			int responseCode = con.getResponseCode();
-//			System.out.println("\nSending 'POST' request to URL : " + url);
-//			System.out.println("Post parameters : " + urlParameters);
-//			System.out.println("Response Code : " + responseCode);
-//
-//			BufferedReader in = new BufferedReader(
-//			        new InputStreamReader(con.getInputStream()));
-//			String inputLine;
-//			StringBuffer response = new StringBuffer();
-//
-//			while ((inputLine = in.readLine()) != null) {
-//				response.append(inputLine);
-//			}
-//			in.close();
-//
-//			//print result
-//			System.out.println(response.toString());
+			//curl -X PUT -d '"tcp:127.0.0.1:8000”’ http://localhost:8080/v1.0/conf/switches/0000121d02890549/ovsdb_addr
+			
+			
+			String url = "http://"+ this.controllerPublicIP + ":8080/v1.0/conf/switches/" + this.getSiteDPID_hex(siteName) + "/ovsdb_addr";
+			URL obj = new URL(url);
+			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+			//add reuqest header
+			con.setRequestMethod("PUT");
+			con.setRequestProperty("User-Agent", USER_AGENT);
+			con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+
+			String urlParameters = "\"tcp:" + this.blockUntilUp(this.generateSwitchName(siteName)) + ":6632\"";
+
+			// Send post request
+			con.setDoOutput(true);
+			DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+			wr.writeBytes(urlParameters);
+			wr.flush();
+			wr.close();
+
+			int responseCode = con.getResponseCode();
+			System.out.println("\nSending 'POST' request to URL : " + url);
+			System.out.println("Post parameters : " + urlParameters);
+			System.out.println("Response Code : " + responseCode);
+
+			BufferedReader in = new BufferedReader(
+			        new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer response = new StringBuffer();
+
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+
+			//print result
+			System.out.println(response.toString());
 
 		}
 }
