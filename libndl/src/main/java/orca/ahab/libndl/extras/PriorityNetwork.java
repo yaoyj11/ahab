@@ -35,16 +35,25 @@ public class PriorityNetwork {
 
 	private ComputeNode controller;
 	private ArrayList<String> siteList;
+	private HashMap<String,Long> siteIDs;
 	private HashMap<String,ComputeNode> switches;
 	private HashMap<String,BroadcastNetwork> localAttachmentPoints;
 	private HashMap<String,BroadcastNetwork> interdomainSwitchLinks;
-
+	
 	private Slice s;
-	private String name;
+	private String priorityNetworkName;
 	private String controllerSiteStr;
 	private String controllerPublicIP;
 	
 	private long bandwidth;
+	
+	//data structures for handling RYU priorities
+	private ArrayList<String> newSites = new ArrayList<String>();
+	private HashMap<String,Integer> priorities = new HashMap<String,Integer>();
+	private HashMap<String,ArrayList<ComputeNode>> siteNodes = new HashMap<String,ArrayList<ComputeNode>>();
+	
+	
+	
 	
 	//Hack so we can update slice
 	public static PriorityNetwork create(Slice s, String name){
@@ -75,28 +84,32 @@ public class PriorityNetwork {
 	private void init(){
 		for (Node n : s.getNodes()){
 			//if controller
-			if(n.getName().equals(name+"_controller")){
-				this.controller = (ComputeNode) s.getResourceByName(name+"_controller"); 
+			if(n.getName().equals(this.generateControllerName() /*priorityNetworkName+"_controller"*/)){
+				this.controller = (ComputeNode) s.getResourceByName(this.generateControllerName() /*priorityNetworkName+"_controller"*/); 
 			}
 			//if switch
-			if(n.getName().startsWith(name+"_sw")){
-				switches.put(n.getName().replace(name+"_sw_", ""), (ComputeNode) n);
-				siteList.add(n.getName().replace(name+"_sw_", ""));
+			if(n.getName().startsWith(this.generateSwitchNamePrefix())){
+				//switches.put(n.getName().replace(this.generateSwitchNamePrefix(), ""), (ComputeNode) n);
+				//siteList.add(n.getName().replace(this.generateSwitchNamePrefix(), ""));
+				switches.put(this.getSiteNameFromSwitchName(n.getName()), (ComputeNode) n);
+				siteList.add(this.getSiteNameFromSwitchName(n.getName()));
 			}
 		}
 		
 		for (Network n : s.getLinks()){
 			//if local attachment point
-			if(n.getName().startsWith(name+"_vlan_sw_")){
-				localAttachmentPoints.put(n.getName().replace(name+"_vlan_sw_",""), (BroadcastNetwork) n); 
+			if(n.getName().startsWith(this.generateLocalAttachmentNetworkNamePrifix())){
+				//localAttachmentPoints.put(n.getName().replace(this.generateLocalAttachmentNetworkNamePrifix(),""), (BroadcastNetwork) n); 
+				localAttachmentPoints.put(this.getSiteNameFromLocalAttachmentPointName(n.getName()), (BroadcastNetwork) n);
 			}
 			//if interdomain switch link
-			if(n.getName().startsWith(name+"_net_")){
+			if(n.getName().startsWith(this.generateIntersiteNetworkNamePrefix())){
 				//rivate HashMap<String,ComputeNode> switches;
-				interdomainSwitchLinks.put(n.getName().replace(name+"_net_",""), (BroadcastNetwork) n);
+				interdomainSwitchLinks.put(n.getName().replace(this.generateIntersiteNetworkNamePrefix(),""), (BroadcastNetwork) n);
 			}
 		}
 		
+		this.controllerPublicIP = this.blockUntilUp(this.generateControllerName());
 		
 	}
 	
@@ -116,16 +129,96 @@ public class PriorityNetwork {
 	
 	private PriorityNetwork(Slice s, String name, String controllerSiteStr){
 		this.s = s;
-		this.name = name;
+		this.priorityNetworkName = name;
 		this.controllerSiteStr = controllerSiteStr;
 		
 		siteList = new ArrayList<String>();
-		
+		siteIDs = new HashMap<String,Long>();
 		switches = new HashMap<String,ComputeNode>();
 		localAttachmentPoints = new HashMap<String,BroadcastNetwork>();
 		interdomainSwitchLinks = new HashMap<String,BroadcastNetwork>();
 		
 		this.bandwidth = bandwidth;
+	}
+	
+	private  String generateControllerName(){
+		return priorityNetworkName + "_controller";
+	}
+	
+	private String getSiteNameFromLocalAttachmentPointName(String switchName){
+		String[] tokens = switchName.toString().split("[_]+");
+		return tokens[tokens.length-2];
+	}
+	
+	private String getSiteNameFromSwitchName(String switchName){
+		String[] tokens = switchName.toString().split("[_]+");
+		return tokens[tokens.length-2];
+	}
+	
+	private Long getSiteIDFromSwitchName(String switchName){
+		String[] tokens = switchName.toString().split("[_]+");
+		return Long.parseLong(tokens[tokens.length-1]);
+	}
+	
+	private  String generateSwitchName(String siteName){
+		return  generateSwitchNamePrefix()+siteName+"_"+getSiteID(siteName);
+	}
+	
+	private  String generateSwitchNamePrefix(){
+		return  this.priorityNetworkName + "_sw_";
+	}
+	
+	private  String generateLocalAttachmentNetworkName(String siteName){
+		return generateLocalAttachmentNetworkNamePrifix()+siteName+"_"+getSiteID(siteName);
+	}
+	private  String generateLocalAttachmentNetworkNamePrifix(){
+		return this.priorityNetworkName + "_vlan_sw_";
+	}
+	private   String generateIntersiteNetworkName(String siteName1, String siteName2){
+		return   generateIntersiteNetworkNamePrefix() +  siteName1 + "_" + siteName2;
+	}
+	
+	
+	private String generateIntersiteNetworkNamePrefix(){
+		return   this.priorityNetworkName + "_net_";
+	}	
+	
+	private static Long generateSwitchDPID_Long(long id){
+		return 0x001100000000l + id;
+	}
+	private static String generateSwitchDPID_dec(long id){
+		return generateSwitchDPID_Long(id).toString();
+	}
+	private static String generateSwitchDPID_mac(long id){
+		Long dpid = generateSwitchDPID_Long(id);
+		
+		
+		
+		String dpidStr = Long.toHexString(dpid);
+		
+		//System.out.println("generateSwitchDPID_mac(10): id = " + id + ", dpid = " + dpid + ", dpidStr = " + dpidStr);
+		
+		//pad with zeros
+		while (dpidStr.length() < 12){
+			dpidStr = "0" + dpidStr;
+		}
+		//System.out.println("generateSwitchDPID_mac(10): id = " + id + ", dpid = " + dpid + ", dpidStr = " + dpidStr);
+		//add colons
+		String rtnStr = "";
+		rtnStr += dpidStr.substring(0, 2) + ":" +
+				  dpidStr.substring(2, 4) + ":" +
+				  dpidStr.substring(4, 6) + ":" +
+				  dpidStr.substring(6, 8) + ":" +
+				  dpidStr.substring(8, 10) + ":" +
+				  dpidStr.substring(10, 12);
+		//System.out.println("generateSwitchDPID_mac(10): id = " + id + ", dpid = " + dpid + ", dpidStr = " + dpidStr + ", rtnStr = " + rtnStr);
+		
+		return rtnStr;
+	}
+
+	
+	private Long getSiteID(String name){
+		return siteIDs.get(name);
 	}
 	
 	private void setBandwidth(long bandwidth) {
@@ -134,10 +227,16 @@ public class PriorityNetwork {
 	
 	
 	public void bind(String name, String rdfID){
-		this.addSDNSite(name, rdfID, this.controllerPublicIP);   
+		this.addSDNSite(name, rdfID, this.controllerPublicIP);  
+		
+		//add site to new site to be processed after instantiation: 
+		//HACK needs fixing. switch need to be up before finishing the processing
+		this.newSites.add(name);
+		this.priorities.put(name, 1);
+		this.siteNodes.put(name, new ArrayList<ComputeNode>());
 	}
 	
-	public void addNode(Node n, String site, String ip){
+	public void addNode(Node n, String site, String ip, String mask){
 		
 		
 		BroadcastNetwork net = this.localAttachmentPoints.get(site); 
@@ -149,10 +248,26 @@ public class PriorityNetwork {
 		s.logger().debug("Interface int1 = " + int1);
 		
 		((InterfaceNode2Net)int1).setIpAddress(ip);
-		((InterfaceNode2Net)int1).setNetmask("255.255.255.0");
+		((InterfaceNode2Net)int1).setNetmask(mask);
 		
 		s.logger().debug("AddNode2Net request:  " + s.getRequest());
 		
+		
+		
+		//Update priorities if needed
+		//Add new sites
+		this.processNewSites();
+		//(re)set priorities
+		
+	}
+	
+	private void processNewSites(){
+		
+		while(!newSites.isEmpty()){
+			String site = newSites.remove(0);
+			//set ovsdb
+			//dddd
+		}
 	}
 	
 	
@@ -217,7 +332,7 @@ public class PriorityNetwork {
 		String controllerDomain=controllerSiteStr;//"RENCI (Chapel Hill, NC USA) XO Rack";
 		String contorllerNodeType="XO Medium";
 		String controllerPostBootScript=getSDNControllerScript();
-		String controllerName=name + "_controller";
+		String controllerName=generateControllerName(); //name + "_controller";
 
 		try{
 			ComputeNode   controllerNode = s.addComputeNode(controllerName);
@@ -225,13 +340,6 @@ public class PriorityNetwork {
 			controllerNode.setNodeType(contorllerNodeType);
 			controllerNode.setDomain(controllerDomain);
 			controllerNode.setPostBootScript(controllerPostBootScript);
-//
-//			String switchImageShortName="Centos6.7-SDN.v0.1";
-//			String switchImageURL ="http://geni-images.renci.org/images/pruth/SDN/Centos6.7-SDN.v0.1/Centos6.7-SDN.v0.1.xml";
-//			String switchImageHash ="77ec2959ff3333f7f7e89be9ad4320c600aa6d77";
-//			String switchDomain=controllerDomain;
-//			String switchNodeType="XO Medium";
-//			String switchPostBootScript=getSDNControllerScript();
 
 			s.commit(10, 20);
 			
@@ -251,7 +359,9 @@ public class PriorityNetwork {
 	
 	
 	public void addSDNSite(String name, String site, String SDNControllerIP){
-		//String sliceName="pruth.sdn.2";	
+		this.siteList.add(name);
+		long switchNum = siteList.indexOf(name);
+		this.siteIDs.put(name,switchNum);
 		
 		String switchImageShortName="Centos6.7-SDN.v0.1";
 
@@ -259,10 +369,10 @@ public class PriorityNetwork {
 		String switchImageHash ="77ec2959ff3333f7f7e89be9ad4320c600aa6d77";
 		String switchDomain=site;
 		String switchNodeType="XO Medium";
-		String switchPostBootScript=getSDNSwitchScript(SDNControllerIP);
+		String switchPostBootScript=getSDNSwitchScript(SDNControllerIP,switchNum);
 		
-		String switchName = this.name + "_sw_"+name;
-		String networkName = this.name + "_vlan_sw_"+name;
+		String switchName = this.generateSwitchName(name);//  this.priorityNetworkName + "_sw_"+name;
+		String networkName = this.generateLocalAttachmentNetworkName(name);  //this.priorityNetworkName + "_vlan_sw_"+name;
 		
 		//setup the node
 		ArrayList<ComputeNode> switches = new ArrayList<ComputeNode>();
@@ -279,7 +389,7 @@ public class PriorityNetwork {
 		
 		this.switches.put(name, sw);
 		this.localAttachmentPoints.put(name,net);	
-		this.siteList.add(name);
+		//this.siteList.add(name);
 		
 		//Add network to parent
 		int position = siteList.indexOf(name);
@@ -288,7 +398,7 @@ public class PriorityNetwork {
 			ComputeNode node1 = this.switches.get(parentName);
 			ComputeNode node2 = sw;
 	
-			String interdomainNetworkName = this.name + "_net_" +  parentName + "_" + name;
+			String interdomainNetworkName = this.generateIntersiteNetworkName(parentName,  name); //  this.priorityNetworkName + "_net_" +  parentName + "_" + name;
 			BroadcastNetwork interdomainNet = s.addBroadcastLink(interdomainNetworkName, bandwidth);
 			//interdomainNet.setBandwidth(bandwidth);
 			
@@ -360,7 +470,7 @@ public class PriorityNetwork {
 	
 	
 
-	private static String getSDNSwitchScript(String SDNControllerIP){
+	private static String getSDNSwitchScript(String SDNControllerIP, Long switchNum){
 	    
 		return "#!/bin/bash \n" +
 			"{ \n " +
@@ -413,9 +523,13 @@ public class PriorityNetwork {
 			" /etc/init.d/openvswitch restart \n" +
 			" sleep 60 \n" +
 			" ovs-vsctl add-br br0 \n" +
+			"ovs-vsctl set bridge br0 other-config:hwaddr=" + PriorityNetwork.generateSwitchDPID_mac(switchNum)+ "\n" + 
+			
+			//"ovs-vsctl set bridge br0 other-config:hwaddr=00:11:00:00:00:0" + Integer.toHexString(switchNum) + "\n" + 
 			" ifconfig br0 up \n" +
 			" controller_ip='" + SDNControllerIP + "' \n" +
 			" echo \"setting ovs to use controller \" ${controller_ip} \n" +
+			
 			" ovs-vsctl set-controller br0 tcp:${controller_ip}:6633 \n" +
 			" ovs-vsctl set controller br0 connection-mode=out-of-band \n" +
 			" ovs-appctl fdb/show br0 \n" +
@@ -466,27 +580,66 @@ public class PriorityNetwork {
 	 * 
 	 */
 	
-//	public void getRYUSwitches(){
-//		System.out.println("in getRYUSwitches");
-//		URL url;
-//		try {
-//			url = new URL("http://147.72.248.17:8080/stats/switches");
-//			BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));
-//			for (String line; (line = reader.readLine()) != null;) {
-//			       System.out.println(line);
-//			}
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//
-//	}
-//	
+
 	private final String USER_AGENT = "Mozilla/5.0";
 	// HTTP GET request
-	public  void getRYUSwitches() throws Exception {
+	public  ArrayList<String> getRYUSwitches() throws Exception {
+		ArrayList<String> switches = new ArrayList<String>();
+		
+		System.out.println("this.controllerPublicIP: " + this.controllerPublicIP);
+		
+		String url = "http://"+this.controllerPublicIP+":8080/stats/switches";
 
-		String url = "http://147.72.248.17:8080/stats/switches";
+		URL obj = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+		// optional default is GET
+		con.setRequestMethod("GET");
+
+		//add request header
+		con.setRequestProperty("User-Agent", USER_AGENT);
+
+		int responseCode = con.getResponseCode();
+		System.out.println("\nSending 'GET' request to URL : " + url);
+		System.out.println("Response Code : " + responseCode);
+
+		BufferedReader in = new BufferedReader(
+		        new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+		}
+		in.close();
+
+		System.out.println("Response: XXX" + response.toString() + "XXX");
+		
+		String delims = "[ ,\\[\\]]+";
+		String[] tokens = response.toString().split(delims);
+		for (int i = 0; i < tokens.length; i++){
+			System.out.println("Tokens: " + tokens[i]);
+			if(tokens[i].length() > 0){
+				switches.add(tokens[i]);
+			}
+		}
+		    
+		//print result
+		//System.out.println(response.toString());
+
+		
+		return switches;
+	}
+	
+	public String convert2Hex(String switchID){
+		Long l =Long.parseLong(switchID);
+		return Long.toHexString(l);
+			
+	}
+	
+	public  void getRYUSwitchDesc(String switchID) throws Exception {
+
+		String url = "http://" + this.controllerPublicIP + ":8080/stats/desc/" + switchID;
 
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -515,7 +668,6 @@ public class PriorityNetwork {
 		System.out.println(response.toString());
 
 	}
-	
 	
 	// HTTP POST request
 	private void sendPost() throws Exception {
@@ -558,5 +710,48 @@ public class PriorityNetwork {
 
 	}
 
-	
+	// HTTP POST request
+		private void sendPost_SetOVSDB_addr() throws Exception {
+			
+			
+//			//curl -X PUT -d '"tcp:127.0.0.1:8000”’ http://localhost:8080/v1.0/conf/switches/0000121d02890549/ovsdb_addr
+//			
+//			
+//			String url = "https://"+ this.controllerPublicIP + ":8080/v1.0/conf/switches/"; // + XXX + "/ovsdb_addr";
+//			URL obj = new URL(url);
+//			HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+//
+//			//add reuqest header
+//			con.setRequestMethod("POST");
+//			con.setRequestProperty("User-Agent", USER_AGENT);
+//			con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+//
+//			String urlParameters = "tcp:";         // + switchPublicIP + ":6632";
+//
+//			// Send post request
+//			con.setDoOutput(true);
+//			DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+//			wr.writeBytes(urlParameters);
+//			wr.flush();
+//			wr.close();
+//
+//			int responseCode = con.getResponseCode();
+//			System.out.println("\nSending 'POST' request to URL : " + url);
+//			System.out.println("Post parameters : " + urlParameters);
+//			System.out.println("Response Code : " + responseCode);
+//
+//			BufferedReader in = new BufferedReader(
+//			        new InputStreamReader(con.getInputStream()));
+//			String inputLine;
+//			StringBuffer response = new StringBuffer();
+//
+//			while ((inputLine = in.readLine()) != null) {
+//				response.append(inputLine);
+//			}
+//			in.close();
+//
+//			//print result
+//			System.out.println(response.toString());
+
+		}
 }
