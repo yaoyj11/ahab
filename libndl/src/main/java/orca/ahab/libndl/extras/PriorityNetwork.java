@@ -17,6 +17,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.xml.ws.WebServiceRef;
 
 import orca.ahab.libndl.Slice;
+import orca.ahab.libndl.resources.manifest.InterfaceNode2NetworkConnection;
 import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
@@ -54,11 +55,11 @@ public class PriorityNetwork {
 	private long bandwidth;
 	
 	//data structures for handling RYU priorities
-	private ArrayList<String> newSites = new ArrayList<String>();
+	private ArrayList<String> newSites;// = new ArrayList<String>();
 	//private HashMap<String,Integer> priorities = new HashMap<String,Integer>();
-	private HashMap<String,ArrayList<ComputeNode>> siteNodes = new HashMap<String,ArrayList<ComputeNode>>();
-	private ArrayList<PriorityPath> priorityPaths = new ArrayList<PriorityPath>();
-	private int defaultPriority = 1;
+	private HashMap<String,ArrayList<String>> siteNodes;// = new HashMap<String,ArrayList<ComputeNode>>();
+	private ArrayList<PriorityPath> priorityPaths;// = new ArrayList<PriorityPath>();
+	private int defaultPriority;// = 1;
 	
 	
 	//Hack so we can update slice
@@ -88,30 +89,40 @@ public class PriorityNetwork {
 	
 	//initialized a priority network from an existing slice
 	private void init(){
-		//this.bandwidth = 1000000000l;
+		this.bandwidth = 1000000000l;
 		
 		for (Node n : s.getNodes()){
 			//if controller
 			if(n.getName().equals(this.generateControllerName() /*priorityNetworkName+"_controller"*/)){
 				this.controller = (ComputeNode) s.getResourceByName(this.generateControllerName() /*priorityNetworkName+"_controller"*/); 
-			}
-			//if switch
-			if(n.getName().startsWith(this.generateSwitchNamePrefix())){
+			} else if(n.getName().startsWith(this.generateSwitchNamePrefix())){
 				//switches.put(n.getName().replace(this.generateSwitchNamePrefix(), ""), (ComputeNode) n);
 				//siteList.add(n.getName().replace(this.generateSwitchNamePrefix(), ""));
 				switches.put(this.getSiteNameFromSwitchName(n.getName()), (ComputeNode) n);
 				siteList.add(this.getSiteNameFromSwitchName(n.getName()));
 				//priorities.put(this.getSiteNameFromSwitchName(n.getName()), 1);
 				siteIDs.put(this.getSiteNameFromSwitchName(n.getName()), this.getSiteIDFromSwitchName(n.getName()));
-			}
+				siteNodes.put(this.getSiteNameFromSwitchName(n.getName()), new ArrayList<String>());
+			} 
+			
+			
 		}
 		
 		for (Network n : s.getLinks()){
 			//if local attachment point
-			this.bandwidth = n.getBandwidth();
+			//this.bandwidth = n.getBandwidth();
 			if(n.getName().startsWith(this.generateLocalAttachmentNetworkNamePrifix())){
 				//localAttachmentPoints.put(n.getName().replace(this.generateLocalAttachmentNetworkNamePrifix(),""), (BroadcastNetwork) n); 
 				localAttachmentPoints.put(this.getSiteNameFromLocalAttachmentPointName(n.getName()), (BroadcastNetwork) n);
+				
+				for(Interface i : n.getInterfaces()){
+					if(i instanceof InterfaceNode2Net){
+						InterfaceNode2Net iface = (InterfaceNode2Net)i;
+						if(iface.getIpAddress() != null){
+							siteNodes.get(this.getSiteNameFromLocalAttachmentPointName(n.getName())).add(iface.getIpAddress());
+						}
+					}
+				}
 			}
 			//if interdomain switch link
 			if(n.getName().startsWith(this.generateIntersiteNetworkNamePrefix())){
@@ -148,6 +159,12 @@ public class PriorityNetwork {
 		switches = new HashMap<String,ComputeNode>();
 		localAttachmentPoints = new HashMap<String,BroadcastNetwork>();
 		interdomainSwitchLinks = new HashMap<String,BroadcastNetwork>();
+		
+		newSites = new ArrayList<String>();
+		siteNodes = new HashMap<String,ArrayList<String>>();
+		priorityPaths = new ArrayList<PriorityPath>();
+		defaultPriority = 1;
+		
 		
 		this.bandwidth = bandwidth;
 	}
@@ -264,12 +281,12 @@ public class PriorityNetwork {
 		//HACK needs fixing. switch need to be up before finishing the processing
 		this.newSites.add(name);
 		//this.priorities.put(name, 1);
-		this.siteNodes.put(name, new ArrayList<ComputeNode>());
+		this.siteNodes.put(name, new ArrayList<String>());
 	}
 	
 	public void addNode(ComputeNode n, String site, String ip, String mask){
-		ArrayList<ComputeNode> nodes = siteNodes.get(site);
-		nodes.add(n);
+		ArrayList<String> nodes = siteNodes.get(site);
+		nodes.add(ip);
 		
 		BroadcastNetwork net = this.localAttachmentPoints.get(site); 
 		
@@ -323,9 +340,9 @@ public class PriorityNetwork {
 	
 	public void QoS_setPriority(String site1, String site2, int priority){
 		PriorityPath path = null;
-		
+		System.out.println("QoS_setPriority");
 		path = this.getPriorityPath(site1, site2);
-		
+		System.out.println("QoS_setPriority: path = " + path);
 		if(path == null){
 			path =  new PriorityPath();
 			this.priorityPaths.add(path);
@@ -345,12 +362,18 @@ public class PriorityNetwork {
 		try {
 			System.out.println("this.postSetQueues");
 			this.postSetQueues();
+			
+			for (PriorityPath path : this.priorityPaths){
+				this.postPathMatches(path,this.priorityPaths.indexOf(path));
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
+
+
 	public String getState(String site){
 		ComputeNode sw = switches.get(site);		
 		Network net = localAttachmentPoints.get(site);
@@ -774,14 +797,15 @@ public class PriorityNetwork {
 
 		for (PriorityPath path : priorityPaths){
 			//add rates to urlParameters
-			for (String site : siteList){
-				System.out.println("postSetQueues: totalPriority = " +totalPriority + ", priorities.get(site)= " + path.priority + ", this.bandwidth = " + this.bandwidth);
-				long siteBandwidth =  (long)(((float)(path.priority)/(float)totalPriority)*this.bandwidth);
-				urlParameters +=  "{\"max_rate\": \""+ siteBandwidth + "\"},";
-			}
-			urlParameters = urlParameters.substring(0, urlParameters.length()-1);
-			urlParameters += "]}"; 
+			
+			System.out.println("postSetQueues: totalPriority = " +totalPriority + ", priorities.get(site)= " + path.priority + ", this.bandwidth = " + this.bandwidth);
+			long siteBandwidth =  (long)(((float)(path.priority)/(float)totalPriority)*this.bandwidth);
+			urlParameters +=  "{\"max_rate\": \""+ siteBandwidth + "\"},";
+			
 		}     
+		urlParameters = urlParameters.substring(0, urlParameters.length()-1);
+		urlParameters += "]}"; 
+		
 		//urlParameters = "{\"type\": \"linux-htb\", \"max_rate\": \"1000000000\", \"queues\": [{\"max_rate\": \"50000000\"},{\"max_rate\": \"100000000\"},{\"max_rate\": \"200000000\"}]}";
 		 
 		System.out.println("postSetQueues urlParameters: " + urlParameters);
@@ -828,7 +852,67 @@ public class PriorityNetwork {
 	}
 	
 	
+	private void postPathMatches(PriorityPath path, int queue) {
+		//curl -X POST -d '{"match": {"nw_dst": "172.16.0.100 "}, "actions":{"queue": "1"}}' http://localhost:8080/qos/rules/00005e82f3b1664e
 
+		System.out.println("in postPathMatches: ");
+		String urlParameters = "";
+		for (String IP1 : this.siteNodes.get(path.site1)){
+
+
+			for (String IP2 : this.siteNodes.get(path.site2)){
+				urlParameters = "{\"match\": {\"nw_dst\": \"" + IP1 + "\", \"nw_src\": \"" + IP2 + "\"}, \"actions\":{\"queue\": \"" + queue + "\"}}";
+				System.out.println("postPathMatches urlParameters: " + urlParameters);
+
+				for(String site : siteList){
+
+					try{
+					//http://localhost:8080/qos/queue/0000000000000001
+					String url = "http://" + this.controllerPublicIP + ":8080/qos/rules/" + this.getSiteDPID_hex(site);
+					System.out.println("url : " + url);
+					URL obj = new URL(url);
+					HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+					//add reuqest header
+					con.setRequestMethod("POST");
+					con.setRequestProperty("User-Agent", USER_AGENT);
+					con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+
+
+
+					// Send post request
+					con.setDoOutput(true);
+					DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+					wr.writeBytes(urlParameters);
+					wr.flush();
+					wr.close();
+
+					int responseCode = con.getResponseCode();
+					System.out.println("\nSending 'POST' request to URL : " + url);
+					System.out.println("Post parameters : " + urlParameters);
+					System.out.println("Response Code : " + responseCode);
+
+					BufferedReader in = new BufferedReader(
+							new InputStreamReader(con.getInputStream()));
+					String inputLine;
+					StringBuffer response = new StringBuffer();
+
+					while ((inputLine = in.readLine()) != null) {
+						response.append(inputLine);
+					}
+					in.close();
+
+					//print result
+					System.out.println(response.toString());
+					}catch (Exception e){
+						System.out.println("exception in postPathMatches");
+					}
+				}
+			}
+		}
+
+
+	}
 
 	
 		private void sendPost_SetOVSDB_addr(String siteName) throws Exception {
