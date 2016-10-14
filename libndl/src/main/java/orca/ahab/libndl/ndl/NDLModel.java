@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.ontology.OntModel;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -475,24 +476,30 @@ public abstract class NDLModel {
 			LIBNDL.logger().debug("NDLModel::getIP:  interfaceIndivdual.getName = " + interfaceNode2Net.getName());
 			//Individual ipInd = ngen.addUniqueIPToIndividual(ipAddress, interfaceNode2Net.getName(), interfaceIndivdual);
 			//ngen.addNetmaskToIP(ipInd, "255.255.0.0");
-			ip = NdlCommons.getAddressIP(interfaceResource);
+			//ip = NdlCommons.getAddressIP(interfaceResource);
 			
+			//<j.10:localIPAddress
+			Resource ipResource = interfaceResource.getProperty(NdlCommons.ip4LocalIPAddressProperty).getResource();
+			LIBNDL.logger().debug("NDLModel::getIP: ipResource = " + ipResource);
+			 ///<j.7:label_ID>172.16.1.100</j.7:label_ID>
+			 ip = NdlCommons.getLabelID(ipResource);
+			LIBNDL.logger().debug("NDLModel::getIP: ipStr = " + ip);
 			
-			
-		   	
 //	    	Iterator i = null;
-//
+
 //	    	OntModel om = this.getJenaModel();
-//
-//	    	for (i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, interfaceResource); i.hasNext();){
+//	    	LIBNDL.logger().debug("NDLModel::getIP: om = " + om);
+//	    	om.listStatements(interfaceResource, (Property) null /*NdlCommons.inRequestNetworkConnection*/, (RDFNode) null /*interfaceResource*/);
+//	    	
+//	    	for (i = om.listStatements(interfaceResource, (Property) null /*NdlCommons.inRequestNetworkConnection*/, (RDFNode) null /*interfaceResource*/); i.hasNext();){
 //	    		Statement st = (Statement) i.next();
 //	    		LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
 //	    		LIBNDL.logger().debug("resource type: " + getType(st.getSubject()));
 //
-//	    		if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
-//	    			LIBNDL.logger().debug("adding vlan: " + st.getSubject());
-//	    			//ip =rtnList.add(st.getSubject()); st.getSubject(); 
-//	    		 }
+//	    		//if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
+//	    		//	LIBNDL.logger().debug("adding vlan: " + st.getSubject());
+//	    		//	//ip =rtnList.add(st.getSubject()); st.getSubject(); 
+//	    		// }
 //	    	}
 
 			
@@ -501,7 +508,7 @@ public abstract class NDLModel {
 			
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
 		

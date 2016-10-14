@@ -367,7 +367,7 @@ public class PriorityNetwork {
 			this.postSetQueues();
 			
 			for (PriorityPath path : this.priorityPaths){
-				this.postPathMatches(path,this.priorityPaths.indexOf(path));
+				this.postPathMatches(path,this.priorityPaths.indexOf(path)+1);
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -865,7 +865,8 @@ public class PriorityNetwork {
 			for (String IP2 : this.siteNodes.get(path.site2)){
 				urlParameters = "{\"match\": {\"nw_dst\": \"" + IP1 + "\", \"nw_src\": \"" + IP2 + "\"}, \"actions\":{\"queue\": \"" + queue + "\"}}";
 				System.out.println("postPathMatches urlParameters: " + urlParameters);
-
+			
+				
 				for(String site : siteList){
 
 					try{
@@ -909,6 +910,58 @@ public class PriorityNetwork {
 					}catch (Exception e){
 						System.out.println("exception in postPathMatches");
 					}
+					
+				}
+				
+				//reverse
+				urlParameters = "{\"match\": {\"nw_dst\": \"" + IP2 + "\", \"nw_src\": \"" + IP1 + "\"}, \"actions\":{\"queue\": \"" + queue + "\"}}";
+				System.out.println("postPathMatches urlParameters: " + urlParameters);
+			
+				
+				for(String site : siteList){
+
+					try{
+					//http://localhost:8080/qos/queue/0000000000000001
+					String url = "http://" + this.controllerPublicIP + ":8080/qos/rules/" + this.getSiteDPID_hex(site);
+					System.out.println("url : " + url);
+					URL obj = new URL(url);
+					HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+					//add reuqest header
+					con.setRequestMethod("POST");
+					con.setRequestProperty("User-Agent", USER_AGENT);
+					con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+
+
+
+					// Send post request
+					con.setDoOutput(true);
+					DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+					wr.writeBytes(urlParameters);
+					wr.flush();
+					wr.close();
+
+					int responseCode = con.getResponseCode();
+					System.out.println("\nSending 'POST' request to URL : " + url);
+					System.out.println("Post parameters : " + urlParameters);
+					System.out.println("Response Code : " + responseCode);
+
+					BufferedReader in = new BufferedReader(
+							new InputStreamReader(con.getInputStream()));
+					String inputLine;
+					StringBuffer response = new StringBuffer();
+
+					while ((inputLine = in.readLine()) != null) {
+						response.append(inputLine);
+					}
+					in.close();
+
+					//print result
+					System.out.println(response.toString());
+					}catch (Exception e){
+						System.out.println("exception in postPathMatches");
+					}
+					
 				}
 			}
 		}
