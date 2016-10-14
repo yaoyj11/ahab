@@ -33,6 +33,12 @@ import orca.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 
 public class PriorityNetwork {
 
+	class PriorityPath{
+		public String site1;
+		public String site2;
+		public int priority;
+	}
+	
 	private ComputeNode controller;
 	private ArrayList<String> siteList;
 	private HashMap<String,Long> siteIDs;
@@ -49,10 +55,10 @@ public class PriorityNetwork {
 	
 	//data structures for handling RYU priorities
 	private ArrayList<String> newSites = new ArrayList<String>();
-	private HashMap<String,Integer> priorities = new HashMap<String,Integer>();
+	//private HashMap<String,Integer> priorities = new HashMap<String,Integer>();
 	private HashMap<String,ArrayList<ComputeNode>> siteNodes = new HashMap<String,ArrayList<ComputeNode>>();
-	
-	
+	private ArrayList<PriorityPath> priorityPaths = new ArrayList<PriorityPath>();
+	private int defaultPriority = 1;
 	
 	
 	//Hack so we can update slice
@@ -82,7 +88,7 @@ public class PriorityNetwork {
 	
 	//initialized a priority network from an existing slice
 	private void init(){
-		this.bandwidth = 1000000000l;
+		//this.bandwidth = 1000000000l;
 		
 		for (Node n : s.getNodes()){
 			//if controller
@@ -95,13 +101,14 @@ public class PriorityNetwork {
 				//siteList.add(n.getName().replace(this.generateSwitchNamePrefix(), ""));
 				switches.put(this.getSiteNameFromSwitchName(n.getName()), (ComputeNode) n);
 				siteList.add(this.getSiteNameFromSwitchName(n.getName()));
-				priorities.put(this.getSiteNameFromSwitchName(n.getName()), 1);
+				//priorities.put(this.getSiteNameFromSwitchName(n.getName()), 1);
 				siteIDs.put(this.getSiteNameFromSwitchName(n.getName()), this.getSiteIDFromSwitchName(n.getName()));
 			}
 		}
 		
 		for (Network n : s.getLinks()){
 			//if local attachment point
+			this.bandwidth = n.getBandwidth();
 			if(n.getName().startsWith(this.generateLocalAttachmentNetworkNamePrifix())){
 				//localAttachmentPoints.put(n.getName().replace(this.generateLocalAttachmentNetworkNamePrifix(),""), (BroadcastNetwork) n); 
 				localAttachmentPoints.put(this.getSiteNameFromLocalAttachmentPointName(n.getName()), (BroadcastNetwork) n);
@@ -256,12 +263,13 @@ public class PriorityNetwork {
 		//add site to new site to be processed after instantiation: 
 		//HACK needs fixing. switch need to be up before finishing the processing
 		this.newSites.add(name);
-		this.priorities.put(name, 1);
+		//this.priorities.put(name, 1);
 		this.siteNodes.put(name, new ArrayList<ComputeNode>());
 	}
 	
-	public void addNode(Node n, String site, String ip, String mask){
-		
+	public void addNode(ComputeNode n, String site, String ip, String mask){
+		ArrayList<ComputeNode> nodes = siteNodes.get(site);
+		nodes.add(n);
 		
 		BroadcastNetwork net = this.localAttachmentPoints.get(site); 
 		
@@ -299,9 +307,32 @@ public class PriorityNetwork {
 	}
 	
 	
+	private PriorityPath getPriorityPath(String site1, String site2){
+	
+		for(PriorityPath p : this.priorityPaths){
+			if ( (p.site1.equals(site1) && p.site2.equals(site2)) || (p.site1.equals(site2) && p.site2.equals(site1)) ){
+				return p;
+			}
+		}
+		
+		return null;
+	}
+	public void QoS_setDefaultPriority(int priority){
+		this.defaultPriority = priority;
+	}
 	
 	public void QoS_setPriority(String site1, String site2, int priority){
+		PriorityPath path = null;
 		
+		path = this.getPriorityPath(site1, site2);
+		
+		if(path == null){
+			path =  new PriorityPath();
+			this.priorityPaths.add(path);
+		}
+		path.site1 = site1;
+		path.site2 = site2;
+		path.priority = priority;
 	}
 
 
@@ -401,7 +432,7 @@ public class PriorityNetwork {
 		this.siteList.add(name);
 		long switchNum = siteList.indexOf(name);
 		this.siteIDs.put(name,switchNum);
-		this.priorities.put(name, 1);
+		//this.priorities.put(name, 1);
 		
 		String switchImageShortName="Centos6.7-SDN.v0.1";
 
@@ -728,27 +759,29 @@ public class PriorityNetwork {
 		
 		
 		//calc total priority
-		int totalPriority = 0;
-		for (String site : siteList){
-			totalPriority += priorities.get(site);
+		int totalPriority = defaultPriority;
+		for (PriorityPath path : priorityPaths){
+			totalPriority += path.priority;
 		}
 		System.out.println("postSetQueues: totalPriority = " +totalPriority);
 		
 		String urlParameters = "{\"type\": \"linux-htb\"" +
 			       ", \"max_rate\": \"" + (this.bandwidth)  +  "\"" +
 			       ", \"queues\": [";
-		long defaultBandwidth =  (long)(this.bandwidth*0.1);
+		long defaultBandwidth =  (long)(((float)(defaultPriority)/(float)totalPriority)*this.bandwidth);
 		urlParameters +=  "{\"max_rate\": \""+ defaultBandwidth + "\"},";
-		
-		//add rates to urlParameters
-		for (String site : siteList){
-			System.out.println("postSetQueues: totalPriority = " +totalPriority + ", priorities.get(site)= " + priorities.get(site) + ", this.bandwidth = " + this.bandwidth);
-			long siteBandwidth =  (long)(((float)(priorities.get(site))/(float)totalPriority)*this.bandwidth);
-			urlParameters +=  "{\"max_rate\": \""+ siteBandwidth + "\"},";
-		}
-		urlParameters = urlParameters.substring(0, urlParameters.length()-1);
-		urlParameters += "]}"; 
-			     
+
+
+		for (PriorityPath path : priorityPaths){
+			//add rates to urlParameters
+			for (String site : siteList){
+				System.out.println("postSetQueues: totalPriority = " +totalPriority + ", priorities.get(site)= " + path.priority + ", this.bandwidth = " + this.bandwidth);
+				long siteBandwidth =  (long)(((float)(path.priority)/(float)totalPriority)*this.bandwidth);
+				urlParameters +=  "{\"max_rate\": \""+ siteBandwidth + "\"},";
+			}
+			urlParameters = urlParameters.substring(0, urlParameters.length()-1);
+			urlParameters += "]}"; 
+		}     
 		//urlParameters = "{\"type\": \"linux-htb\", \"max_rate\": \"1000000000\", \"queues\": [{\"max_rate\": \"50000000\"},{\"max_rate\": \"100000000\"},{\"max_rate\": \"200000000\"}]}";
 		 
 		System.out.println("postSetQueues urlParameters: " + urlParameters);
