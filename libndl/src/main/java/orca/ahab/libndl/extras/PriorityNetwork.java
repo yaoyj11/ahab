@@ -674,7 +674,7 @@ public class PriorityNetwork {
 	}
 	
 	public String convert2Hex(String switchID){
-		Long l =Long.parseLong(switchID);
+		Long l = Long.parseLong(switchID);
 		return Long.toHexString(l);
 			
 	}
@@ -735,8 +735,10 @@ public class PriorityNetwork {
 		System.out.println("postSetQueues: totalPriority = " +totalPriority);
 		
 		String urlParameters = "{\"type\": \"linux-htb\"" +
-			       ", \"max_rate\": \"" + this.bandwidth  +  "\"" +
+			       ", \"max_rate\": \"" + (this.bandwidth)  +  "\"" +
 			       ", \"queues\": [";
+		long defaultBandwidth =  (long)(this.bandwidth*0.1);
+		urlParameters +=  "{\"max_rate\": \""+ defaultBandwidth + "\"},";
 		
 		//add rates to urlParameters
 		for (String site : siteList){
@@ -747,7 +749,7 @@ public class PriorityNetwork {
 		urlParameters = urlParameters.substring(0, urlParameters.length()-1);
 		urlParameters += "]}"; 
 			     
-		//urlParameters = "{\"type\": \"linux-htb\", \"max_rate\": \"1000000\", \"queues\": [{\"max_rate\": \"500000\"}]}";
+		//urlParameters = "{\"type\": \"linux-htb\", \"max_rate\": \"1000000000\", \"queues\": [{\"max_rate\": \"50000000\"},{\"max_rate\": \"100000000\"},{\"max_rate\": \"200000000\"}]}";
 		 
 		System.out.println("postSetQueues urlParameters: " + urlParameters);
 		
