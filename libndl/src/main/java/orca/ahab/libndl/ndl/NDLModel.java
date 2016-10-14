@@ -468,8 +468,44 @@ public abstract class NDLModel {
 
 
 	public String getIP(InterfaceNode2Net interfaceNode2Net) {
-		// TODO Auto-generated method stub
-		return null;
+		String ip = null;
+		try {
+			Resource interfaceResource = this.getModelResource(interfaceNode2Net);
+			LIBNDL.logger().debug("NDLModel::getIP:  interfaceIndivdual = " + interfaceResource);
+			LIBNDL.logger().debug("NDLModel::getIP:  interfaceIndivdual.getName = " + interfaceNode2Net.getName());
+			//Individual ipInd = ngen.addUniqueIPToIndividual(ipAddress, interfaceNode2Net.getName(), interfaceIndivdual);
+			//ngen.addNetmaskToIP(ipInd, "255.255.0.0");
+			ip = NdlCommons.getAddressIP(interfaceResource);
+			
+			
+			
+		   	
+//	    	Iterator i = null;
+//
+//	    	OntModel om = this.getJenaModel();
+//
+//	    	for (i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, interfaceResource); i.hasNext();){
+//	    		Statement st = (Statement) i.next();
+//	    		LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
+//	    		LIBNDL.logger().debug("resource type: " + getType(st.getSubject()));
+//
+//	    		if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
+//	    			LIBNDL.logger().debug("adding vlan: " + st.getSubject());
+//	    			//ip =rtnList.add(st.getSubject()); st.getSubject(); 
+//	    		 }
+//	    	}
+
+			
+			
+			
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+		return ip;
 	}
 	public void setIP(InterfaceNode2Net interfaceNode2Net, String ipAddress) {
 		//LIBNDL.logger().debug("NDLModel::setIP:  " + this.getModelResource(interfaceNode2Net));	

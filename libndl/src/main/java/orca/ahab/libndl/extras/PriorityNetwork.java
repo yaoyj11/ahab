@@ -115,9 +115,12 @@ public class PriorityNetwork {
 				//localAttachmentPoints.put(n.getName().replace(this.generateLocalAttachmentNetworkNamePrifix(),""), (BroadcastNetwork) n); 
 				localAttachmentPoints.put(this.getSiteNameFromLocalAttachmentPointName(n.getName()), (BroadcastNetwork) n);
 				
+				System.out.println("init: network = " + n + ", intefaces = " + n.getInterfaces());
 				for(Interface i : n.getInterfaces()){
+					System.out.println("init: network = " + n + ", inteface = " + i);
 					if(i instanceof InterfaceNode2Net){
 						InterfaceNode2Net iface = (InterfaceNode2Net)i;
+						System.out.println("init: network = " + n + ", inteface = " + i + " instanceof InterfaceNode2Net, IP = " + iface.getIpAddress());
 						if(iface.getIpAddress() != null){
 							siteNodes.get(this.getSiteNameFromLocalAttachmentPointName(n.getName())).add(iface.getIpAddress());
 						}
@@ -855,11 +858,10 @@ public class PriorityNetwork {
 	private void postPathMatches(PriorityPath path, int queue) {
 		//curl -X POST -d '{"match": {"nw_dst": "172.16.0.100 "}, "actions":{"queue": "1"}}' http://localhost:8080/qos/rules/00005e82f3b1664e
 
-		System.out.println("in postPathMatches: ");
+		System.out.println("in postPathMatches: this.siteNodes.get(path.site1) = " +  this.siteNodes.get(path.site1));
 		String urlParameters = "";
 		for (String IP1 : this.siteNodes.get(path.site1)){
-
-
+			
 			for (String IP2 : this.siteNodes.get(path.site2)){
 				urlParameters = "{\"match\": {\"nw_dst\": \"" + IP1 + "\", \"nw_src\": \"" + IP2 + "\"}, \"actions\":{\"queue\": \"" + queue + "\"}}";
 				System.out.println("postPathMatches urlParameters: " + urlParameters);
