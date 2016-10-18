@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -24,6 +25,8 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 
 public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
+	private static final String UNABLE_TO_CONTACT_SM = "Unable to contact SM ";
+	private static final String RECEIVED_NULL_RESPONSE = "Received null response from SM ";
 	private static final String RET_RET_FIELD = "ret";
 	private static final String MSG_RET_FIELD = "msg";
 	private static final String ERR_RET_FIELD = "err";
@@ -37,6 +40,11 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 	private static final String LIST_RESOURCES = "orca.listResources";
 	private static final String GET_SLIVER_PROPERTIES = "orca.getSliverProperties";
 	private static final String GET_RESERVATION_STATES = "orca.getReservationStates";
+	private static final String GET_RESERVATION_SLICE_STITCH_INFO = "orca.getReservationSliceStitchInfo";
+	private static final String PERMIT_SLICE_STITCH = "orca.permitSliceStitch";
+	private static final String REVOKE_SLICE_STITCH = "orca.revokeSliceStitch";
+	private static final String PERFORM_SLICE_STITCH = "orca.performSliceStitch";
+	private static final String UNDO_SLICE_STITCH = "orca.undoSliceStitch";
 
 	private final SSLTransportContext ctx;
 	private final URL cUrl;
@@ -48,26 +56,30 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 		ctx.establishIdentity(cUrl);
 	}
 
+	private XmlRpcClient getConfiguredClient() {
+		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+		config.setServerURL(cUrl);
+		XmlRpcClient client = new XmlRpcClient();
+		client.setConfig(config);
+
+		// set this transport factory for host-specific SSLContexts to work
+		XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
+		client.setTransportFactory(f);
+		
+		return client;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public Map<String, Object> getVersion() throws TransportException, ContextTransportException {
 		Map<String, Object> versionMap = null;
 
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
 			// get verbose list of the AMs
-			versionMap = (Map<String, Object>)client.execute(GET_VERSION, new Object[]{});
+			versionMap = (Map<String, Object>)getConfiguredClient().execute(GET_VERSION, new Object[]{});
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 		return versionMap;
 	}
@@ -82,27 +94,19 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
 			SliceAccessContext<SSHAccessToken> sshSliceCtx = (SliceAccessContext<SSHAccessToken>)sliceCtx;
 			List<Map<String, ?>> users = (List<Map<String, ?>>)sshSliceCtx.getTokens(new XMLRPCAPIAdapter());
 			// create sliver
-			rr = (Map<String, Object>)client.execute(CREATE_SLICE, new Object[]{ sliceId, new Object[]{}, resReq, users});
+			rr = (Map<String, Object>)getConfiguredClient().execute(CREATE_SLICE, 
+					new Object[]{ sliceId, new Object[]{}, resReq, users});
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
 			return "Unable to submit slice to SM:  " + cUrl + " due to " + e;
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException("Unable to create slice: " + (String)rr.get(MSG_RET_FIELD));
@@ -120,28 +124,20 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
 			// create sliver
 			Calendar ecal = Calendar.getInstance();
 			ecal.setTime(newDate);
 			String endDateString = DatatypeConverter.printDateTime(ecal); // RFC3339/ISO8601
-			rr = (Map<String, Object>)client.execute(RENEW_SLICE, new Object[]{ sliceId, new Object[]{}, endDateString});
+			rr = (Map<String, Object>)getConfiguredClient().execute(RENEW_SLICE, 
+					new Object[]{ sliceId, new Object[]{}, endDateString});
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException("Unable to renew slice: " + (String)rr.get(MSG_RET_FIELD));
@@ -157,25 +153,17 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
 			// delete sliver
-			rr = (Map<String, Object>)client.execute(DELETE_SLICE, new Object[]{ sliceId, new Object[]{}});
+			rr = (Map<String, Object>)getConfiguredClient().execute(DELETE_SLICE, 
+					new Object[]{ sliceId, new Object[]{}});
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException("Unable to delete slice: " + (String)rr.get(MSG_RET_FIELD));
@@ -204,26 +192,19 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
 
 			// sliver status
-			rr = (Map<String, Object>)client.execute(SLICE_STATUS, new Object[]{ sliceId, new Object[]{}});
+			rr = (Map<String, Object>)getConfiguredClient().execute(SLICE_STATUS, 
+					new Object[]{ sliceId, new Object[]{}});
 
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException("Unable to get slice status: " + rr.get(MSG_RET_FIELD));
@@ -236,29 +217,25 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 	@SuppressWarnings("unchecked")
 	public Map<String, Map<String, String>> getReservationStates(String sliceId, List<String> reservationIds)  
 			throws TransportException, ContextTransportException {
-		assert((sliceId != null) && (reservationIds != null));
+		assert(sliceId != null);
+		
+		if (reservationIds == null)
+			reservationIds = new ArrayList<>();
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
 			// sliver status
-			rr = (Map<String, Object>)client.execute(GET_RESERVATION_STATES, new Object[]{ sliceId, reservationIds, new Object[]{}});
+			rr = (Map<String, Object>)getConfiguredClient().execute(GET_RESERVATION_STATES, 
+					new Object[]{ sliceId, reservationIds, new Object[]{}});
 
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException("Unable to get reservation states: " + rr.get(MSG_RET_FIELD));
@@ -273,26 +250,19 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
+			
 			// sliver status
-			rr = (Map<String, Object>)client.execute(GET_SLIVER_PROPERTIES, new Object[]{ sliceId, reservationId, new Object[]{}});
+			rr = (Map<String, Object>)getConfiguredClient().execute(GET_SLIVER_PROPERTIES, 
+					new Object[]{ sliceId, reservationId, new Object[]{}});
 
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException("Unable to get sliver properties: " + rr.get(MSG_RET_FIELD));
@@ -313,25 +283,17 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
 			// sliver status
-			rr = (Map<String, Object>)client.execute(LIST_SLICES, new Object[]{ new Object[]{}});
+			rr = (Map<String, Object>)getConfiguredClient().execute(LIST_SLICES, 
+					new Object[]{ new Object[]{}});
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException ("Unable to list active slices: " + rr.get(MSG_RET_FIELD));
@@ -358,25 +320,17 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
 			// modify slice
-			rr = (Map<String, Object>)client.execute(MODIFY_SLICE, new Object[]{ sliceId, new Object[]{}, modReq});
+			rr = (Map<String, Object>)getConfiguredClient().execute(MODIFY_SLICE, 
+					new Object[]{ sliceId, new Object[]{}, modReq});
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException("Unable to modify slice: " + (String)rr.get(MSG_RET_FIELD));
@@ -393,30 +347,160 @@ public class OrcaSMXMLRPCProxy implements ISliceTransportAPIv1 {
 
 		Map<String, Object> rr = null;
 		try {
-			XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-			config.setServerURL(cUrl);
-			XmlRpcClient client = new XmlRpcClient();
-			client.setConfig(config);
-
-			// set this transport factory for host-specific SSLContexts to work
-			XmlRpcCommonsTransportFactory f = new XmlRpcCommonsTransportFactory(client);
-			client.setTransportFactory(f);
-
-			// modify slice
-			rr = (Map<String, Object>)client.execute(LIST_RESOURCES, new Object[]{ new Object[]{}, new HashMap<String, String>()});
+			rr = (Map<String, Object>)getConfiguredClient().execute(LIST_RESOURCES, 
+					new Object[]{ new Object[]{}, new HashMap<String, String>()});
 		} catch (XmlRpcException e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl + " due to " + e);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
 		} catch (Exception e) {
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
 		}
 
 		if (rr == null)
-			throw new XMLRPCTransportException("Unable to contact SM " + cUrl);
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
 
 		if ((Boolean)rr.get(ERR_RET_FIELD))
 			throw new XMLRPCTransportException("Unable to list resources: " + (String)rr.get(MSG_RET_FIELD));
 
 		result = (String)rr.get(RET_RET_FIELD);
 		return result;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public boolean permitSliceStitch(String sliceId, String resId, String secret)
+			throws TransportException, ContextTransportException {
+		boolean res = false;
+		
+		Map<String, Object> rr = null;
+		try {
+			// permit
+			rr = (Map<String, Object>)getConfiguredClient().execute(PERMIT_SLICE_STITCH, 
+					new Object[]{ sliceId, resId, secret, new Object[]{}});
+		} catch (XmlRpcException e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
+		} catch (Exception e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
+		}
+
+		if (rr == null)
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
+
+		if ((Boolean)rr.get(ERR_RET_FIELD))
+			throw new XMLRPCTransportException("Unable to permit slice stitch on slice " + sliceId + " reservation " + 
+					resId + " due to: " + (String)rr.get(MSG_RET_FIELD));
+
+		res = (Boolean)rr.get(RET_RET_FIELD);
+		return res;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public boolean revokeSliceStitch(String sliceId, String resId)
+			throws TransportException, ContextTransportException {
+		boolean res = false;
+		
+		Map<String, Object> rr = null;
+		try {
+			// revoke
+			rr = (Map<String, Object>)getConfiguredClient().execute(REVOKE_SLICE_STITCH, 
+					new Object[]{ sliceId, resId, new Object[]{}});
+		} catch (XmlRpcException e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
+		} catch (Exception e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
+		}
+
+		if (rr == null)
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
+
+		if ((Boolean)rr.get(ERR_RET_FIELD))
+			throw new XMLRPCTransportException("Unable to revoke slice stitch on slice " + sliceId + " reservation " + 
+					resId + " due to: " + (String)rr.get(MSG_RET_FIELD));
+
+		res = (Boolean)rr.get(RET_RET_FIELD);
+		return res;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public boolean performSliceStitch(String fromSlice, String fromReservation,
+			String toSlice, String toReservation, String secret, Properties p)
+			throws TransportException, ContextTransportException {
+		boolean res = false;
+		
+		Map<String, Object> rr = null;
+		try {
+			rr = (Map<String, Object>)getConfiguredClient().execute(PERFORM_SLICE_STITCH, 
+					new Object[]{ fromSlice, fromReservation, 
+					toSlice, toReservation, secret, p, new Object[]{}});
+		} catch (XmlRpcException e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
+		} catch (Exception e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
+		}
+
+		if (rr == null)
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
+
+		if ((Boolean)rr.get(ERR_RET_FIELD))
+			throw new XMLRPCTransportException("Unable to perform slice stitch on slice " + fromSlice + " reservation " + 
+					fromReservation + " due to: " + (String)rr.get(MSG_RET_FIELD));
+
+		res = (Boolean)rr.get(RET_RET_FIELD);
+		return res;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public boolean undoSliceStitch(String fromSlice, String fromReservation,
+			String toSlice, String toReservation) throws TransportException,
+			ContextTransportException {
+		boolean res = false;
+		
+		Map<String, Object> rr = null;
+		try {
+			rr = (Map<String, Object>)getConfiguredClient().execute(UNDO_SLICE_STITCH, 
+					new Object[]{ fromSlice, fromReservation, 
+					toSlice, toReservation, new Object[]{}});
+		} catch (XmlRpcException e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
+		} catch (Exception e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
+		}
+
+		if (rr == null)
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
+
+		if ((Boolean)rr.get(ERR_RET_FIELD))
+			throw new XMLRPCTransportException("Unable to perform slice stitch on slice " + fromSlice + " reservation " + 
+					fromReservation + " due to: " + (String)rr.get(MSG_RET_FIELD));
+
+		res = (Boolean)rr.get(RET_RET_FIELD);
+		return res;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Map<String, Object> getSliceStitchInfo(String sliceId, List<String> reservationIds) 
+			throws TransportException, ContextTransportException {
+		assert((sliceId != null) && (reservationIds != null));
+
+		Map<String, Object> rr = null;
+		try {
+			rr = (Map<String, Object>)getConfiguredClient().execute(GET_RESERVATION_SLICE_STITCH_INFO, 
+					new Object[]{ sliceId, reservationIds, new Object[]{}});
+		} catch (XmlRpcException e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl + " due to " + e);
+		} catch (Exception e) {
+			throw new XMLRPCTransportException(UNABLE_TO_CONTACT_SM + cUrl);
+		}
+
+		if (rr == null)
+			throw new XMLRPCTransportException(RECEIVED_NULL_RESPONSE + cUrl);
+
+		if ((Boolean)rr.get(ERR_RET_FIELD))
+			throw new XMLRPCTransportException("Unable to get reservation stitching info: " + rr.get(MSG_RET_FIELD));
+
+		return (Map<String, Object>) rr.get(RET_RET_FIELD);
 	}
 }
