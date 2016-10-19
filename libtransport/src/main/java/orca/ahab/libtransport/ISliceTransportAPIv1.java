@@ -180,8 +180,8 @@ public interface ISliceTransportAPIv1 {
 	 * Retrieve stitching information about a list of reservations in a slice. Returned as a 
 	 * Map of Maps (of Maps) (JSON-ish equivalent:
 	 * 
-	 * "allowed": "yes"|"no"
 	 * [<reservation id>:
+	 *      "allowed": "yes"|"no"
 	 * 		[<stitch guid>:
 	 * 			"performed": <RFC3399 date/time>
 	 * 			"undone":    <RFC3399 date/time> - optional
