@@ -89,7 +89,7 @@ public class PriorityNetwork {
 	
 	//initialized a priority network from an existing slice
 	private void init(){
-		this.bandwidth = 100000000l;
+		this.bandwidth = 1000000000l;
 		
 		for (Node n : s.getNodes()){
 			//if controller
