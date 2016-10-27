@@ -3,6 +3,7 @@ package orca.ahab.libtransport;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import orca.ahab.libtransport.util.ContextTransportException;
 import orca.ahab.libtransport.util.TransportException;
@@ -117,5 +118,89 @@ public interface ISliceTransportAPIv1 {
 	 */
 	public abstract String listResources()
 			throws TransportException, ContextTransportException;
+	
+	
+	/**
+	 * Permit a bearer-token-based stitch to a given reservation in a slice
+	 * @param sliceId
+	 * @param resId
+	 * @param secret
+	 * @return
+	 * @throws TransportException
+	 * @throws ContextTransportException
+	 */
+	public abstract boolean permitSliceStitch(String sliceId, String resId, String secret) 
+			throws TransportException, ContextTransportException;
+	
+	/**
+	 * Revoke permission to stitch to a given reservation
+	 * @param sliceId
+	 * @param resId
+	 * @return
+	 * @throws TransportException
+	 * @throws ContextTransportException
+	 */
+	public abstract boolean revokeSliceStitch(String sliceId, String resId)
+			throws TransportException, ContextTransportException;
 
+	/**
+	 * Perform a stitching operation between reservations (from slice/from reservation)
+	 * and someone else's reservation (toSlice/toReservation) using bearer token secret
+	 * established by the owner of the other reservation via permitStitch call. Properties
+	 * can contain configuration properties for the stitch.
+	 * @param fromSlice
+	 * @param fromReservation
+	 * @param toSlice
+	 * @param toReservation
+	 * @param secret
+	 * @param p
+	 * @return
+	 * @throws TransportException
+	 * @throws ContextTransportException
+	 */
+	public abstract boolean performSliceStitch(String fromSlice, String fromReservation, 
+			String toSlice, String toReservation, String secret, Properties p) 
+			throws TransportException, ContextTransportException;
+	
+	/**
+	 * If present, undo a stitch between the reservations (from owned by the caller)
+	 * @param fromSlice
+	 * @param fromReservation
+	 * @param toSlice
+	 * @param toReservation
+	 * @return
+	 * @throws TransportException
+	 * @throws ContextTransportException
+	 */
+	public abstract boolean undoSliceStitch(String fromSlice, String fromReservation,
+			String toSlice, String toReservation) 
+			throws TransportException, ContextTransportException;
+	
+	/**
+	 * Retrieve stitching information about a list of reservations in a slice. Returned as a 
+	 * Map of Maps (of Maps) (JSON-ish equivalent:
+	 * 
+	 * [<reservation id>:
+	 *      "allowed": "yes"|"no"
+	 * 		[<stitch guid>:
+	 * 			"performed": <RFC3399 date/time>
+	 * 			"undone":    <RFC3399 date/time> - optional
+	 * 			"toreservation": <guid>
+	 * 			"toslice": <string>
+	 * 			"stitch.dn": <string>]]
+	 * )
+	 * @param sliceId
+	 * @param resId 
+	 * @return
+	 * @throws TransportException
+	 * @throws ContextTransportException
+	 */
+    public static final String SliceStitchAllowed = "allowed";
+    public static final String SliceStitchToReservation = "toreservation";
+    public static final String SliceStitchToSlice = "toslice";
+    public static final String SliceStitchPerformed = "performed";
+    public static final String SliceStitchUndone = "undone";
+    public static final String SliceStitchDN = "stitch.dn";
+	public abstract Map<String, Object> getSliceStitchInfo(String sliceId, List<String> resId) 
+			throws TransportException, ContextTransportException;
 }

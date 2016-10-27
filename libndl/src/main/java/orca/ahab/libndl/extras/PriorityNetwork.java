@@ -307,6 +307,7 @@ public class PriorityNetwork {
 		
 
 		
+		
 	}
 	
 	private void processNewSites(){
@@ -367,7 +368,7 @@ public class PriorityNetwork {
 			this.postSetQueues();
 			
 			for (PriorityPath path : this.priorityPaths){
-				this.postPathMatches(path,this.priorityPaths.indexOf(path)+1);
+				this.postPathMatches(path,this.priorityPaths.indexOf(path)- 1);
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -641,15 +642,24 @@ public class PriorityNetwork {
 			" while true; do \n" +
 			"  #check to see if bridge is consistant \n" +
 			"   is_bridge_consistant \"br0\" \n" +
-			"           if [ \"$?\" != \"0\" ]; then \n" +
-			"           echo resetting bridge br0 \n" +
-			"           reset_bridge \"br0\" ${controller_ip} \n" +
+			"   if [ \"$?\" != \"0\" ]; then \n" +
+			"      echo resetting bridge br0 \n" +
+			"      reset_bridge \"br0\" ${controller_ip} \n" +
 			"   fi \n" +
-			"     br0_ifaces=`ovs-vsctl list-ifaces br0` \n" +
-			"     echo 'Ifaces on br0: '$br0_ifaces \n" +
-			"     echo 'All ifaces' \n" +
-			"     for i in `ip link show | grep '^[1-9]' | awk -F\": \"  '{print $2}'`; do  \n" +
-			"        ip=`ip -f inet -o addr show $i` \n" +
+			"   \n " +	
+ 			"   br0_ifaces=`ovs-vsctl list-ifaces br0` \n" +
+			"   echo 'Ifaces on br0: '$br0_ifaces \n" +
+			"   echo 'All ifaces' \n" +
+			"   for i in `ip link show | grep '^[1-9]' | awk -F\": \"  '{print $2}'`; do  \n" +
+			"      ip=\"unset\" \n" +
+			"      ip=`ip -f inet -o addr show $i` \n" +
+			"      if [ \"$?\" != \"0\" ]; then \n" +
+			"          echo skipping interface: get ip address failed for ${i}, ip: XXX${ip}XXX \n" +
+			"          continue \n" +
+			"      fi \n" +
+			
+			
+            "      echo testing ip for interface: iface: ${i}, ip: XXX${ip}XXX \n" +
 			"      if [[ \"$ip\" != \"\" ]]; then \n" +
 			"          echo skipping $i \n" +
 			"      else \n" +
