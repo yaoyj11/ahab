@@ -651,6 +651,22 @@ public class PriorityNetwork {
 			"   echo 'Ifaces on br0: '$br0_ifaces \n" +
 			"   echo 'All ifaces' \n" +
 			"   for i in `ip link show | grep '^[1-9]' | awk -F\": \"  '{print $2}'`; do  \n" +
+			
+" \n" +
+" skip=\"false\" \n" + 
+"for target in `route | grep -v Kernel | grep -v Destination | awk '{ print $8 }'`; do \n" +
+"   echo $target; \n" +
+"    if [ \"$target\" == \"$i\" ]; then \n" +
+"        echo iface $i matches a route, skip and continue \n" +
+"        skip=\"true\" \n" +
+"        break \n" +
+"    fi \n" +
+"done \n" +
+"    if [ \"$skip\" == \"true\" ]; then \n" +
+"        echo skipping iface \n" +
+"        continue \n" +
+"    fi \n" +
+			
 			"      ip=\"unset\" \n" +
 			"      ip=`ip -f inet -o addr show $i` \n" +
 			"      if [ \"$?\" != \"0\" ]; then \n" +
@@ -658,6 +674,10 @@ public class PriorityNetwork {
 			"          continue \n" +
 			"      fi \n" +
 			
+
+
+            
+            
 			
             "      echo testing ip for interface: iface: ${i}, ip: XXX${ip}XXX \n" +
 			"      if [[ \"$ip\" != \"\" ]]; then \n" +

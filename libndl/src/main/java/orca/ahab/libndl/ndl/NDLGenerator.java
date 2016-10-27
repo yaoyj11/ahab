@@ -70,6 +70,7 @@ public abstract class NDLGenerator {
 			dm.put("UH (Houston, TX USA) XO Rack", "uhvmsite.rdf#uhvmsite");
 			dm.put("UvA (Amsterdam, The Netherlands) XO Rack", "uvanlvmsite.rdf#uvanlvmsite");
 			dm.put("UFL (Gainesville, FL USA) XO Rack", "uflvmsite.rdf#uflvmsite");
+			dm.put("UAF (Fairbanks, AK, USA) XO Rack", "uafvmsite.rdf#uafvmsite");
 			dm.put("UCD (Davis, CA USA) XO Rack", "ucdvmsite.rdf#ucdvmsite");
 			dm.put("OSF (Oakland, CA USA) XO Rack", "osfvmsite.rdf#osfvmsite");
 			dm.put("SL (Chicago, IL USA) XO Rack", "slvmsite.rdf#slvmsite");
@@ -104,6 +105,7 @@ public abstract class NDLGenerator {
 			ndm.put("UCD XO Rack Net", "ucdNet.rdf#ucdNet");
 			ndm.put("OSF XO Rack Net", "osfNet.rdf#osfNet");
 			ndm.put("SL XO Rack Net", "slNet.rdf#slNet");
+			ndm.put("UAF XO Rack Net",  "uafNet.rdf#uafNet");
 			ndm.put("WVN XO Rack Net", "wvnNet.rdf#wvnNet");
 			ndm.put("NCSU XO Rack Net", "ncsuNet.rdf#ncsuNet");
 			ndm.put("NCSU2 XO Rack Net", "ncs2Net.rdf#ncsuNet");
