@@ -368,7 +368,7 @@ public class PriorityNetwork {
 			this.postSetQueues();
 			
 			for (PriorityPath path : this.priorityPaths){
-				this.postPathMatches(path,this.priorityPaths.indexOf(path));
+				this.postPathMatches(path,this.priorityPaths.indexOf(path)+1);
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
