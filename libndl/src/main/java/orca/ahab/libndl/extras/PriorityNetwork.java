@@ -368,7 +368,7 @@ public class PriorityNetwork {
 			this.postSetQueues();
 			
 			for (PriorityPath path : this.priorityPaths){
-				this.postPathMatches(path,this.priorityPaths.indexOf(path)- 1);
+				this.postPathMatches(path,this.priorityPaths.indexOf(path)+1);
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -637,9 +637,10 @@ public class PriorityNetwork {
 			" ovs-vsctl set-manager ptcp:6632 \n" +
 
 			
-			
+            "skiplist=\"lo ovs-system\" \n " +		
 			"\n" +
 			" while true; do \n" +
+			"  echo Loop forever! \n" +
 			"  #check to see if bridge is consistant \n" +
 			"   is_bridge_consistant \"br0\" \n" +
 			"   if [ \"$?\" != \"0\" ]; then \n" +
@@ -651,38 +652,61 @@ public class PriorityNetwork {
 			"   echo 'Ifaces on br0: '$br0_ifaces \n" +
 			"   echo 'All ifaces' \n" +
 			"   for i in `ip link show | grep '^[1-9]' | awk -F\": \"  '{print $2}'`; do  \n" +
-			
-" \n" +
-" skip=\"false\" \n" + 
-"for target in `route | grep -v Kernel | grep -v Destination | awk '{ print $8 }'`; do \n" +
-"   echo $target; \n" +
-"    if [ \"$target\" == \"$i\" ]; then \n" +
-"        echo iface $i matches a route, skip and continue \n" +
-"        skip=\"true\" \n" +
-"        break \n" +
-"    fi \n" +
-"done \n" +
-"    if [ \"$skip\" == \"true\" ]; then \n" +
-"        echo skipping iface \n" +
-"        continue \n" +
-"    fi \n" +
-			
-			"      ip=\"unset\" \n" +
+			"        echo Processing interface $i :  skiplist = $skiplist \n " + 
+			"        skip=\"false\" \n " +
+            "        for target in $skiplist; do \n" +
+            "            echo Testing for target $target equal iface $i; \n" +
+            "            if [ \"$target\" == \"$i\" ]; then \n" +
+            "              echo marking $i to be skipped \n" +         
+            "              skip=\"true\" \n" + 
+            "              break \n" +
+            "            fi \n" +
+            "        done \n" +
+            "      if [ \"$skip\" == \"true\" ]; then \n" +
+            "              echo first check skipping! \n" + 
+            "              continue \n" +
+            "      fi \n" +
+            
+            
+            "        for target in `route | grep -v Kernel | grep -v Destination | awk '{ print $8 }'`; do \n" +
+            "            echo $target from route command, i = $i \n" +
+            "            if [ \"$target\" == \"$i\" ]; then \n" +
+            "              echo iface $i matches a route, adding to skiplist \n" +
+            "              echo $i > /tmp/skippedIfaces.txt   \n" +
+            "              skiplist=\"${skiplist} $i\" \n" +
+            "              break \n" +
+            "            fi \n" +
+            "        done \n" +
+
 			"      ip=`ip -f inet -o addr show $i` \n" +
 			"      if [ \"$?\" != \"0\" ]; then \n" +
-			"          echo skipping interface: get ip address failed for ${i}, ip: XXX${ip}XXX \n" +
+			"          echo skipping interface: get ip address failed for ${i}, ip: XXX${ip}XXX, adding to skiplist \n" +
+			"          echo $i > /tmp/skippedIfaces.txt \n" +
+			"          skiplist=\"${skiplist} $i\" \n" +
 			"          continue \n" +
 			"      fi \n" +
-			
 
-
+			"        skip=\"false\" \n " +
+            "        for target in $skiplist; do \n" +
+            "            echo $target; \n" +
+            "            if [ \"$target\" == \"$i\" ]; then \n" +
+            "              echo marking $i to be skipped \n" +
+            "              skip=\"true\" \n" + 
+            "              break \n" +
+            "            fi \n" +
+            "        done \n" +
             
+            "      if [ \"$skip\" == \"true\" ]; then \n" +
+            "              echo skipping! \n" + 
+            "              continue \n" +
+            "      fi \n" +
             
+"      if [ \"$i\" == \"eth0\" ]; then \n" +
+"              echo hardcoded eth0 skipping! \n" + 
+"              continue \n" +
+"      fi \n" +
 			
-            "      echo testing ip for interface: iface: ${i}, ip: XXX${ip}XXX \n" +
-			"      if [[ \"$ip\" != \"\" ]]; then \n" +
-			"          echo skipping $i \n" +
-			"      else \n" +
+			
 			"         echo checking ${i};   \n" +
 			"          br_4_iface=`ovs-vsctl iface-to-br $i` \n" +
 			"         if [ \"$?\" != \"0\" ]; then \n" +
@@ -692,10 +716,12 @@ public class PriorityNetwork {
 			"         else \n" +
 			"            echo \"skipping already added iface: \"$i \n" +
 			"          fi \n" +
-			"       fi \n" +
-			"   done \n" +
+	
+			
+			" done \n" +
 			"     echo sleeping 10 \n" +
 			"     sleep 10  \n" +
+			
 			" done \n" +
 			" echo Bootscript done. \n" +
 			" } 2>&1 > /tmp/bootscript.log \n" +
