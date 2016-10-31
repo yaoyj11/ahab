@@ -66,8 +66,8 @@ public class PriorityNetwork {
 	public static PriorityNetwork create(Slice s, String name){
 		//SDN sdn = SDN.create(s, name, "RENCI (Chapel Hill, NC USA) XO Rack");
 		PriorityNetwork sdn = PriorityNetwork.create(s, name, "PSC (Pittsburgh, TX, USA) XO Rack");
-		
-		
+		//PriorityNetwork sdn = PriorityNetwork.create(s, name, "RENCI (Chapel Hill, NC USA) XO Rack");
+		                                                       
 		sdn.startController();
 
 		return sdn;
@@ -75,6 +75,7 @@ public class PriorityNetwork {
 	
 	public static PriorityNetwork get(Slice s, String name){
 		PriorityNetwork net = new PriorityNetwork(s, name, "PSC (Pittsburgh, TX, USA) XO Rack");
+		//PriorityNetwork net = new PriorityNetwork(s, name, "RENCI (Chapel Hill, NC USA) XO Rack");
 		
 		net.init();
 		
@@ -89,6 +90,10 @@ public class PriorityNetwork {
 	
 	//initialized a priority network from an existing slice
 	private void init(){
+		System.out.println("Slice in init:BEGIN");
+		System.out.println("Slice in init: "  + s.getAllResources());
+		
+		
 		this.bandwidth = 1000000000l;
 		
 		for (Node n : s.getNodes()){
@@ -529,14 +534,18 @@ public class PriorityNetwork {
 		
 		try{
 			ComputeNode  node = (ComputeNode) s.getResourceByName(nodeName);
-		
+			
+			if (node == null){
+				return null;
+			}
+			
 			return node.getManagementIP();
 		} catch  (Exception e){
 			e.printStackTrace();
 			System.err.println("Proxy factory test failed");
 			assert(false);
 		}
-		return "";
+		return null;
 	}
 	
 
@@ -549,7 +558,7 @@ public class PriorityNetwork {
     			s.refresh();
     			SDNControllerIP=this.getPublicIP(nodeName);
     			System.out.println("Waiting for node: " +nodeName + " (try " + count++ + ")");
-    	    
+    	       			
     			if(SDNControllerIP != null) break;
     		} catch (Exception e){
     			System.out.println("Error in blockUntilUp... retrying refresh");
