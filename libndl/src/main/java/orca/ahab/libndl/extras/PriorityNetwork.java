@@ -545,12 +545,16 @@ public class PriorityNetwork {
 		int count = 0;
 		String SDNControllerIP = null; 
     	while (SDNControllerIP == null){
-    		s.refresh();
-    	    SDNControllerIP=this.getPublicIP(nodeName);
-    	    System.out.println("Waiting for node: " +nodeName + " (try " + count++ + ")");
+    		try{
+    			s.refresh();
+    			SDNControllerIP=this.getPublicIP(nodeName);
+    			System.out.println("Waiting for node: " +nodeName + " (try " + count++ + ")");
     	    
-    	    if(SDNControllerIP != null) break;
-    	    
+    			if(SDNControllerIP != null) break;
+    		} catch (Exception e){
+    			System.out.println("Error in blockUntilUp... retrying refresh");
+    		}
+    		
     	    sleep(30);
     	};
     	return SDNControllerIP;
