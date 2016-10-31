@@ -612,7 +612,7 @@ public class PriorityNetwork {
 			
 			" while true; do \n" +
 			"     sleep 10 \n" +
-			"     ping -c 1 8.8.8.8\n" +
+			"     ping -c 1 "+ SDNControllerIP + "\n" +
 			"     if [ \"$?\" == \"0\" ]; then \n" +                                                                                                          
 			"        echo Network is up! \n" +
 			"        break \n" +
