@@ -102,7 +102,8 @@ public class Slice {
 			this.sliceGraph.loadManifestRDF(sliceProxy.sliceStatus(this.name));
 		} catch (TransportException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			LIBNDL.logger().error("Handling exception in refresh()");
 		}
 	}
 	
