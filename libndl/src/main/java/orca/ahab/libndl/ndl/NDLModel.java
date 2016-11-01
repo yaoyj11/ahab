@@ -225,7 +225,6 @@ public abstract class NDLModel {
 			return true;
 		}
 		return false;
-		
 	}
 	
    //Jena helper method
