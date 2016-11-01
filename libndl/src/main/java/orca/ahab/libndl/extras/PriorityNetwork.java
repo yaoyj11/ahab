@@ -94,7 +94,8 @@ public class PriorityNetwork {
 		System.out.println("Slice in init: "  + s.getAllResources());
 		
 		
-		this.bandwidth = 1000000000l;
+		//this.bandwidth = 1000000000l;
+		this.bandwidth = 500000000l;
 		
 		for (Node n : s.getNodes()){
 			//if controller
@@ -127,7 +128,9 @@ public class PriorityNetwork {
 						InterfaceNode2Net iface = (InterfaceNode2Net)i;
 						System.out.println("init: network = " + n + ", inteface = " + i + " instanceof InterfaceNode2Net, IP = " + iface.getIpAddress());
 						if(iface.getIpAddress() != null){
-							siteNodes.get(this.getSiteNameFromLocalAttachmentPointName(n.getName())).add(iface.getIpAddress());
+							//get the ipaddress and split off the cidr notation if needed
+							System.out.println("Real IP = " + iface.getIpAddress().split("/")[0]);
+							siteNodes.get(this.getSiteNameFromLocalAttachmentPointName(n.getName())).add(iface.getIpAddress().split("/")[0]);
 						}
 					}
 				}
