@@ -535,6 +535,7 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 	}
 	
 	public void ndlSlice(Resource sl, OntModel m) {
+		LIBNDL.logger().debug("UserAbstractionLoader::ndlSlice, OntModel m = " + m); 
 		ndlModel.setJenaModel(m);
 		
 		LIBNDL.logger().debug("UserAbstractionLoader::ndlSlice, Slice: " + sl + ", sliceState(sliceGraph) = " + NdlCommons.getGeniSliceStateName(sl));
@@ -626,7 +627,9 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 
 	@Override
 	public void ndlManifest(Resource i, OntModel m) {
-		// TODO Auto-generated method stub
+		LIBNDL.logger().debug("UserAbstractionLoader::ndlManifest, OntModel m = " + m); 
+		ndlModel.setJenaModel(m);
+		
 		
 	}
 

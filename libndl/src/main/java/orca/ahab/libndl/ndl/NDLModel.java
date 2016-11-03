@@ -286,7 +286,9 @@ public abstract class NDLModel {
     	Iterator i = null;
 
     	OntModel om = this.getJenaModel();
-
+    	LIBNDL.logger().debug("om = " + om);
+    	i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, (RDFNode) l);
+    	LIBNDL.logger().debug("i = " + i);
     	for (i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, (RDFNode) l); i.hasNext();){
     		Statement st = (Statement) i.next();
     		LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
