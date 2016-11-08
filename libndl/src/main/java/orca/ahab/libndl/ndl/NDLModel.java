@@ -28,6 +28,7 @@ import orca.ahab.libndl.resources.request.BroadcastNetwork;
 import orca.ahab.libndl.resources.request.ComputeNode;
 import orca.ahab.libndl.resources.request.Interface;
 import orca.ahab.libndl.resources.request.InterfaceNode2Net;
+import orca.ahab.libndl.resources.request.Network;
 import orca.ahab.libndl.resources.request.RequestResource;
 import orca.ahab.libndl.resources.request.StitchPort;
 import orca.ahab.libndl.resources.request.StorageNode;
@@ -184,10 +185,8 @@ public abstract class NDLModel {
 //			System.exit(1);
 //		}
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXX  END set bandwidth   XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-//		
-		
-
 	}
+	
 	public Long getBandwidth(BroadcastNetwork broadcastNetwork) {
 
 		//Individual bn = (Individual)this.getModelResource(broadcastNetwork);
@@ -392,9 +391,9 @@ public abstract class NDLModel {
 		}
 		
 		if (NdlCommons.isStitchingNode(r)){
-			System.out.println("getState(StitchPort sp)" + r.getLocalName());
+//			System.out.println("getState(StitchPort sp)" + r.getLocalName());
 			Resource link =  getLinkFromStitchPort(r);
-			System.out.println("getState(StitchPort sp): link = " + link);
+//			System.out.println("getState(StitchPort sp): link = " + link);
 			
 			return getStateOfLink(link);
 		} 
@@ -411,8 +410,6 @@ public abstract class NDLModel {
 		//works for compute nodes (and maybe some other things)
 		return null; //NdlCommons.getResourceStateAsString(r);
 	}
-
-
 	
 	public void setNodeType(ComputeNode computeNode, String nodeType) {
 		try{
@@ -522,25 +519,23 @@ public abstract class NDLModel {
 			Individual interfaceIndivdual = (Individual) this.getModelResource(interfaceNode2Net);
 			LIBNDL.logger().debug("NDLModel::setIP:  interfaceIndivdual = " + interfaceIndivdual);
 			LIBNDL.logger().debug("NDLModel::setIP:  interfaceIndivdual.getName = " + interfaceNode2Net.getName());
-			Individual ipInd = ngen.addUniqueIPToIndividual(ipAddress, interfaceNode2Net.getName(), interfaceIndivdual);
-			ngen.addNetmaskToIP(ipInd, "255.255.0.0");
+			ngen.addUniqueIPToIndividual(ipAddress, interfaceNode2Net.getName(), interfaceIndivdual);
 		} catch (NdlException e) {
 			e.printStackTrace();
 		}
 		
 	}
 	public String getNetMask(InterfaceNode2Net interfaceNode2Net) {
-		// TODO Auto-generated method stub
-		return null;
+		return NdlCommons.getInterfaceNetmask(getModelResource(interfaceNode2Net));
 	}
 	public void setNetMask(InterfaceNode2Net interfaceNode2Net, String netmask) {
-//		try {
-//			//Individual interfaceIndivdual = (Individual) this.getModelResource(interfaceNode2Net);
-//			Individual ipInd = ngen.getRequestIndividual(interfaceNode2Net.getName());
-//			ngen.addNetmaskToIP(ipInd, netmask);
-//		} catch (NdlException e) {
-//			e.printStackTrace();
-//		}
+		try {
+			//Individual interfaceIndivdual = (Individual) this.getModelResource(interfaceNode2Net);
+			Individual ipInd = ngen.getRequestIndividual(interfaceNode2Net.getName());
+			ngen.addNetmaskToIP(ipInd, netmask);
+		} catch (NdlException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
