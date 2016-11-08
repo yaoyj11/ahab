@@ -83,6 +83,8 @@ public abstract class NDLGenerator {
 			dm.put("UAF (Fairbanks, AK, USA) XO Rack", "uafvmsite.rdf#uafvmsite");
 			dm.put("PSC (Pittsburgh, TX, USA) XO Rack", "pscvmsite.rdf#pscvmsite");
 			dm.put("UNF (Jacksonville, FL) XO Rack", "unfvmsite.rdf#unfvmsite");
+			dm.put("GWU (Washington DC,  USA) XO Rack", "gwuvmsite.rdf#gwuvmsite");
+			dm.put("CIENA (Ottawa,  CA) XO Rack", "cienavmsite.rdf#cienavmsite");
 			dm.put(StitchPort.STITCHING_DOMAIN_SHORT_NAME, "orca.rdf#Stitching");
 
 			domainMap = Collections.unmodifiableMap(dm);
@@ -110,6 +112,8 @@ public abstract class NDLGenerator {
 			ndm.put("NCSU XO Rack Net", "ncsuNet.rdf#ncsuNet");
 			ndm.put("NCSU2 XO Rack Net", "ncs2Net.rdf#ncsuNet");
 			ndm.put("UNF XO Rack Net", "unfNet.rdf#unfNet");
+			ndm.put("GWU XO Rack Net",  "gwuNet.rdf#gwuNet");
+			ndm.put("CIENA XO Rack Net",  "cienaNet.rdf#cienaNet");
 			
 			ndm.put("I2 ION/AL2S", "ion.rdf#ion");
 			ndm.put("NLR Net", "nlr.rdf#nlr");
