@@ -35,7 +35,7 @@
 				<configuration>
 					<programs>
 						<program>
-							<mainClass>orca.ahab.libndl.TestDriver</mainClass>
+							<mainClass>org.renci.ahab.libndl.TestDriver</mainClass>
 							<name>libndlTestDriver</name>
 						</program>
 					</programs>
