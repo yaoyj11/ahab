@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>orca</groupId>
+
+	<groupId>org.renci.ahab</groupId>
 	<artifactId>ahab</artifactId>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
+
 	<name>ahab</name>
 	<description>Top-level project for Ahab libraries - management and control of ORCA slices</description>
 
@@ -35,6 +36,43 @@
 		<name>RENCI, The University of North Carolina at Chapel Hill</name>
 		<url>http://www.renci.org</url>
 	</organization>
+
+	<licenses>
+		<license>
+			<name>Eclipse Public License, Version 1.0</name>
+			<url>https://www.eclipse.org/legal/epl-v10.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>pruth</id>
+			<name>Paul Ruth</name>
+			<email>pruth@renci.org</email>
+		</developer>
+		<developer>
+			<id>ibaldin</id>
+			<name>Ilya Baldin</name>
+			<email>ibaldin@renci.org</email>
+		</developer>
+		<developer>
+			<id>anirban</id>
+			<name>Anirban Mandal</name>
+			<email>anirban@renci.org</email>
+		</developer>
+	</developers>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
 	<repositories>
 		<repository>
@@ -165,7 +203,7 @@
 				<version>5.0-SNAPSHOT</version>
 			</dependency>
 			<dependency>
-				<groupId>orca.ahab</groupId>
+				<groupId>org.renci.ahab</groupId>
 				<artifactId>libtransport</artifactId>
 				<version>${project.version}</version>
 			</dependency>
@@ -188,6 +226,91 @@
 					<target>1.7</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.3</version>
+				<configuration>
+					<!-- The configuration for the Maven release plugin should include disabling
+						the release profile that is part of the Maven Super POM, since we are using
+						our own profile, and specify the deploy goal together with the activation
+						of our release profile -->
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<useReleaseProfile>false</useReleaseProfile>
+					<releaseProfiles>release</releaseProfiles>
+					<goals>deploy</goals>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.sonatype.plugins</groupId>
+						<artifactId>nexus-staging-maven-plugin</artifactId>
+						<version>1.6.7</version>
+						<executions>
+							<execution>
+								<id>default-deploy</id>
+								<phase>deploy</phase>
+								<goals>
+									<goal>deploy</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<serverId>ossrh</serverId>
+							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>2.2.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>2.9.1</version>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.5</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 </project>
