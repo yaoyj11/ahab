@@ -27,7 +27,7 @@
 	</issueManagement>
 
 	<scm>
-		<connection>scm:git:ssh://github.com/RENCI-NRIG/ahab.git</connection>
+		<connection>scm:git:git@github.com:RENCI-NRIG/ahab.git</connection>
 		<url>https://github.com/RENCI-NRIG/ahab</url>
 		<tag>master</tag>
 	</scm>
