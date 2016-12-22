@@ -8,14 +8,9 @@ Use the following pom snippet to include Ahab in your project:
 ```
 <dependency>
     <groupId>org.renci.ahab</groupId>
-    <artifactId>libndl</artifactId>
-    <version>0.1.0</version>
+    <artifactId>ahab</artifactId>
+    <version>0.1.2</version>
 </dependency>
-<dependency>
-    <groupId>org.renci.ahab</groupId>
-    <artifactId>libtransport</artifactId>
-    <version>0.1.0</version>
-</dependency> 
 ```
 
 Further information for Ahab developers on the Release process can be found in [RELEASE.md](https://github.com/RENCI-NRIG/ahab/blob/master/RELEASE.md)
