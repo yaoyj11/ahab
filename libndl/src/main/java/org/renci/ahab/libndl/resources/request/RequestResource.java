@@ -112,6 +112,10 @@ public abstract class RequestResource extends ModelResource{
 		return this.getNDLModel().getGUID(this);
 	}
 	
+	public String getStitchingGUID(){
+		return this.getNDLModel().getStitchingGUID(this);
+	}
+	
 	
 	//public Set<ManifestResource> getInstantiation() {
 	//	return instantiation;

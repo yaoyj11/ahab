@@ -132,6 +132,27 @@ public abstract class NDLModel {
 		//not implemented
 	}
 
+	//Method that gets the GUID required for slice2slice stitching
+	//For networks this is the GUID of the manifest object that represents this requested network.
+	//This is only allowed for intradomain networks
+	public String getStitchingGUID(ModelResource modelResource){
+		//TODO: needs checks to see what type of resource this is.  
+		//For now this might only work with intradomain bcast networks and nodes.
+		
+		Resource r = this.getModelResource(modelResource);
+		Statement st = r.getProperty(NdlCommons.requestMessage);
+		LIBNDL.logger().debug("NDLModel message = " + st.getLiteral());
+
+		String[] tokens = st.getLiteral().getString().split(" ");
+		String stitchingGUID = "";
+		if(tokens.length >= 2){
+			stitchingGUID = tokens[1];
+		}
+		
+		return stitchingGUID;
+	}
+	
+	
 	public void setImage(ComputeNode cn, String imageURL, String imageHash, String shortName){
 		try{
 			Individual imageIndividual = ngen.declareDiskImage(imageURL, imageHash, shortName);	

@@ -59,7 +59,7 @@ public class TestTransportContext extends TestCase {
 	
 	public void testPEM2() {
 		try {
-			TransportContext ctx = new PEMTransportContext("", "files/selfest.crt", "files/selftest.key");
+			TransportContext ctx = new PEMTransportContext("", " /home/geni-orca/.ssl/geni-pruth.pem", " /home/geni-orca/.ssl/geni_ssl_portal.key");
 			System.out.println("PEM2 " + ctx);
 			
 		} catch(Exception e) {
