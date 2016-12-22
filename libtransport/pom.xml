@@ -7,10 +7,9 @@
 		<version>0.1.2-SNAPSHOT</version>
 	</parent>
 
-	<groupId>org.renci.ahab</groupId>
 	<artifactId>libtransport</artifactId>
 	<name>libtransport</name>
-	<url>http://maven.apache.org</url>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>

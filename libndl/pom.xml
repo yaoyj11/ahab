@@ -7,7 +7,6 @@
 		<version>0.1.2-SNAPSHOT</version>
 	</parent>
 
-	<groupId>org.renci.ahab</groupId>
 	<artifactId>libndl</artifactId>
 	<name>libndl</name>
 
