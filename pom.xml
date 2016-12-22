@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.renci.ahab</groupId>
-	<artifactId>ahab</artifactId>
+	<artifactId>ahab-project</artifactId>
 	<version>0.1.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>ahab</name>
+	<name>ahab project</name>
 	<description>Top-level project for Ahab libraries - management and control of ORCA slices</description>
 
 	<properties>
@@ -207,10 +207,16 @@
 				<artifactId>libtransport</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>org.renci.ahab</groupId>
+				<artifactId>libndl</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
 	<modules>
+		<module>assemble</module>
 		<module>libndl</module>
 		<module>libtransport</module>
 	</modules>

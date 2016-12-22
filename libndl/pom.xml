@@ -3,7 +3,7 @@
 
 	<parent>
 		<groupId>org.renci.ahab</groupId>
-		<artifactId>ahab</artifactId>
+		<artifactId>ahab-project</artifactId>
 		<version>0.1.2-SNAPSHOT</version>
 	</parent>
 
