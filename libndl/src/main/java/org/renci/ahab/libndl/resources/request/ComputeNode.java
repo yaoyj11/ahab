@@ -44,9 +44,6 @@ public class ComputeNode extends Node {
 	//list of nodes that instantiate this group
 	ArrayList<org.renci.ahab.libndl.resources.manifest.Node> manifestNodes; 
 		
-	
-
-
 	protected List<String> managementAccess = null;
 
 	// list of open ports
@@ -71,7 +68,6 @@ public class ComputeNode extends Node {
 	public void setImage(String url, String hash, String shortName){
 		this.getNDLModel().setImage(this, url, hash, shortName);
 	}
-	
 	
 	//get image properties
 	public String getImageUrl(){

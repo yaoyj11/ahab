@@ -259,7 +259,19 @@ public class Slice {
 		}
 	}
 	
-	
+	public String enableSliceStitching(RequestResource r, String secret){
+		String stitching_GUID = r.getStitchingGUID();
+		try {
+			sliceProxy.permitSliceStitch(this.name, stitching_GUID, secret);
+		} catch (ContextTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return stitching_GUID;
+	}
 	
 	/**************************** Get Slice Info ***********************************/
 	public Collection<ModelResource> getAllResources(){

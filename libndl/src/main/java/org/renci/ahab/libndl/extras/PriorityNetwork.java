@@ -61,21 +61,44 @@ public class PriorityNetwork {
 	private ArrayList<PriorityPath> priorityPaths;// = new ArrayList<PriorityPath>();
 	private int defaultPriority;// = 1;
 	
+	private PriorityNetwork(Slice s, String name, String controllerSite){
+		this.s = s;
+		this.priorityNetworkName = name;
+		this.controllerSiteStr = controllerSite;
+		
+		siteList = new ArrayList<String>();
+		siteIDs = new HashMap<String,Long>();
+		switches = new HashMap<String,ComputeNode>();
+		localAttachmentPoints = new HashMap<String,BroadcastNetwork>();
+		interdomainSwitchLinks = new HashMap<String,BroadcastNetwork>();
+		
+		newSites = new ArrayList<String>();
+		siteNodes = new HashMap<String,ArrayList<String>>();
+		priorityPaths = new ArrayList<PriorityPath>();
+		defaultPriority = 1;
+		
+		
+		this.bandwidth = 1000000000l;
+	}
 	
-	//Hack so we can update slice
-	public static PriorityNetwork create(Slice s, String name){
-		//SDN sdn = SDN.create(s, name, "RENCI (Chapel Hill, NC USA) XO Rack");
-		PriorityNetwork sdn = PriorityNetwork.create(s, name, "PSC (Pittsburgh, TX, USA) XO Rack");
-		//PriorityNetwork sdn = PriorityNetwork.create(s, name, "RENCI (Chapel Hill, NC USA) XO Rack");
-		                                                       
+	//public static PriorityNetwork create(Slice s, String name){
+	//	return PriorityNetwork.create(s, name, "PSC (Pittsburgh, TX, USA) XO Rack");
+	//}
+	
+	public static PriorityNetwork create(Slice s, String name, String controllerSite){
+		return PriorityNetwork.create(s, name, controllerSite, 1000000000l);
+	}      
+	
+	public static PriorityNetwork create(Slice s, String name, String controllerSite, long bandwidth){
+		PriorityNetwork sdn = new PriorityNetwork(s, name, controllerSite);
+		sdn.setBandwidth(bandwidth);
 		sdn.startController();
-
 		return sdn;
 	}
 	
-	public static PriorityNetwork get(Slice s, String name){
-		PriorityNetwork net = new PriorityNetwork(s, name, "PSC (Pittsburgh, TX, USA) XO Rack");
-		//PriorityNetwork net = new PriorityNetwork(s, name, "RENCI (Chapel Hill, NC USA) XO Rack");
+	
+	public static PriorityNetwork get(Slice s, String name){	
+		PriorityNetwork net = new PriorityNetwork(s, name,getControllerSite(s,name));
 		
 		net.init();
 		
@@ -87,6 +110,117 @@ public class PriorityNetwork {
 		
 		return net;
 	}
+	
+	//enables slice to slice stitching on a site. 
+	//returns the reservation id of the vlan which is required for stitching
+	public String enableSlice2SliceStitching(String siteName, String secret){
+		BroadcastNetwork net = this.localAttachmentPoints.get(siteName);
+		return net.enableSliceStitching(secret);
+	}
+	
+	public Map<String,String> enableSlice2SliceStitching(String secret){
+		Map<String,String> returnMap = new HashMap<String,String>();
+		for(String site : this.localAttachmentPoints.keySet()){ 
+		    returnMap.put(site, this.localAttachmentPoints.get(site).enableSliceStitching(secret)); 
+		}
+		return returnMap;
+		
+	}
+	
+	
+	public void bind(String name, String rdfID){
+		this.addSDNSite(name, rdfID, this.controllerPublicIP);  
+		this.newSites.add(name);
+		this.siteNodes.put(name, new ArrayList<String>());
+	}
+	
+	public void addNode(ComputeNode n, String site, String ip, String mask){
+		ArrayList<String> nodes = siteNodes.get(site);
+		nodes.add(ip);
+		
+		BroadcastNetwork net = this.localAttachmentPoints.get(site); 
+		Interface int1  = net.stitch(n);
+		
+		((InterfaceNode2Net)int1).setIpAddress(ip);
+		((InterfaceNode2Net)int1).setNetmask(mask);		
+	}
+	
+	public void QoS_setDefaultPriority(int priority){
+		this.defaultPriority = priority;
+	}
+	
+	public void QoS_setPriority(String site1, String site2, int priority){
+		PriorityPath path = null;
+		System.out.println("QoS_setPriority");
+		path = this.getPriorityPath(site1, site2);
+		System.out.println("QoS_setPriority: path = " + path);
+		if(path == null){
+			path =  new PriorityPath();
+			this.priorityPaths.add(path);
+		}
+		path.site1 = site1;
+		path.site2 = site2;
+		path.priority = priority;
+	}
+
+
+	public void QoS_commit(){
+		//Update priorities if needed
+		//Add new sites
+		System.out.println("this.processNewSites");
+		this.processNewSites();
+		//(re)set priorities
+		try {
+			System.out.println("this.postSetQueues");
+			this.postSetQueues();
+			
+			for (PriorityPath path : this.priorityPaths){
+				this.postPathMatches(path,this.priorityPaths.indexOf(path)+1);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public String getState(String site){
+		ComputeNode sw = switches.get(site);		
+		Network net = localAttachmentPoints.get(site);
+		
+		
+		s.logger().debug("PriorityNetwork.getState(): net = " + net);
+		s.logger().debug("PriorityNetwork.getState(): sw = " + sw);
+		s.logger().debug("PriorityNetwork.getState(): net.getState() = " + net.getState());
+		s.logger().debug("PriorityNetwork.getState(): sw.getState() = " + sw.getState());
+		
+		
+		if(net.getState().equals("Active") && sw.getState().equals("Active")){
+			return "Active";
+		}
+		
+		if(net.getState().equals("Failed") || sw.getState().equals("Failed")){
+			return "Failed";
+		}
+		
+		return "Building";
+	}
+	
+	public String getState(){
+		
+		String state = "Active";
+		for( String site : siteList){
+			if(this.getState(site).equals("Failed")){
+				return "Failed";
+			}
+			
+			if(this.getState(site).equals("Building")){
+				state = "Building";
+			}
+		}		
+		return state;
+	}
+	
+	
 	
 	//initialized a priority network from an existing slice
 	private void init(){
@@ -146,38 +280,13 @@ public class PriorityNetwork {
 		
 	}
 	
-	public static PriorityNetwork create(Slice s, String name, String controllerSite, long bandwidth){
-		PriorityNetwork sdn = new PriorityNetwork(s, name, controllerSite);
-		sdn.setBandwidth(bandwidth);
-		sdn.startController();
-		return sdn;
-	}
+                                         
 	
 	
-
-	private static PriorityNetwork create(Slice s, String name, String controllerSite){
-		return PriorityNetwork.create(s, name, controllerSite, 1000000000l);
-	}                                                          
-	
-	
-	private PriorityNetwork(Slice s, String name, String controllerSiteStr){
-		this.s = s;
-		this.priorityNetworkName = name;
-		this.controllerSiteStr = controllerSiteStr;
-		
-		siteList = new ArrayList<String>();
-		siteIDs = new HashMap<String,Long>();
-		switches = new HashMap<String,ComputeNode>();
-		localAttachmentPoints = new HashMap<String,BroadcastNetwork>();
-		interdomainSwitchLinks = new HashMap<String,BroadcastNetwork>();
-		
-		newSites = new ArrayList<String>();
-		siteNodes = new HashMap<String,ArrayList<String>>();
-		priorityPaths = new ArrayList<PriorityPath>();
-		defaultPriority = 1;
-		
-		
-		this.bandwidth = bandwidth;
+	private static String getControllerSite(Slice s, String name){
+		ComputeNode controller = (ComputeNode) s.getResourceByName(name+"_controller");
+		System.out.println("Found controller: " + controller + " at site " + controller.getDomain());
+		return controller.getDomain();
 	}
 	
 	private  String generateControllerName(){
@@ -285,38 +394,7 @@ public class PriorityNetwork {
 	}
 	
 	
-	public void bind(String name, String rdfID){
-		this.addSDNSite(name, rdfID, this.controllerPublicIP);  
-		
-		//add site to new site to be processed after instantiation: 
-		//HACK needs fixing. switch need to be up before finishing the processing
-		this.newSites.add(name);
-		//this.priorities.put(name, 1);
-		this.siteNodes.put(name, new ArrayList<String>());
-	}
-	
-	public void addNode(ComputeNode n, String site, String ip, String mask){
-		ArrayList<String> nodes = siteNodes.get(site);
-		nodes.add(ip);
-		
-		BroadcastNetwork net = this.localAttachmentPoints.get(site); 
-		
-		s.logger().debug("BroadcastNetwork net = " + net);
-	
-		Interface int1  = net.stitch(n);
-		
-		s.logger().debug("Interface int1 = " + int1);
-		
-		((InterfaceNode2Net)int1).setIpAddress(ip);
-		((InterfaceNode2Net)int1).setNetmask(mask);
-		
-		s.logger().debug("AddNode2Net request:  " + s.getRequest());
-		
-		
 
-		
-		
-	}
 	
 	private void processNewSites(){
 		
@@ -346,83 +424,7 @@ public class PriorityNetwork {
 		
 		return null;
 	}
-	public void QoS_setDefaultPriority(int priority){
-		this.defaultPriority = priority;
-	}
-	
-	public void QoS_setPriority(String site1, String site2, int priority){
-		PriorityPath path = null;
-		System.out.println("QoS_setPriority");
-		path = this.getPriorityPath(site1, site2);
-		System.out.println("QoS_setPriority: path = " + path);
-		if(path == null){
-			path =  new PriorityPath();
-			this.priorityPaths.add(path);
-		}
-		path.site1 = site1;
-		path.site2 = site2;
-		path.priority = priority;
-	}
 
-
-	public void QoS_commit(){
-		//Update priorities if needed
-		//Add new sites
-		System.out.println("this.processNewSites");
-		this.processNewSites();
-		//(re)set priorities
-		try {
-			System.out.println("this.postSetQueues");
-			this.postSetQueues();
-			
-			for (PriorityPath path : this.priorityPaths){
-				this.postPathMatches(path,this.priorityPaths.indexOf(path)+1);
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-
-
-	public String getState(String site){
-		ComputeNode sw = switches.get(site);		
-		Network net = localAttachmentPoints.get(site);
-		
-		
-		s.logger().debug("PriorityNetwork.getState(): net = " + net);
-		s.logger().debug("PriorityNetwork.getState(): sw = " + sw);
-		s.logger().debug("PriorityNetwork.getState(): net.getState() = " + net.getState());
-		s.logger().debug("PriorityNetwork.getState(): sw.getState() = " + sw.getState());
-		
-		
-		if(net.getState().equals("Active") && sw.getState().equals("Active")){
-			return "Active";
-		}
-		
-		if(net.getState().equals("Failed") || sw.getState().equals("Failed")){
-			return "Failed";
-		}
-		
-		return "Building";
-	}
-	
-	public String getState(){
-		
-		String state = "Active";
-		for( String site : siteList){
-			if(this.getState(site).equals("Failed")){
-				return "Failed";
-			}
-			
-			if(this.getState(site).equals("Building")){
-				state = "Building";
-			}
-		}		
-		return state;
-	}
-	
 	private void startController(){
 
 		
@@ -463,7 +465,7 @@ public class PriorityNetwork {
 	}
 	
 	
-	public void addSDNSite(String name, String site, String SDNControllerIP){
+	private void addSDNSite(String name, String site, String SDNControllerIP){
 		this.siteList.add(name);
 		long switchNum = siteList.indexOf(name);
 		this.siteIDs.put(name,switchNum);
@@ -533,7 +535,7 @@ public class PriorityNetwork {
 		}
 	}
 	
-	public String getPublicIP(String nodeName){
+	private String getPublicIP(String nodeName){
 		
 		try{
 			ComputeNode  node = (ComputeNode) s.getResourceByName(nodeName);
@@ -754,7 +756,7 @@ public class PriorityNetwork {
 
 	private final String USER_AGENT = "Mozilla/5.0";
 	// HTTP GET request
-	public  ArrayList<String> getRYUSwitches() throws Exception {
+	private  ArrayList<String> getRYUSwitches() throws Exception {
 		ArrayList<String> switches = new ArrayList<String>();
 		
 		System.out.println("this.controllerPublicIP: " + this.controllerPublicIP);
@@ -802,13 +804,13 @@ public class PriorityNetwork {
 		return switches;
 	}
 	
-	public String convert2Hex(String switchID){
+	private String convert2Hex(String switchID){
 		Long l = Long.parseLong(switchID);
 		return Long.toHexString(l);
 			
 	}
 	
-	public  void getRYUSwitchDesc(String switchID) throws Exception {
+	private  void getRYUSwitchDesc(String switchID) throws Exception {
 
 		String url = "http://" + this.controllerPublicIP + ":8080/stats/desc/" + switchID;
 
@@ -840,18 +842,8 @@ public class PriorityNetwork {
 
 	}
 	
-	public void putOVSDB_test(){
-		try {
-			sendPost_SetOVSDB_addr(siteList.get(0));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			System.out.println("putOVSDB failed" );
-			e.printStackTrace();
-		}
-	}
 	
-
-	public  void postSetQueues() throws Exception {
+	private  void postSetQueues() throws Exception {
 		//curl -X POST -d '{"port_name": "s1-eth1", "type": "linux-htb", "max_rate": "1000000", "queues": [{"max_rate": "500000"}, {"min_rate": "800000"}]}' http://localhost:8080/qos/queue/0000000000000001
 
 		

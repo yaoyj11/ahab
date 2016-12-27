@@ -127,6 +127,7 @@ public class SliceGraph   {
 		rawLoadedRDF = null;
 		
 		ipAssign = new IP4Assign();
+		this.slice = slice;
 		
 	}
 	
@@ -150,6 +151,11 @@ public class SliceGraph   {
 		if(ndlModel == null) LIBNDL.logger().debug("SliceGraph.getNDLModel ndlModel is null");
 		return ndlModel;
 	}
+	
+	public String enableSliceStitching(RequestResource r, String secret){
+		return slice.enableSliceStitching(r, secret);
+	}
+	
 	/*************************************   Add/Delete/Get resources  ************************************/
 	
 	public void increaseComputeNodeCount(ComputeNode node, int addCount){

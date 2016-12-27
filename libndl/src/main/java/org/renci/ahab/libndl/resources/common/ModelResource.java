@@ -18,7 +18,7 @@ public abstract class ModelResource {
 	
 	protected NDLModel getNDLModel() {
 		if(sliceGraph == null) LIBNDL.logger().debug("ModelResource::getNDLModel sliceGraph is null");
-		
+	
 		return  sliceGraph.getNDLModel();
 	}
 	

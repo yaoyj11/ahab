@@ -130,6 +130,8 @@ public abstract class RequestResource extends ModelResource{
 	//}
 
 	
-
+	public String enableSliceStitching(String secret){
+		return this.sliceGraph.enableSliceStitching(this, secret);
+	}
 	
 }
