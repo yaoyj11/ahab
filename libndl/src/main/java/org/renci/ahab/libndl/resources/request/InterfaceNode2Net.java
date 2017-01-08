@@ -52,7 +52,8 @@ public class InterfaceNode2Net extends Interface{
 		//this.netmask = netmask;
 	}
 	public String getMacAddress() {
-		return macAddress;
+		return this.getNDLModel().getMacAddress(this);
+		//return macAddress;
 	}
 	public void setMacAddress(String macAddress) {
 		this.macAddress = macAddress;

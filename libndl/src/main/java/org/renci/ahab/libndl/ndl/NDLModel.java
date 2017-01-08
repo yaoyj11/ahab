@@ -487,6 +487,33 @@ public abstract class NDLModel {
 		return services;
 	}
 
+	public String getMacAddress(InterfaceNode2Net interfaceNode2Net) {
+		String mac = null;
+		try {
+			Resource interfaceResource = this.getModelResource(interfaceNode2Net);
+			LIBNDL.logger().debug("NDLModel::getMacAddress:  interfaceIndivdual = " + interfaceResource);
+			LIBNDL.logger().debug("NDLModel::getMacAddress:  interfaceIndivdual.getName = " + interfaceNode2Net.getName());
+			//Individual ipInd = ngen.addUniqueIPToIndividual(ipAddress, interfaceNode2Net.getName(), interfaceIndivdual);
+			//ngen.addNetmaskToIP(ipInd, "255.255.0.0");
+			//ip = NdlCommons.getAddressIP(interfaceResource);
+			
+			//<j.10:localIPAddres    ipMacAddressProperty
+			//Resource ipResource = interfaceResource.getProperty(NdlCommons.ip4LocalIPAddressProperty).getResource();
+			//NdlCommons.getAddressMAC(interfaceResource);
+		
+			//LIBNDL.logger().debug("NDLModel::getMacAddress: ipResource = " + ipResource);
+			 ///<j.7:label_ID>172.16.1.100</j.7:label_ID>
+			 mac = NdlCommons.getAddressMAC(interfaceResource);
+			LIBNDL.logger().debug("NDLModel::getMacAddress: macStr = " + mac);
+				
+		} catch (Exception e) {
+			LIBNDL.logger().debug("NDLModel::getMacAddress");
+			e.printStackTrace();
+		}
+		
+		
+		return mac;
+	}
 
 	public String getIP(InterfaceNode2Net interfaceNode2Net) {
 		String ip = null;
@@ -607,6 +634,7 @@ public abstract class NDLModel {
 			}
 			return rname;
 		}
+
 
 		
 		
