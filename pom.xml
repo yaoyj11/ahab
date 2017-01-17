@@ -4,7 +4,7 @@
 
 	<groupId>org.renci.ahab</groupId>
 	<artifactId>ahab-project</artifactId>
-	<version>0.1.4-SNAPSHOT</version>
+	<version>0.1.4</version>
 	<packaging>pom</packaging>
 
 	<name>ahab project</name>
@@ -29,7 +29,7 @@
 	<scm>
 		<connection>scm:git:git@github.com:RENCI-NRIG/ahab.git</connection>
 		<url>https://github.com/RENCI-NRIG/ahab</url>
-		<tag>master</tag>
+		<tag>ahab-project-0.1.4</tag>
 	</scm>
 
 	<organization>
