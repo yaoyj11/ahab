@@ -241,14 +241,14 @@ public abstract class NDLModel {
 	
 	//Jena helper method
      private boolean isType(Resource r, Resource resourceClass){
-		
+	        return  r.hasProperty(NdlCommons.RDF_TYPE, resourceClass);	
 		//Test for type of subject (if any)
-		Resource candidateResourceClass = getType(r);  //r.getProperty(new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).getResource();
+		//	Resource candidateResourceClass = getType(r);  //r.getProperty(new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).getResource();
 	
-		if(candidateResourceClass != null && candidateResourceClass.equals(resourceClass)){
-			return true;
-		}
-		return false;
+		//if(candidateResourceClass != null && candidateResourceClass.equals(resourceClass)){
+		//	return true;
+		//}
+		//return false;
 		
 	}
 	
