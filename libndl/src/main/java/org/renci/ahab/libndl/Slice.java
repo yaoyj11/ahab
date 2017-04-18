@@ -34,6 +34,7 @@ import org.renci.ahab.libtransport.TransportContext;
 import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
+import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
 import edu.uci.ics.jung.graph.SparseMultigraph;
 
@@ -202,7 +203,7 @@ public class Slice {
 	}
 	
 	
-	public void commit(int count, int sleepInterval){
+	public void commit(int count, int sleepInterval) throws XMLRPCTransportException{
 		boolean done = false;
 		int i = 0;
 		do{
@@ -210,23 +211,24 @@ public class Slice {
 			try{
 				this.commit();
 				done = true;
-			} catch (Exception e){
-				
+			} catch (XMLRPCTransportException e){
 				System.out.print("Slice commit failed: sleeping for " + sleepInterval + " seconds. ");
-				
-				try {
-				    Thread.sleep(sleepInterval*1000); //1000 milliseconds is one second.
-				} catch(InterruptedException ex) {  
-				    Thread.currentThread().interrupt();
-				}
-				
+				if(i >= count) throw e;
+			} catch (Exception e){
+				System.out.print("Slice commit failed: sleeping for " + sleepInterval + " seconds. ");				
+			}
+			
+			try {
+			    Thread.sleep(sleepInterval*1000); //1000 milliseconds is one second.
+			} catch(InterruptedException ex) {  
+			    Thread.currentThread().interrupt();
 			}
 		}while (!done && i < count);
 		
 		
 	}
 	
-	public void commit() {
+	public void commit() throws XMLRPCTransportException{
 		try{
 			LIBNDL.logger().debug("Name: " + this.getName());
 			LIBNDL.logger().debug("Req: " + this.getRequest());
@@ -238,6 +240,8 @@ public class Slice {
 				LIBNDL.logger().debug("commit modify slice");
 				sliceProxy.modifySlice(this.getName(), this.getRequest());
 			}
+		} catch (XMLRPCTransportException e){
+			throw e;
 		} catch (Exception e){
 			this.logger().debug("Failed to commit changes");
 			e.printStackTrace();

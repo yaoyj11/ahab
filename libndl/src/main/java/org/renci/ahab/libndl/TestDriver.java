@@ -39,6 +39,7 @@ import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.TransportContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
+import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 
@@ -917,7 +918,12 @@ public class TestDriver {
 		
 		cn.delete();
 		
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public static void testDelete(String pem, String sliceName){
@@ -1065,7 +1071,12 @@ public class TestDriver {
 		
 		String rdfString = s.getRequest();
 		
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		return rdfString;
 	}
@@ -1160,7 +1171,12 @@ public class TestDriver {
 		
 		String rdfString = s.getRequest();
 		
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		return rdfString;
 	}
@@ -1186,7 +1202,12 @@ public class TestDriver {
 		BroadcastNetwork net = (BroadcastNetwork)s.getResourceByName(networkName);
 		net.delete();
 	
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}	
 /*	
