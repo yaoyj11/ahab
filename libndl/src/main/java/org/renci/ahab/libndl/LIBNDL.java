@@ -12,8 +12,7 @@ public class LIBNDL {
 	}
 	
 	public static void setLogger(){
-		logger = Logger.getLogger(LIBNDL.class.getCanonicalName());
-		logger.setLevel(Level.DEBUG);
+		logger = Logger.getLogger(LIBNDL.class);
 	}
 	
 

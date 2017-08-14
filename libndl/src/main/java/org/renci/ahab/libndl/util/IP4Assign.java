@@ -39,8 +39,7 @@ public class IP4Assign {
 
 	public IP4Assign() {
 		if (logger == null)	{
-			logger = Logger.getLogger(IP4Assign.class.getCanonicalName());
-			logger.setLevel(Level.DEBUG);
+			logger = Logger.getLogger(IP4Assign.class);
 		}
 		
 		allocatedSubnetTreeMap = new TreeMap<Integer, Integer>();
