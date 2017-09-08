@@ -469,8 +469,7 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 			
 			return;
 		}
-		
-		
+				
 		RequestResource onode = null;
 		if(node != null){
 			ndlModel.printRequest2NDLMap();
@@ -484,6 +483,15 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 			olink = this.sliceGraph.getResourceByName(this.getPrettyName(conn));
 		} else{
 			LIBNDL.logger().warn("ndlInterface with null connection: " + intf);
+			LIBNDL.logger().debug("intf.getLocalName: " + intf.getLocalName());
+			//LIBNDL.logger().debug("intf.getURI: " + intf.getURI());
+			//LIBNDL.logger().debug("intf.getId: " + intf.getId());
+			
+			//Super hack that needs to be fixed in NDL
+			//if the connection is null assume its interdomain and find the link name by parsing the interface name
+			LIBNDL.logger().debug("link name: " + intf.getLocalName().split("-")[0]);
+			olink = this.sliceGraph.getResourceByName(intf.getLocalName().split("-")[0]);
+			//end hack
 		}
 		
 		

@@ -77,6 +77,7 @@ public class Slice {
 	
 	public static Slice loadManifestFile(ISliceTransportAPIv1 sliceProxy, String sliceName) throws ContextTransportException, TransportException{
 		Slice s = Slice.loadManifest(sliceProxy.sliceStatus(sliceName));
+		
 		s.setName(sliceName);
 		s.setSliceProxy(sliceProxy);
 		return s;
