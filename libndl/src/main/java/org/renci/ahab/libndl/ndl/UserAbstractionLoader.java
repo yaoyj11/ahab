@@ -227,6 +227,7 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 				//LIBNDL.logger().debug("StitchPort: " + ce.getLocalName() + ", " + ce.getURI());
 				//LIBNDL.logger().debug("Interface = " + spIface.getLocalName() + ", " + spIface.getURI()); 
 			
+				LIBNDL.logger().debug("Looking for linkconnection");
 				//get LinkConnection (thing that sit between an interface and a link... why?)
 				Resource spLinkConnection = null;
 				
@@ -234,8 +235,9 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 					Statement st = (Statement) i.next();
 					LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
 					
-					if (!st.getSubject().equals(sp)) {
-						//LIBNDL.logger().debug("XXXXXXXXXXXXXXXX SETTING  LinkConnection resource: " + st.getSubject());
+					//if (!st.getSubject().equals(sp)) {
+					if(isType(st.getSubject(),NdlCommons.topologyNetworkConnectionClass)){
+						LIBNDL.logger().debug("XXXXXXXXXXXXXXXX SETTING  LinkConnection resource: " + st.getSubject());
 						spLinkConnection = st.getSubject(); 
 						break;
 					}
@@ -255,16 +257,16 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 				
 	
 				
-				
+				LIBNDL.logger().debug("Looking for linkconnectioniface");
 				//Get Link connection iface (the interface between the linkconnection and the link
 				Resource spLinkConnectionIface = null;
 				for (i = om.listStatements(spLinkConnection, new PropertyImpl("http://geni-orca.renci.org/owl/topology.owl#hasInterface"), (RDFNode) null); i.hasNext();){
 					Statement st = (Statement) i.next();
 					LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource());  
 					if (!st.getResource().equals(spIface)) {
-						//LIBNDL.logger().debug("XXXXXXXXXXXXX SETTING Link connection iface resource: " + st.getResource());
+						LIBNDL.logger().debug("XXXXXXXXXXXXX SETTING Link connection iface resource: " + st.getResource());
 						spLinkConnectionIface = st.getResource(); 
-						break;
+						//break;
 					}
 				}
 				
@@ -282,44 +284,68 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 				//}
 				
 
+				//inRequestNetworkConnection
+				
+//				//Get stichport in request 
+//				LIBNDL.logger().debug("GET spRequest: BEGIN");
+//				Resource spRequest = null;
+//				for (i = om.listStatements(null, new PropertyImpl("http://geni-orca.renci.org/owl/topology.owl#hasInterface"), (RDFNode) spLinkConnectionIface); i.hasNext();){
+//					Statement st = (Statement) i.next();
+//					LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource());  
+//					
+//					if(isType(st.getSubject(),NdlCommons.deviceOntClass)){
+//						spRequest = st.getSubject();
+//						break;
+//					}
+//				}
+//				LIBNDL.logger().debug("GET spRequest: END");
+//				
+//				
+//				
+//				//Get Link
+//				Resource spLink = null;
+//				for (i = om.listStatements(null, new PropertyImpl("http://geni-orca.renci.org/owl/topology.owl#hasInterface"), (RDFNode) spLinkConnectionIface); i.hasNext();){
+//					Statement st = (Statement) i.next();
+//					LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
+//
+//					if (st.getSubject().equals(spLinkConnectionIface)) {
+//						//LIBNDL.logger().debug("XXXXXXXXXXXXX SETTING Link resource: " + st.getResource());
+//						spLink = st.getSubject();
+//						break;
+//					}
+//				}
+				
+
+				//inRequestNetworkConnection
+				
 				//Get stichport in request 
 				LIBNDL.logger().debug("GET spRequest: BEGIN");
 				Resource spRequest = null;
-				for (i = om.listStatements(null, new PropertyImpl("http://geni-orca.renci.org/owl/topology.owl#hasInterface"), (RDFNode) spLinkConnectionIface); i.hasNext();){
+				for (i = om.listStatements(null, NdlCommons.inRequestNetworkConnection, (RDFNode) spLinkConnection); i.hasNext();){
 					Statement st = (Statement) i.next();
 					LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource());  
 					
 					if(isType(st.getSubject(),NdlCommons.deviceOntClass)){
 						spRequest = st.getSubject();
-						break;
+						//break;
 					}
 				}
 				LIBNDL.logger().debug("GET spRequest: END");
 				
 				
 				
-				//Get Link
-				Resource spLink = null;
-				for (i = om.listStatements(null, new PropertyImpl("http://geni-orca.renci.org/owl/topology.owl#hasInterface"), (RDFNode) spLinkConnectionIface); i.hasNext();){
-					Statement st = (Statement) i.next();
-					LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
-
-					if (st.getSubject().equals(spLinkConnectionIface)) {
-						//LIBNDL.logger().debug("XXXXXXXXXXXXX SETTING Link resource: " + st.getResource());
-						spLink = st.getSubject();
-						break;
-					}
-				}
 				
-				
-				//LIBNDL.logger().debug("StitchPort: " + ce.getLocalName() + ", " + ce.getURI());
-				//LIBNDL.logger().debug("Interface = " + spIface.getLocalName() + ", " + spIface.getURI()); 
+				LIBNDL.logger().debug("StitchPort: " + ce.getLocalName() + ", " + ce.getURI());
+				LIBNDL.logger().debug("Interface = " + spIface.getLocalName() + ", " + spIface.getURI()); 
 				//LIBNDL.logger().debug("Link: " + spLink.getLocalName() + ", " + spLink.getURI());
 				//LIBNDL.logger().debug("Link: TYPE: " + spLink.getProperty(new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")));
-				//LIBNDL.logger().debug("StitchPort (Request) = " + spRequest.getLocalName() + ", " + spRequest.getURI()); 
+				
+				
+				LIBNDL.logger().debug("StitchPort (Request) = " + spRequest.getLocalName() + ", " + spRequest.getURI()); 
 				
 				String spName = spRequest.getLocalName();
 				//String spName = spLink.getLocalName().substring(0, spLink.getLocalName().indexOf("-net") - 1);
+				//String spName = ce.getLocalName();
 				
 				LIBNDL.logger().debug("StitchPort Name: " + spName);
 				
