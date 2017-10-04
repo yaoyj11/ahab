@@ -281,8 +281,12 @@ public abstract class NDLModel {
     	 Resource spLink = null;
     	 for (i = om.listStatements(null, new PropertyImpl("http://geni-orca.renci.org/owl/topology.owl#hasInterface"), (RDFNode) spIface); i.hasNext();){
     		 Statement st = (Statement) i.next();
-    		 LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource()); 
-    		 LIBNDL.logger().debug("subject type: " + getType(st.getSubject()) + ", resource type: " + getType(st.getResource()));
+    		 LIBNDL.logger().debug("FOUND Statement subject: " + st.getSubject() + ", predicate: " + st.getPredicate() + ", resource  " + st.getResource());
+    		 try{
+    			 LIBNDL.logger().debug("subject type: " + getType(st.getSubject()) + ", resource type: " + getType(st.getResource()));
+    		 } catch (Exception e){
+    			 LIBNDL.logger().debug("error getting type for statement");
+    		 }
     		 //http://geni-orca.renci.org/owl/topology.owl#NetworkConnection
     		if (isType(st.getSubject(),NdlCommons.topologyNetworkConnectionClass)) {
     			 //LIBNDL.logger().debug("XXXXXXXXXXXXXXXX SETTING  LinkConnection resource: " + st.getSubject());

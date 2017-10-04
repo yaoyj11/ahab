@@ -266,7 +266,7 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 					if (!st.getResource().equals(spIface)) {
 						LIBNDL.logger().debug("XXXXXXXXXXXXX SETTING Link connection iface resource: " + st.getResource());
 						spLinkConnectionIface = st.getResource(); 
-						//break;
+						break;
 					}
 				}
 				
@@ -327,7 +327,7 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 					
 					if(isType(st.getSubject(),NdlCommons.deviceOntClass)){
 						spRequest = st.getSubject();
-						//break;
+						break;
 					}
 				}
 				LIBNDL.logger().debug("GET spRequest: END");
@@ -335,8 +335,8 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 				
 				
 				
-				LIBNDL.logger().debug("StitchPort: " + ce.getLocalName() + ", " + ce.getURI());
-				LIBNDL.logger().debug("Interface = " + spIface.getLocalName() + ", " + spIface.getURI()); 
+				//LIBNDL.logger().debug("StitchPort: " + ce.getLocalName() + ", " + ce.getURI());
+				//LIBNDL.logger().debug("Interface = " + spIface.getLocalName() + ", " + spIface.getURI()); 
 				//LIBNDL.logger().debug("Link: " + spLink.getLocalName() + ", " + spLink.getURI());
 				//LIBNDL.logger().debug("Link: TYPE: " + spLink.getProperty(new PropertyImpl("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")));
 				
@@ -355,9 +355,10 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 				
 				//LIBNDL.logger().debug(printStr);
 						
-				String label= NdlCommons.getLayerLabelLiteral(interfaces.get(0));
+				String label = null;
 				String port = null;
-				if (NdlCommons.getLinkTo(interfaces.get(0)) != null){
+				if (interfaces.size() == 1 && NdlCommons.getLinkTo(interfaces.get(0)) != null){
+					label = NdlCommons.getLayerLabelLiteral(interfaces.get(0));
 					port = NdlCommons.getLinkTo(interfaces.get(0)).toString();
 				}
 				long bandwidth = 10000000;
