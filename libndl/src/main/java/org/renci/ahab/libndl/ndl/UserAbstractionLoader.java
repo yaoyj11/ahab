@@ -89,7 +89,8 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 			//nrp.processRequest();
 			//nrp.freeModel();
 			nrp.processManifest();
-			
+			LIBNDL.logger().debug("processManifest ends");
+
 		} catch (Exception e) {
 			LIBNDL.logger().error(e);
 			LIBNDL.logger().debug("error loading graph");
@@ -438,7 +439,7 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 		// LIBNDL.logger().debug("Found connection " + l + " connecting " + interfaces + " with bandwidth " + bandwidth);
 		if (l == null)
 			return;
-		
+
 
 		//om.listStatements(null, null, l);
  		LIBNDL.logger().debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     ndlNetworkConnection     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ");
@@ -462,7 +463,6 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
     		if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
 
 					LIBNDL.logger().debug("adding vlan: " + st.getSubject());
-					System.out.println("adding vlan " + st.getSubject());
 					try {
 						if (NdlCommons.getResourceStateAsString(st.getSubject()).equals("Failed")) {
 							LIBNDL.logger().debug("State = " + NdlCommons.getResourceStateAsString(st.getSubject()));

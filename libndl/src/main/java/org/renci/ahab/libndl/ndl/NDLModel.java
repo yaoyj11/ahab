@@ -183,12 +183,12 @@ public abstract class NDLModel {
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXX  setting       bandwidth   XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 //
-//		
+//
 //		try {
 //			Resource rbn = this.getModelResource(broadcastNetwork);
-//			
+//
 //			Individual ibn = ngen.getRequestIndividual(rbn.getLocalName());
-//			
+//
 //			LIBNDL.logger().debug("rbn = : " + rbn + ", ibn = " + ibn);
 //			if (b > 0){
 //

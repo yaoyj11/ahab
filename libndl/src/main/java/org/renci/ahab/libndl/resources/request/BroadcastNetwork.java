@@ -74,12 +74,12 @@ public class BroadcastNetwork extends Network {
 	
 	public void setBandwidth(long b) {
 		this.getNDLModel().setBandwidth(this, b);
-		//bandwidth = b;
+		bandwidth = b;
 	}
 	
 	public Long getBandwidth() {
-		return this.getNDLModel().getBandwidth(this); 
-		//return bandwidth;
+		//return this.getNDLModel().getBandwidth(this);
+		return bandwidth;
 	}
 		
 	public Interface stitch(RequestResource r){

@@ -1,5 +1,6 @@
 package org.renci.ahab.libndl;
 
+import org.renci.ahab.libndl.resources.request.Network;
 import org.renci.ahab.libtransport.*;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
@@ -37,6 +38,11 @@ public class TestLoadSlice {
     try {
       Slice slice = Slice.loadManifestFile(sliceProxy, "sdx-yaoyj11");
       System.out.println(slice.getComputeNodes());
+      System.out.println(slice.getBroadcastLinks());
+      System.out.println(slice.getInterfaces());
+      for(Network net : slice.getBroadcastLinks()){
+        System.out.println(net.getBandwidth());
+      }
     }catch (Exception e){
 
       e.printStackTrace();
