@@ -89,10 +89,12 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 			//nrp.processRequest();
 			//nrp.freeModel();
 			nrp.processManifest();
-			
+			LIBNDL.logger().debug("processManifest ends");
+
 		} catch (Exception e) {
 			LIBNDL.logger().error(e);
 			LIBNDL.logger().debug("error loading graph");
+			e.printStackTrace();
 			return null;
 		} 
 		
@@ -437,7 +439,7 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
 		// LIBNDL.logger().debug("Found connection " + l + " connecting " + interfaces + " with bandwidth " + bandwidth);
 		if (l == null)
 			return;
-		
+
 
 		//om.listStatements(null, null, l);
  		LIBNDL.logger().debug("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%     ndlNetworkConnection     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ");
@@ -459,19 +461,24 @@ public class UserAbstractionLoader extends NDLLoader  implements INdlManifestMod
     		//LIBNDL.logger().debug("resource type: " + getType(st.getSubject()));
 
     		if (isType(st.getSubject(),NdlCommons.topologyCrossConnectClass)) {
-    			
-    			LIBNDL.logger().debug("adding vlan: " + st.getSubject());
-    			if(NdlCommons.getResourceStateAsString(st.getSubject()).equals("Failed")){
-    				LIBNDL.logger().debug("State = " + NdlCommons.getResourceStateAsString(st.getSubject()));
-        			state = "Failed" ;
-        		}
-        		
-        		if(!NdlCommons.getResourceStateAsString(st.getSubject()).equals("Active")){
-        			LIBNDL.logger().debug("State = " + NdlCommons.getResourceStateAsString(st.getSubject()));
-        			state = "Building";
-        			break;
-        		}
-    		 }
+
+					LIBNDL.logger().debug("adding vlan: " + st.getSubject());
+					try {
+						if (NdlCommons.getResourceStateAsString(st.getSubject()).equals("Failed")) {
+							LIBNDL.logger().debug("State = " + NdlCommons.getResourceStateAsString(st.getSubject()));
+							state = "Failed";
+						}
+
+						if (!NdlCommons.getResourceStateAsString(st.getSubject()).equals("Active")) {
+							LIBNDL.logger().debug("State = " + NdlCommons.getResourceStateAsString(st.getSubject()));
+							state = "Building";
+							break;
+						}
+					}catch (NullPointerException e){
+						LIBNDL.logger().debug("State = " + NdlCommons.getResourceStateAsString(st.getSubject()));
+						state = "NULL";
+					}
+				}
     	}
  		LIBNDL.logger().debug("looking for statements: end");
  		LIBNDL.logger().debug("State = " + state);

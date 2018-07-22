@@ -183,12 +183,12 @@ public abstract class NDLModel {
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXX  setting       bandwidth   XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 //		LIBNDL.logger().debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 //
-//		
+//
 //		try {
 //			Resource rbn = this.getModelResource(broadcastNetwork);
-//			
+//
 //			Individual ibn = ngen.getRequestIndividual(rbn.getLocalName());
-//			
+//
 //			LIBNDL.logger().debug("rbn = : " + rbn + ", ibn = " + ibn);
 //			if (b > 0){
 //
@@ -383,14 +383,18 @@ public abstract class NDLModel {
     	LIBNDL.logger().debug("VLANs from Link " + l);
     	for  (Resource r : getVLANsFromBroadcastLink(l)){
     		LIBNDL.logger().debug("VLAN: " + r + ", state: " + NdlCommons.getResourceStateAsString(r));
-    		
-    		if(NdlCommons.getResourceStateAsString(r).equals("Failed")){
-    			return "Failed";
-    		}
-    		
-    		if(!NdlCommons.getResourceStateAsString(r).equals("Active")){
-    			active = false;
-    		}
+
+    		try {
+					if (NdlCommons.getResourceStateAsString(r).equals("Failed")) {
+						return "Failed";
+					}
+
+					if (!NdlCommons.getResourceStateAsString(r).equals("Active")) {
+						active = false;
+					}
+				}catch (Exception e){
+    			return "Null";
+				}
     	}
     	
     	if (active) {
