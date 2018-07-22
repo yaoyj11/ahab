@@ -10,6 +10,7 @@ import java.util.Collection;
 import orca.ndl.NdlRequestParser;
 
 import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.renci.ahab.libndl.ndl.ExistingSliceModel;
 import org.renci.ahab.libndl.ndl.NDLModel;
@@ -41,6 +42,7 @@ import edu.uci.ics.jung.graph.SparseMultigraph;
 
 
 public class Slice {
+  static Logger logger = LogManager.getLogger(Slice.class);
 	
 	private SliceGraph sliceGraph;
 	private ISliceTransportAPIv1 sliceProxy;
@@ -92,9 +94,9 @@ public class Slice {
 	
 	public static Slice loadManifest(String manifestRDFString){
 		Slice s = new Slice();
+		System.out.println("manifestRdfString: " + manifestRDFString);
 		s.sliceGraph.loadManifestRDF(manifestRDFString);
-		
-		return s; 
+		return s;
 	}
 	
 	//refresh the slice by pulling a new manifest.  Note: this resets any pending modifications
