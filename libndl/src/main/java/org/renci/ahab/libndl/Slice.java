@@ -4,17 +4,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.Collection;
+import java.util.Date;
 
 import orca.ndl.NdlRequestParser;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.renci.ahab.libndl.ndl.ExistingSliceModel;
-import org.renci.ahab.libndl.ndl.NDLModel;
-import org.renci.ahab.libndl.ndl.NewSliceModel;
 import org.renci.ahab.libndl.ndl.RequestGenerator;
 import org.renci.ahab.libndl.resources.common.ModelResource;
 import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
@@ -28,13 +25,9 @@ import org.renci.ahab.libndl.resources.request.StorageNode;
 import org.renci.ahab.libndl.util.IP4Subnet;
 import org.renci.ahab.libtransport.AccessToken;
 import org.renci.ahab.libtransport.ISliceTransportAPIv1;
-import org.renci.ahab.libtransport.ITransportProxyFactory;
-import org.renci.ahab.libtransport.PEMTransportContext;
 import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.TransportContext;
 import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.TransportException;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
 import edu.uci.ics.jung.graph.SparseMultigraph;
@@ -400,5 +393,14 @@ public class Slice {
 	public void setSliceContext(SliceAccessContext<? extends AccessToken> sliceContext) {
 		this.sliceContext = sliceContext;
 	}
-	 
+	
+	public void renew(Date newDate) {
+	    try {
+	        sliceProxy.renewSlice(name, newDate);
+	    } catch(ContextTransportException e) {
+	        e.printStackTrace();
+	    } catch(TransportException e) {
+	        e.printStackTrace();
+	    }
+	}
 }
