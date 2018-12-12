@@ -94,6 +94,7 @@ public class Slice {
 	
 	public static Slice loadManifest(String manifestRDFString){
 		Slice s = new Slice();
+		logger.debug("manifestRdfString: " + manifestRDFString);
 		s.sliceGraph.loadManifestRDF(manifestRDFString);
 		return s;
 	}
